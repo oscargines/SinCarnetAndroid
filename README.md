@@ -240,7 +240,7 @@ Ejecutar tests unitarios:
 
 ### APK de distribucion
 
-Descarga directa del APK firmado:
+Descarga directa del APK:
 
 - [SinCarnet_V1.3.apk](./SinCarnet_V1.3.apk)
 
@@ -285,8 +285,3 @@ Buenas practicas para contribuir:
 - Desarrollo: GC Oscar I. Gines
 - Referencia operativa inicial: grafico elaborado por AEGC
 - Repositorio: `https://github.com/oscargines/SinCarnetAndroid.git`
-
----
-
-Si quieres, puedo generar tambien una version corta del README para portada publica y dejar este como `README.dev.md` tecnico.
-
