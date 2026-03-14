@@ -26,7 +26,7 @@
     <string name="continue_trip_message">Puede continuar viaje</string>
     <string name="about_screen_title">Acerca de...</string>
     <string name="about_image_content_description">Escudo de la aplicacion</string>
-    <string name="about_message">App desarrollada por el\nGC Óscar I. Ginés\nDestacamento de Tráfico de Ribadesella\nSector de Asturias.\n\nSe ha realizado tomando como referencia el gráfico elaborado por AEGC.\n\n\nMarzo 2026.</string>
+    <string name="about_message">App desarrollada por el\nGC Óscar I. Ginés\nDestacamento de Tráfico de Ribadesella\nSector de Asturias.\n\nSe ha realizado tomando como referencia el gráfico elaborado por AEGC.\n\nhttps://github.com/oscargines/SinCarnetAndroid.git\n\n\nMarzo 2026.</string>
     <string name="expired_validity_second_card_placeholder">Contenido pendiente de programar</string>
     <string name="judicial_suspension_screen_title">Suspensión Judicial</string>
     <string name="judicial_suspension_sentence_question">Tipo de condena</string>
