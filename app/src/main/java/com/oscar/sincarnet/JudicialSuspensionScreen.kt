@@ -1,12 +1,15 @@
 package com.oscar.sincarnet
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -24,6 +27,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.oscar.sincarnet.ui.theme.SinCarnetTheme
@@ -35,6 +42,7 @@ fun JudicialSuspensionScreen(
 ) {
     var sentenceType by rememberSaveable { mutableStateOf<SentenceType?>(null) }
     var drivingMoment by rememberSaveable { mutableStateOf<DrivingMoment?>(null) }
+    var showObservationsModal by rememberSaveable { mutableStateOf(false) }
 
     var showLowerSentenceModal by rememberSaveable { mutableStateOf(false) }
     var hasCompletedCourseForLowerSentence by rememberSaveable { mutableStateOf<Boolean?>(null) }
@@ -46,6 +54,7 @@ fun JudicialSuspensionScreen(
     fun selectSentenceType(type: SentenceType) {
         sentenceType = type
         drivingMoment = null
+        showObservationsModal = false
 
         showLowerSentenceModal = false
         hasCompletedCourseForLowerSentence = null
@@ -57,6 +66,7 @@ fun JudicialSuspensionScreen(
 
     fun selectDrivingMoment(moment: DrivingMoment) {
         drivingMoment = moment
+        showObservationsModal = false
         showLowerSentenceModal = false
         showHigherSentenceModal = false
 
@@ -85,6 +95,30 @@ fun JudicialSuspensionScreen(
         hasCompletedCourseForHigherSentence = hasCompletedCourseForHigherSentence,
         hasPassedExamsForHigherSentence = hasPassedExamsForHigherSentence
     )
+    val observationCase = when {
+        sentenceType == SentenceType.UP_TO_TWO_YEARS && drivingMoment == DrivingMoment.WITHIN_PERIOD -> {
+            JudicialObservationCase.LOWER_SENTENCE_WITHIN_PERIOD
+        }
+
+        sentenceType == SentenceType.OVER_TWO_YEARS && drivingMoment == DrivingMoment.WITHIN_PERIOD -> {
+            JudicialObservationCase.HIGHER_SENTENCE_WITHIN_PERIOD
+        }
+
+        sentenceType == SentenceType.UP_TO_TWO_YEARS &&
+            drivingMoment == DrivingMoment.AFTER_PERIOD &&
+            hasCompletedCourseForLowerSentence == false -> {
+            JudicialObservationCase.LOWER_SENTENCE_AFTER_PERIOD_WITHOUT_COURSE
+        }
+
+        sentenceType == SentenceType.OVER_TWO_YEARS &&
+            drivingMoment == DrivingMoment.AFTER_PERIOD &&
+            hasCompletedCourseForHigherSentence == false &&
+            hasPassedExamsForHigherSentence == false -> {
+            JudicialObservationCase.HIGHER_SENTENCE_AFTER_PERIOD_WITHOUT_COURSE_AND_EXAM
+        }
+
+        else -> null
+    }
 
     Column(
         modifier = modifier
@@ -167,7 +201,9 @@ fun JudicialSuspensionScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Button(
-                onClick = { /* TODO: Observaciones */ },
+                onClick = {
+                    if (observationCase != null) showObservationsModal = true
+                },
                 modifier = Modifier.weight(1f),
                 shape = MaterialTheme.shapes.medium,
                 colors = ButtonDefaults.buttonColors(
@@ -180,6 +216,139 @@ fun JudicialSuspensionScreen(
             }
             BackIconButton(onClick = onBackClick)
         }
+    }
+
+    if (showObservationsModal) {
+        AlertDialog(
+            onDismissRequest = { showObservationsModal = false },
+            title = {
+                Box(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    AssetImage(
+                        assetPath = "icons/error.png",
+                        contentDescription = stringResource(R.string.error_icon_content_description),
+                        modifier = Modifier.size(100.dp)
+                    )
+                }
+            },
+            text = {
+                Column(
+                    modifier = Modifier.verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    when (observationCase) {
+                        JudicialObservationCase.LOWER_SENTENCE_WITHIN_PERIOD -> {
+                            Text(
+                                text = buildAnnotatedString {
+                                    withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
+                                        append(stringResource(R.string.observations_label_hecho))
+                                    }
+                                    append(stringResource(R.string.obs_judicial_within_period_lower_sentence_hecho))
+                                }
+                            )
+                            Text(
+                                text = buildAnnotatedString {
+                                    withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
+                                        append(stringResource(R.string.observations_label_actuacion))
+                                    }
+                                    append(stringResource(R.string.obs_judicial_within_period_lower_sentence_actuacion))
+                                }
+                            )
+                        }
+
+                        JudicialObservationCase.LOWER_SENTENCE_AFTER_PERIOD_WITHOUT_COURSE -> {
+                            Text(
+                                text = buildAnnotatedString {
+                                    withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
+                                        append(stringResource(R.string.observations_label_hecho))
+                                    }
+                                    append(stringResource(R.string.obs_judicial_after_period_lower_sentence_without_course_hecho))
+                                }
+                            )
+                            Text(
+                                text = buildAnnotatedString {
+                                    withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
+                                        append(stringResource(R.string.observations_label_actuacion))
+                                    }
+                                    append(stringResource(R.string.obs_judicial_after_period_lower_sentence_without_course_actuacion))
+                                }
+                            )
+                            Text(
+                                text = buildAnnotatedString {
+                                    withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
+                                        append(stringResource(R.string.observations_label_requisito))
+                                    }
+                                    append(stringResource(R.string.obs_judicial_after_period_lower_sentence_without_course_requisito))
+                                }
+                            )
+                        }
+
+                        JudicialObservationCase.HIGHER_SENTENCE_WITHIN_PERIOD -> {
+                            Text(
+                                text = buildAnnotatedString {
+                                    withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
+                                        append(stringResource(R.string.observations_label_hecho))
+                                    }
+                                    append(stringResource(R.string.obs_judicial_within_period_higher_sentence_hecho))
+                                }
+                            )
+                            Text(
+                                text = buildAnnotatedString {
+                                    withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
+                                        append(stringResource(R.string.observations_label_actuacion))
+                                    }
+                                    append(stringResource(R.string.obs_judicial_within_period_higher_sentence_actuacion))
+                                }
+                            )
+                            Text(
+                                text = buildAnnotatedString {
+                                    withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
+                                        append(stringResource(R.string.observations_label_requisito))
+                                    }
+                                    append(stringResource(R.string.obs_judicial_within_period_higher_sentence_requisito))
+                                }
+                            )
+                        }
+
+                        JudicialObservationCase.HIGHER_SENTENCE_AFTER_PERIOD_WITHOUT_COURSE_AND_EXAM -> {
+                            Text(
+                                text = buildAnnotatedString {
+                                    withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
+                                        append(stringResource(R.string.observations_label_hecho))
+                                    }
+                                    append(stringResource(R.string.obs_judicial_after_period_higher_sentence_without_course_and_exam_hecho))
+                                }
+                            )
+                            Text(
+                                text = buildAnnotatedString {
+                                    withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
+                                        append(stringResource(R.string.observations_label_actuacion))
+                                    }
+                                    append(stringResource(R.string.obs_judicial_after_period_higher_sentence_without_course_and_exam_actuacion))
+                                }
+                            )
+                            Text(
+                                text = buildAnnotatedString {
+                                    withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
+                                        append(stringResource(R.string.observations_label_requisito))
+                                    }
+                                    append(stringResource(R.string.obs_judicial_after_period_higher_sentence_without_course_and_exam_requisito))
+                                }
+                            )
+                        }
+
+                        null -> Unit
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showObservationsModal = false }) {
+                    Text(text = stringResource(R.string.accept_action))
+                }
+            }
+        )
     }
 
     if (showLowerSentenceModal) {
@@ -239,6 +408,13 @@ private enum class SentenceType {
 private enum class DrivingMoment {
     WITHIN_PERIOD,
     AFTER_PERIOD
+}
+
+private enum class JudicialObservationCase {
+    LOWER_SENTENCE_WITHIN_PERIOD,
+    LOWER_SENTENCE_AFTER_PERIOD_WITHOUT_COURSE,
+    HIGHER_SENTENCE_WITHIN_PERIOD,
+    HIGHER_SENTENCE_AFTER_PERIOD_WITHOUT_COURSE_AND_EXAM
 }
 
 private enum class JudicialBorderBehavior {

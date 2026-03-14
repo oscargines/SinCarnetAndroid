@@ -103,3 +103,34 @@ internal fun YesNoQuestionBlock(
     }
 }
 
+@Composable
+internal fun AssetImage(
+    assetPath: String,
+    contentDescription: String?,
+    modifier: Modifier = Modifier
+) {
+    val context = LocalContext.current
+    val assetBitmap = remember(assetPath) {
+        runCatching {
+            context.assets.open(assetPath).use { inputStream ->
+                BitmapFactory.decodeStream(inputStream)?.asImageBitmap()
+            }
+        }.getOrNull()
+    }
+
+    if (assetBitmap != null) {
+        Image(
+            bitmap = assetBitmap,
+            contentDescription = contentDescription,
+            modifier = modifier,
+            contentScale = ContentScale.Fit
+        )
+    } else {
+        Image(
+            painter = painterResource(id = R.drawable.ic_launcher_foreground),
+            contentDescription = contentDescription,
+            modifier = modifier,
+            contentScale = ContentScale.Fit
+        )
+    }
+}

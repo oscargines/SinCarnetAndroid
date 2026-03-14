@@ -1,18 +1,21 @@
 package com.oscar.sincarnet
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -35,6 +38,13 @@ fun WithoutPermitScreen(
 ) {
     var hasEverObtainedPermit by rememberSaveable { mutableStateOf<Boolean?>(null) }
     var isValidForDrivingInSpain by rememberSaveable { mutableStateOf<Boolean?>(null) }
+    var showObservationsModal by rememberSaveable { mutableStateOf(false) }
+
+    val observationCase = if (hasEverObtainedPermit == false) {
+        WithoutPermitObservationCase.NEVER_OBTAINED_PERMIT
+    } else {
+        null
+    }
 
     if (hasEverObtainedPermit != true) {
         isValidForDrivingInSpain = null
@@ -74,6 +84,7 @@ fun WithoutPermitScreen(
                     onSelect = {
                         hasEverObtainedPermit = true
                         isValidForDrivingInSpain = null
+                        showObservationsModal = false
                     }
                 )
 
@@ -83,6 +94,7 @@ fun WithoutPermitScreen(
                     onSelect = {
                         hasEverObtainedPermit = false
                         isValidForDrivingInSpain = null
+                        showObservationsModal = false
                     }
                 )
 
@@ -127,7 +139,9 @@ fun WithoutPermitScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Button(
-                onClick = { /* TODO: Observaciones */ },
+                onClick = {
+                    if (observationCase != null) showObservationsModal = true
+                },
                 modifier = Modifier.weight(1f),
                 shape = MaterialTheme.shapes.medium,
                 colors = ButtonDefaults.buttonColors(
@@ -141,6 +155,47 @@ fun WithoutPermitScreen(
             BackIconButton(onClick = onBackClick)
         }
     }
+
+    if (showObservationsModal) {
+        AlertDialog(
+            onDismissRequest = { showObservationsModal = false },
+            title = {
+                Box(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    AssetImage(
+                        assetPath = "icons/error.png",
+                        contentDescription = stringResource(R.string.error_icon_content_description),
+                        modifier = Modifier.size(100.dp)
+                    )
+                }
+            },
+            text = {
+                Column(
+                    modifier = Modifier.verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    when (observationCase) {
+                        WithoutPermitObservationCase.NEVER_OBTAINED_PERMIT -> {
+                            Text(text = stringResource(R.string.obs_without_permit_never_obtained_actuacion))
+                        }
+
+                        null -> Unit
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showObservationsModal = false }) {
+                    Text(text = stringResource(R.string.accept_action))
+                }
+            }
+        )
+    }
+}
+
+private enum class WithoutPermitObservationCase {
+    NEVER_OBTAINED_PERMIT
 }
 
 private enum class WithoutPermitBorderBehavior {

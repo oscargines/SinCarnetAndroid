@@ -1,17 +1,23 @@
 package com.oscar.sincarnet
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -31,6 +37,13 @@ fun SpecialCasesScreen(
     onBackClick: () -> Unit = {}
 ) {
     var selectedSpecialCase by rememberSaveable { mutableStateOf<SpecialCaseType?>(null) }
+    var showObservationsModal by rememberSaveable { mutableStateOf(false) }
+
+    val observationCase = when (selectedSpecialCase) {
+        SpecialCaseType.PSYCHOPHYSICAL_LOSS -> SpecialCaseObservationCase.PSYCHOPHYSICAL_LOSS
+        SpecialCaseType.MISSING_REQUIREMENTS -> SpecialCaseObservationCase.MISSING_REQUIREMENTS
+        null -> null
+    }
 
     val decision = resolveSpecialCaseDecision(selectedSpecialCase)
 
@@ -60,13 +73,19 @@ fun SpecialCasesScreen(
                 OptionRadioRow(
                     text = stringResource(R.string.special_case_psychophysical_loss_option),
                     selected = selectedSpecialCase == SpecialCaseType.PSYCHOPHYSICAL_LOSS,
-                    onSelect = { selectedSpecialCase = SpecialCaseType.PSYCHOPHYSICAL_LOSS }
+                    onSelect = {
+                        selectedSpecialCase = SpecialCaseType.PSYCHOPHYSICAL_LOSS
+                        showObservationsModal = false
+                    }
                 )
 
                 OptionRadioRow(
                     text = stringResource(R.string.special_case_missing_requirements_option),
                     selected = selectedSpecialCase == SpecialCaseType.MISSING_REQUIREMENTS,
-                    onSelect = { selectedSpecialCase = SpecialCaseType.MISSING_REQUIREMENTS }
+                    onSelect = {
+                        selectedSpecialCase = SpecialCaseType.MISSING_REQUIREMENTS
+                        showObservationsModal = false
+                    }
                 )
             }
         }
@@ -86,7 +105,9 @@ fun SpecialCasesScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Button(
-                onClick = { /* TODO: Observaciones */ },
+                onClick = {
+                    if (observationCase != null) showObservationsModal = true
+                },
                 modifier = Modifier.weight(1f),
                 shape = MaterialTheme.shapes.medium,
                 colors = ButtonDefaults.buttonColors(
@@ -100,9 +121,55 @@ fun SpecialCasesScreen(
             BackIconButton(onClick = onBackClick)
         }
     }
+
+    if (showObservationsModal) {
+        AlertDialog(
+            onDismissRequest = { showObservationsModal = false },
+            title = {
+                Box(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    AssetImage(
+                        assetPath = "icons/error.png",
+                        contentDescription = stringResource(R.string.error_icon_content_description),
+                        modifier = Modifier.size(100.dp)
+                    )
+                }
+            },
+            text = {
+                Column(
+                    modifier = Modifier.verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    when (observationCase) {
+                        SpecialCaseObservationCase.PSYCHOPHYSICAL_LOSS -> {
+                            Text(text = stringResource(R.string.obs_special_case_psychophysical_loss_actuacion))
+                        }
+
+                        SpecialCaseObservationCase.MISSING_REQUIREMENTS -> {
+                            Text(text = stringResource(R.string.obs_special_case_missing_requirements_actuacion))
+                        }
+
+                        null -> Unit
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showObservationsModal = false }) {
+                    Text(text = stringResource(R.string.accept_action))
+                }
+            }
+        )
+    }
 }
 
 private enum class SpecialCaseType {
+    PSYCHOPHYSICAL_LOSS,
+    MISSING_REQUIREMENTS
+}
+
+private enum class SpecialCaseObservationCase {
     PSYCHOPHYSICAL_LOSS,
     MISSING_REQUIREMENTS
 }
