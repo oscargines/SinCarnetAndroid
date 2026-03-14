@@ -46,7 +46,7 @@
     <string name="special_case_psychophysical_loss_option">Se ha declarado la pérdida de vigencia por pérdida de condiciones psicofísicas</string>
     <string name="special_case_missing_requirements_option">Conduce sin mantener los requisitos exigidos en su día para su otorgamiento</string>
     <string name="special_case_psychophysical_loss_message">INFRACCIÓN AL REGLAMENTO GENERAL DE CONDUCTORES\n\nArtículo 1.1.5A\n500€</string>
-    <string name="special_case_missing_requirements_message">INFRACCIÓN AL REGLAMENTO GENERAL DE CONDUCTORES\n\nArtículo 12.6.5A\n500€</string>
+    <string name="special_case_missing_requirements_message">INFRACCIÓN AL REGLAMENTO GENERAL DE CONDUCTORES\n\nArtículo 12.6.5A\n200€</string>
     <string name="case_screen_placeholder">Pantalla en construcción</string>
     <string name="back_action">Volver</string>
     <string name="back_icon_content_description">Volver atrás</string>

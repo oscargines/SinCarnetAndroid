@@ -13,8 +13,10 @@
         android:theme="@style/Theme.SinCarnet">
         <activity
             android:name=".MainActivity"
+            android:configChanges="keyboardHidden|orientation|screenSize|uiMode"
             android:exported="true"
             android:label="@string/app_name"
+            android:screenOrientation="portrait"
             android:theme="@style/Theme.SinCarnet">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

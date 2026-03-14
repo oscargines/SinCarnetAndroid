@@ -238,6 +238,12 @@ Ejecutar tests unitarios:
 ./gradlew.bat testDebugUnitTest
 ```
 
+### APK de distribucion
+
+Descarga directa del APK firmado:
+
+- [SinCarnet_V1.3.apk](./SinCarnet_V1.3.apk)
+
 ## 10) Estado actual
 
 Estado: **en desarrollo activo**.
