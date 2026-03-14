@@ -18,19 +18,22 @@ import androidx.compose.animation.core.tween
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 
 @Composable
 fun PerdidaVigenciaFuntionCard(
     modifier: Modifier = Modifier,
-    messageText: String,
-    isAlertBlinking: Boolean
+    messageText: String? = null,
+    isAlertBlinking: Boolean,
+    blinkingColor: Color = Color(0xFFD32F2F),
+    borderColor: Color = Color.Transparent
 ) {
     val borderAlpha = if (isAlertBlinking) {
         val transition = rememberInfiniteTransition(label = "alertBorderTransition")
         transition.animateFloat(
             initialValue = 1f,
-            targetValue = 0f,
+            targetValue = 0.45f,
             animationSpec = infiniteRepeatable(
                 animation = tween(durationMillis = 550),
                 repeatMode = RepeatMode.Reverse
@@ -40,12 +43,18 @@ fun PerdidaVigenciaFuntionCard(
     } else {
         0f
     }
-    val borderColor = Color.Red.copy(alpha = borderAlpha)
+    val animatedBlinkingBorderColor = blinkingColor.copy(alpha = borderAlpha)
+    val resolvedBorderColor = if (isAlertBlinking) {
+        animatedBlinkingBorderColor
+    } else {
+        borderColor.copy(alpha = 0.95f)
+    }
+    val borderWidth = if (isAlertBlinking || borderColor != Color.Transparent) 6.dp else 2.dp
 
     Card(
         modifier = modifier,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-        border = BorderStroke(2.dp, borderColor)
+        border = BorderStroke(borderWidth, resolvedBorderColor)
     ) {
         Column(
             modifier = Modifier
@@ -54,7 +63,12 @@ fun PerdidaVigenciaFuntionCard(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(text = messageText)
+            if (!messageText.isNullOrBlank()) {
+                Text(
+                    text = messageText,
+                    textAlign = TextAlign.Center
+                )
+            }
         }
     }
 }

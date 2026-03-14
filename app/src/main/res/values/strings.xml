@@ -8,13 +8,47 @@
     <string name="case_without_permit">Carecer de Permiso</string>
     <string name="case_special_cases">Casos especiales</string>
     <string name="about_action">Acerca de...</string>
+    <string name="about_icon_content_description">Abrir información de la aplicación</string>
     <string name="expired_validity_option_1">Conduce en periodo de Perdida de Vigencia</string>
     <string name="expired_validity_option_2">Conduce finalizada Perdida de Vigencia</string>
     <string name="expired_validity_option_3">Edictal</string>
-    <string name="expired_validity_crime_message">DELITO CONTRA LA SEGURIDAD VIAL
- Artículo 384 del Código Penal
-
-Se debe de realizar Atestado</string>
+    <string name="expired_validity_modal_title">Comprobaciones</string>
+    <string name="expired_validity_courses_question">¿Ha realizado los cursos?</string>
+    <string name="expired_validity_exams_question">¿Ha superado los exámenes?</string>
+    <string name="edictal_knowledge_question">¿Tiene conocimiento?</string>
+    <string name="edictal_appeal_period_question">¿Está en periodo de recurso o de resolución de recurso?</string>
+    <string name="yes_option">Sí</string>
+    <string name="no_option">No</string>
+    <string name="close_action">Cerrar</string>
+    <string name="accept_action">Cerrar</string>
+    <string name="expired_validity_crime_message">DELITO CONTRA LA SEGURIDAD VIAL\nArtículo 384 del Código Penal\n\nSe debe de realizar Atestado</string>
+    <string name="expired_validity_infringement_message">INFRACCIÓN AL REGLAMENTO DE CONDUCTORES\n\nRGCond. Art. 1.1.5A\n500€</string>
+    <string name="continue_trip_message">Puede continuar viaje</string>
+    <string name="about_screen_title">Acerca de...</string>
+    <string name="about_image_content_description">Escudo de la aplicacion</string>
+    <string name="about_message">App desarrollada por el\nGC Óscar I. Ginés\nDestacamento de Tráfico de Ribadesella\nSector de Asturias.\n\nSe ha realizado tomando como referencia el gráfico elaborado por AEGC.\n\n\nMarzo 2026.</string>
     <string name="expired_validity_second_card_placeholder">Contenido pendiente de programar</string>
+    <string name="judicial_suspension_screen_title">Suspensión Judicial</string>
+    <string name="judicial_suspension_sentence_question">Tipo de condena</string>
+    <string name="judicial_sentence_up_to_two_years">Condena igual o inferior a dos años</string>
+    <string name="judicial_sentence_over_two_years">Condena superior a dos años</string>
+    <string name="judicial_drive_moment_question">Situación de conducción</string>
+    <string name="judicial_drive_within_period">Conduce dentro del periodo de condena</string>
+    <string name="judicial_drive_after_period">Conduce finalizada la condena</string>
+    <string name="judicial_course_question">¿Ha realizado los cursos?</string>
+    <string name="judicial_exams_question">¿Ha superado los exámenes?</string>
+    <string name="judicial_infringement_lsv_message">INFRACCIÓN A LA LEY DE SEGURIDAD VIAL\n\nLSV Art. 73.2.5A\n200 €</string>
+    <string name="without_permit_screen_title">Carecer de Permiso</string>
+    <string name="without_permit_ever_had_license_question">¿Ha obtenido alguna vez algún tipo de permiso o licencia de conducir de España o cualquier otro país?</string>
+    <string name="without_permit_valid_in_spain_question">¿Es válido para conducir en España?</string>
+    <string name="without_permit_admin_report_message">Denuncia administrativa según corresponda</string>
+    <string name="special_cases_screen_title">Casos especiales</string>
+    <string name="special_case_psychophysical_loss_option">Se ha declarado la pérdida de vigencia por pérdida de condiciones psicofísicas</string>
+    <string name="special_case_missing_requirements_option">Conduce sin mantener los requisitos exigidos en su día para su otorgamiento</string>
+    <string name="special_case_psychophysical_loss_message">INFRACCIÓN AL REGLAMENTO GENERAL DE CONDUCTORES\n\nArtículo 1.1.5A\n500€</string>
+    <string name="special_case_missing_requirements_message">INFRACCIÓN AL REGLAMENTO GENERAL DE CONDUCTORES\n\nArtículo 12.6.5A\n500€</string>
+    <string name="case_screen_placeholder">Pantalla en construcción</string>
     <string name="back_action">Volver</string>
+    <string name="back_icon_content_description">Volver atrás</string>
+    <string name="observations_action">Observaciones</string>
 </resources>

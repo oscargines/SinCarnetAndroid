@@ -19,6 +19,9 @@ import kotlinx.coroutines.delay
 
 private const val CASES_ROUTE = "cases"
 private const val EXPIRED_VALIDITY_ROUTE = "expired_validity"
+private const val JUDICIAL_SUSPENSION_ROUTE = "judicial_suspension"
+private const val WITHOUT_PERMIT_ROUTE = "without_permit"
+private const val SPECIAL_CASES_ROUTE = "special_cases"
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -28,6 +31,7 @@ class MainActivity : ComponentActivity() {
             SinCarnetTheme {
                 var showSplash by remember { mutableStateOf(true) }
                 var currentRoute by rememberSaveable { mutableStateOf(CASES_ROUTE) }
+                var showAboutDialog by rememberSaveable { mutableStateOf(false) }
 
                 LaunchedEffect(Unit) {
                     delay(3000)
@@ -50,14 +54,43 @@ class MainActivity : ComponentActivity() {
                                 onBackClick = { currentRoute = CASES_ROUTE }
                             )
 
+                            JUDICIAL_SUSPENSION_ROUTE -> JudicialSuspensionScreen(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(innerPadding),
+                                onBackClick = { currentRoute = CASES_ROUTE }
+                            )
+
+                            WITHOUT_PERMIT_ROUTE -> WithoutPermitScreen(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(innerPadding),
+                                onBackClick = { currentRoute = CASES_ROUTE }
+                            )
+
+                            SPECIAL_CASES_ROUTE -> SpecialCasesScreen(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(innerPadding),
+                                onBackClick = { currentRoute = CASES_ROUTE }
+                            )
+
                             else -> CasesScreen(
                                 modifier = Modifier
                                     .fillMaxSize()
                                     .padding(innerPadding),
-                                onExpiredValidityClick = { currentRoute = EXPIRED_VALIDITY_ROUTE }
+                                onExpiredValidityClick = { currentRoute = EXPIRED_VALIDITY_ROUTE },
+                                onJudicialSuspensionClick = { currentRoute = JUDICIAL_SUSPENSION_ROUTE },
+                                onWithoutPermitClick = { currentRoute = WITHOUT_PERMIT_ROUTE },
+                                onSpecialCasesClick = { currentRoute = SPECIAL_CASES_ROUTE },
+                                onAboutClick = { showAboutDialog = true }
                             )
                         }
                     }
+                }
+
+                if (showAboutDialog) {
+                    AboutDialog(onDismissRequest = { showAboutDialog = false })
                 }
             }
         }

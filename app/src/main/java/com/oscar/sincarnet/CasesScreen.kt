@@ -1,20 +1,29 @@
 package com.oscar.sincarnet
 
+import android.graphics.BitmapFactory
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -24,15 +33,27 @@ import com.oscar.sincarnet.ui.theme.SinCarnetTheme
 @Composable
 fun CasesScreen(
     modifier: Modifier = Modifier,
-    onExpiredValidityClick: () -> Unit = {},
+    onExpiredValidityClick: () -> Unit,
+    onJudicialSuspensionClick: () -> Unit,
+    onWithoutPermitClick: () -> Unit,
+    onSpecialCasesClick: () -> Unit,
     onAboutClick: () -> Unit = {}
 ) {
     val caseItems = listOf(
-        CaseItem(R.string.case_expired_validity, Color(0xFFDCEBFF), onExpiredValidityClick),
-        CaseItem(R.string.case_judicial_suspension, Color(0xFFFFF4CC)),
-        CaseItem(R.string.case_without_permit, Color(0xFFFFE8D6)),
-        CaseItem(R.string.case_special_cases, Color(0xFFE7E8EC))
+        CaseItem(CaseType.EXPIRED_VALIDITY, R.string.case_expired_validity, Color(0xFFDCEBFF)),
+        CaseItem(CaseType.JUDICIAL_SUSPENSION, R.string.case_judicial_suspension, Color(0xFFFFF4CC)),
+        CaseItem(CaseType.WITHOUT_PERMIT, R.string.case_without_permit, Color(0xFFFFE8D6)),
+        CaseItem(CaseType.SPECIAL_CASES, R.string.case_special_cases, Color(0xFFE7E8EC))
     )
+
+    fun handleCaseClick(caseType: CaseType) {
+        when (caseType) {
+            CaseType.EXPIRED_VALIDITY -> onExpiredValidityClick()
+            CaseType.JUDICIAL_SUSPENSION -> onJudicialSuspensionClick()
+            CaseType.WITHOUT_PERMIT -> onWithoutPermitClick()
+            CaseType.SPECIAL_CASES -> onSpecialCasesClick()
+        }
+    }
 
     Column(
         modifier = modifier
@@ -50,7 +71,7 @@ fun CasesScreen(
                 CaseCard(
                     title = stringResource(caseItem.titleRes),
                     backgroundColor = caseItem.backgroundColor,
-                    onClick = caseItem.onClick,
+                    onClick = { handleCaseClick(caseItem.type) },
                     modifier = Modifier
                         .fillMaxWidth()
                         .weight(1f)
@@ -58,11 +79,42 @@ fun CasesScreen(
             }
         }
 
-        TextButton(
+        AboutIconButton(
             onClick = onAboutClick,
             modifier = Modifier.align(Alignment.End)
-        ) {
-            Text(text = stringResource(R.string.about_action))
+        )
+    }
+}
+
+@Composable
+private fun AboutIconButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
+    val context = LocalContext.current
+    val aboutIconBitmap = remember {
+        runCatching {
+            context.assets.open("icons/sobre_nosotros.png").use { inputStream ->
+                BitmapFactory.decodeStream(inputStream)?.asImageBitmap()
+            }
+        }.getOrNull()
+    }
+
+    IconButton(
+        onClick = onClick,
+        modifier = modifier.size(44.dp)
+    ) {
+        if (aboutIconBitmap != null) {
+            Image(
+                bitmap = aboutIconBitmap,
+                contentDescription = stringResource(R.string.about_icon_content_description),
+                modifier = Modifier.size(30.dp),
+                contentScale = ContentScale.Fit
+            )
+        } else {
+            Image(
+                painter = painterResource(id = R.drawable.ic_launcher_foreground),
+                contentDescription = stringResource(R.string.about_icon_content_description),
+                modifier = Modifier.size(30.dp),
+                contentScale = ContentScale.Fit
+            )
         }
     }
 }
@@ -72,62 +124,51 @@ private fun CaseCard(
     title: String,
     backgroundColor: Color,
     modifier: Modifier = Modifier,
-    onClick: (() -> Unit)? = null
+    onClick: () -> Unit
 ) {
-    if (onClick != null) {
-        Card(
-            onClick = onClick,
-            modifier = modifier,
-            colors = CardDefaults.cardColors(containerColor = backgroundColor)
+    Card(
+        modifier = modifier.clickable(onClick = onClick),
+        colors = CardDefaults.cardColors(containerColor = backgroundColor)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            contentAlignment = Alignment.Center
         ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = title,
-                    modifier = Modifier.fillMaxWidth(),
-                    textAlign = TextAlign.Center,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-            }
-        }
-    } else {
-        Card(
-            modifier = modifier,
-            colors = CardDefaults.cardColors(containerColor = backgroundColor)
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = title,
-                    modifier = Modifier.fillMaxWidth(),
-                    textAlign = TextAlign.Center,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-            }
+            Text(
+                text = title,
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Center,
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
         }
     }
 }
 
 private data class CaseItem(
+    val type: CaseType,
     val titleRes: Int,
-    val backgroundColor: Color,
-    val onClick: (() -> Unit)? = null
+    val backgroundColor: Color
 )
+
+private enum class CaseType {
+    EXPIRED_VALIDITY,
+    JUDICIAL_SUSPENSION,
+    WITHOUT_PERMIT,
+    SPECIAL_CASES
+}
 
 @Preview(showBackground = true)
 @Composable
 fun CasesScreenPreview() {
     SinCarnetTheme {
-        CasesScreen()
+        CasesScreen(
+            onExpiredValidityClick = {},
+            onJudicialSuspensionClick = {},
+            onWithoutPermitClick = {},
+            onSpecialCasesClick = {}
+        )
     }
 }
