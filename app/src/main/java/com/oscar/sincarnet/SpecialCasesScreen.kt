@@ -164,7 +164,7 @@ fun SpecialCasesScreen(
     }
 }
 
-private enum class SpecialCaseType {
+internal enum class SpecialCaseType {
     PSYCHOPHYSICAL_LOSS,
     MISSING_REQUIREMENTS
 }
@@ -174,12 +174,12 @@ private enum class SpecialCaseObservationCase {
     MISSING_REQUIREMENTS
 }
 
-private data class SpecialCaseDecision(
+internal data class SpecialCaseDecision(
     val messageRes: Int?,
     val hasOrangeBorder: Boolean
 )
 
-private fun resolveSpecialCaseDecision(selectedSpecialCase: SpecialCaseType?): SpecialCaseDecision {
+internal fun resolveSpecialCaseDecision(selectedSpecialCase: SpecialCaseType?): SpecialCaseDecision {
     return when (selectedSpecialCase) {
         SpecialCaseType.PSYCHOPHYSICAL_LOSS -> SpecialCaseDecision(
             messageRes = R.string.special_case_psychophysical_loss_message,

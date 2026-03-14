@@ -400,12 +400,12 @@ fun JudicialSuspensionScreen(
     }
 }
 
-private enum class SentenceType {
+internal enum class SentenceType {
     UP_TO_TWO_YEARS,
     OVER_TWO_YEARS
 }
 
-private enum class DrivingMoment {
+internal enum class DrivingMoment {
     WITHIN_PERIOD,
     AFTER_PERIOD
 }
@@ -417,19 +417,19 @@ private enum class JudicialObservationCase {
     HIGHER_SENTENCE_AFTER_PERIOD_WITHOUT_COURSE_AND_EXAM
 }
 
-private enum class JudicialBorderBehavior {
+internal enum class JudicialBorderBehavior {
     NONE,
     RED_BLINK,
     YELLOW_BLINK,
     GREEN_SOLID
 }
 
-private data class JudicialSuspensionDecision(
+internal data class JudicialSuspensionDecision(
     val messageRes: Int?,
     val borderBehavior: JudicialBorderBehavior
 )
 
-private fun resolveJudicialSuspensionDecision(
+internal fun resolveJudicialSuspensionDecision(
     sentenceType: SentenceType?,
     drivingMoment: DrivingMoment?,
     hasCompletedCourseForLowerSentence: Boolean?,

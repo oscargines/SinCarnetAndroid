@@ -198,19 +198,19 @@ private enum class WithoutPermitObservationCase {
     NEVER_OBTAINED_PERMIT
 }
 
-private enum class WithoutPermitBorderBehavior {
+internal enum class WithoutPermitBorderBehavior {
     NONE,
     RED_BLINK,
     GREEN_SOLID,
     ORANGE_SOLID
 }
 
-private data class WithoutPermitDecision(
+internal data class WithoutPermitDecision(
     val messageRes: Int?,
     val borderBehavior: WithoutPermitBorderBehavior
 )
 
-private fun resolveWithoutPermitDecision(
+internal fun resolveWithoutPermitDecision(
     hasEverObtainedPermit: Boolean?,
     isValidForDrivingInSpain: Boolean?
 ): WithoutPermitDecision {

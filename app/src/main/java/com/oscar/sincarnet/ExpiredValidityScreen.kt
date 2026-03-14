@@ -360,19 +360,19 @@ private enum class ObservationCase {
     EDICTAL_APPEAL_PERIOD
 }
 
-private enum class BorderBehavior {
+internal enum class BorderBehavior {
     NONE,
     RED_BLINK,
     YELLOW_BLINK,
     GREEN_SOLID
 }
 
-private data class ExpiredValidityDecision(
+internal data class ExpiredValidityDecision(
     val messageRes: Int?,
     val borderBehavior: BorderBehavior
 )
 
-private fun resolveExpiredValidityDecision(
+internal fun resolveExpiredValidityDecision(
     selectedOption: Int,
     hasAnyNegativeAnswer: Boolean,
     hasAllPositiveAnswers: Boolean,
