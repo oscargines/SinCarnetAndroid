@@ -1,0 +1,20 @@
+<resources>
+    <string name="app_name">SinCarnet</string>
+    <string name="splash_title">SIN CARNET</string>
+    <string name="splash_subtitle">App de consulta sobre la casuística cuando un conductor no tiene permiso de conducir en vigor</string>
+    <string name="splash_logo_content_description">Logo de Sin Carnet</string>
+    <string name="case_expired_validity">Perdida de Vigencia</string>
+    <string name="case_judicial_suspension">Suspensión Judicial</string>
+    <string name="case_without_permit">Carecer de Permiso</string>
+    <string name="case_special_cases">Casos especiales</string>
+    <string name="about_action">Acerca de...</string>
+    <string name="expired_validity_option_1">Conduce en periodo de Perdida de Vigencia</string>
+    <string name="expired_validity_option_2">Conduce finalizada Perdida de Vigencia</string>
+    <string name="expired_validity_option_3">Edictal</string>
+    <string name="expired_validity_crime_message">DELITO CONTRA LA SEGURIDAD VIAL
+ Artículo 384 del Código Penal
+
+Se debe de realizar Atestado</string>
+    <string name="expired_validity_second_card_placeholder">Contenido pendiente de programar</string>
+    <string name="back_action">Volver</string>
+</resources>
