@@ -9,9 +9,12 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -22,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -37,6 +41,7 @@ fun CasesScreen(
     onJudicialSuspensionClick: () -> Unit,
     onWithoutPermitClick: () -> Unit,
     onSpecialCasesClick: () -> Unit,
+    onCourtsClick: () -> Unit = {},
     onAboutClick: () -> Unit = {}
 ) {
     val caseItems = listOf(
@@ -79,22 +84,43 @@ fun CasesScreen(
             }
         }
 
-        AboutIconButton(
-            onClick = onAboutClick,
-            modifier = Modifier.align(Alignment.End)
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Button(
+                onClick = onCourtsClick,
+                modifier = Modifier.weight(1f),
+                shape = MaterialTheme.shapes.medium,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF40407A),
+                    contentColor = Color.White
+                ),
+                elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
+            ) {
+                Text(text = stringResource(R.string.courts_action))
+            }
+
+            AboutIconButton(onClick = onAboutClick)
+        }
     }
 }
 
 @Composable
 private fun AboutIconButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
     val context = LocalContext.current
-    val aboutIconBitmap = remember {
-        runCatching {
-            context.assets.open("icons/sobre_nosotros.png").use { inputStream ->
-                BitmapFactory.decodeStream(inputStream)?.asImageBitmap()
-            }
-        }.getOrNull()
+    val isInPreview = LocalInspectionMode.current
+    val aboutIconBitmap = remember(isInPreview) {
+        if (isInPreview) {
+            null
+        } else {
+            runCatching {
+                context.assets.open("icons/sobre_nosotros.png").use { inputStream ->
+                    BitmapFactory.decodeStream(inputStream)?.asImageBitmap()
+                }
+            }.getOrNull()
+        }
     }
 
     IconButton(

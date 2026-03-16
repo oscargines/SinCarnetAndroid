@@ -34,7 +34,8 @@ import com.oscar.sincarnet.ui.theme.SinCarnetTheme
 @Composable
 fun WithoutPermitScreen(
     modifier: Modifier = Modifier,
-    onBackClick: () -> Unit = {}
+    onBackClick: () -> Unit = {},
+    onStartAtestadoClick: () -> Unit = {}
 ) {
     var hasEverObtainedPermit by rememberSaveable { mutableStateOf<Boolean?>(null) }
     var isValidForDrivingInSpain by rememberSaveable { mutableStateOf<Boolean?>(null) }
@@ -131,7 +132,9 @@ fun WithoutPermitScreen(
                 WithoutPermitBorderBehavior.GREEN_SOLID -> Color(0xFF2E7D32)
                 WithoutPermitBorderBehavior.ORANGE_SOLID -> Color(0xFFEF6C00)
                 else -> Color.Transparent
-            }
+            },
+            showAtestadoButton = decision.isCrimeCase,
+            onAtestadoClick = onStartAtestadoClick
         )
 
         Row(
@@ -208,7 +211,8 @@ internal enum class WithoutPermitBorderBehavior {
 
 internal data class WithoutPermitDecision(
     val messageRes: Int?,
-    val borderBehavior: WithoutPermitBorderBehavior
+    val borderBehavior: WithoutPermitBorderBehavior,
+    val isCrimeCase: Boolean = false
 )
 
 internal fun resolveWithoutPermitDecision(
@@ -219,7 +223,8 @@ internal fun resolveWithoutPermitDecision(
         hasEverObtainedPermit == false -> {
             WithoutPermitDecision(
                 messageRes = R.string.expired_validity_crime_message,
-                borderBehavior = WithoutPermitBorderBehavior.RED_BLINK
+                borderBehavior = WithoutPermitBorderBehavior.RED_BLINK,
+                isCrimeCase = true
             )
         }
 

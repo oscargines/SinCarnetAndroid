@@ -38,7 +38,8 @@ import com.oscar.sincarnet.ui.theme.SinCarnetTheme
 @Composable
 fun JudicialSuspensionScreen(
     modifier: Modifier = Modifier,
-    onBackClick: () -> Unit = {}
+    onBackClick: () -> Unit = {},
+    onStartAtestadoClick: () -> Unit = {}
 ) {
     var sentenceType by rememberSaveable { mutableStateOf<SentenceType?>(null) }
     var drivingMoment by rememberSaveable { mutableStateOf<DrivingMoment?>(null) }
@@ -193,7 +194,9 @@ fun JudicialSuspensionScreen(
                 Color(0xFF2E7D32)
             } else {
                 Color.Transparent
-            }
+            },
+            showAtestadoButton = decision.isCrimeCase,
+            onAtestadoClick = onStartAtestadoClick
         )
 
         Row(
@@ -427,7 +430,8 @@ internal enum class JudicialBorderBehavior {
 
 internal data class JudicialSuspensionDecision(
     val messageRes: Int?,
-    val borderBehavior: JudicialBorderBehavior
+    val borderBehavior: JudicialBorderBehavior,
+    val isCrimeCase: Boolean = false
 )
 
 internal fun resolveJudicialSuspensionDecision(
@@ -441,7 +445,8 @@ internal fun resolveJudicialSuspensionDecision(
         drivingMoment == DrivingMoment.WITHIN_PERIOD -> {
             JudicialSuspensionDecision(
                 messageRes = R.string.expired_validity_crime_message,
-                borderBehavior = JudicialBorderBehavior.RED_BLINK
+                borderBehavior = JudicialBorderBehavior.RED_BLINK,
+                isCrimeCase = true
             )
         }
 

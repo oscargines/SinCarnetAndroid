@@ -14,18 +14,14 @@ if (keystorePropertiesFile.exists()) {
 
 android {
     namespace = "com.oscar.sincarnet"
-    compileSdk {
-        version = release(36) {
-            minorApiLevel = 1
-        }
-    }
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.oscar.sincarnet"
         minSdk = 31
-        targetSdk = 36
+        targetSdk = 35
         versionCode = 1
-        versionName = "1.3"
+        versionName = "1.5"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

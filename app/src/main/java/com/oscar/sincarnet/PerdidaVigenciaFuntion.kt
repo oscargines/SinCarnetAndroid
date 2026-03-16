@@ -5,8 +5,11 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -27,7 +30,9 @@ fun PerdidaVigenciaFuntionCard(
     messageText: String? = null,
     isAlertBlinking: Boolean,
     blinkingColor: Color = Color(0xFFD32F2F),
-    borderColor: Color = Color.Transparent
+    borderColor: Color = Color.Transparent,
+    showAtestadoButton: Boolean = false,
+    onAtestadoClick: () -> Unit = {}
 ) {
     val borderAlpha = if (isAlertBlinking) {
         val transition = rememberInfiniteTransition(label = "alertBorderTransition")
@@ -68,6 +73,23 @@ fun PerdidaVigenciaFuntionCard(
                     text = messageText,
                     textAlign = TextAlign.Center
                 )
+            }
+
+            if (showAtestadoButton) {
+                Button(
+                    onClick = onAtestadoClick,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 12.dp),
+                    shape = MaterialTheme.shapes.medium,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF40407A),
+                        contentColor = Color.White
+                    ),
+                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
+                ) {
+                    Text(text = androidx.compose.ui.res.stringResource(R.string.atestado_action))
+                }
             }
         }
     }

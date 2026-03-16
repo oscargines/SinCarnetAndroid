@@ -9,11 +9,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.res.stringResource
 import com.oscar.sincarnet.ui.theme.SinCarnetTheme
 import kotlinx.coroutines.delay
 
@@ -22,6 +25,15 @@ private const val EXPIRED_VALIDITY_ROUTE = "expired_validity"
 private const val JUDICIAL_SUSPENSION_ROUTE = "judicial_suspension"
 private const val WITHOUT_PERMIT_ROUTE = "without_permit"
 private const val SPECIAL_CASES_ROUTE = "special_cases"
+private const val COURTS_ROUTE = "courts"
+private const val ATESTADO_DATA_ROUTE = "atestado_data"
+private const val ATESTADO_PERSON_DATA_ROUTE = "atestado_person_data"
+private const val ATESTADO_VEHICLE_DATA_ROUTE = "atestado_vehicle_data"
+private const val ATESTADO_COURT_DATA_ROUTE = "atestado_court_data"
+private const val ATESTADO_ACTING_DATA_ROUTE = "atestado_acting_data"
+private const val ATESTADO_SIGNATURES_ROUTE = "atestado_signatures"
+private const val FIRMA_SCREEN_ROUTE = "firma_screen"
+private const val BLUETOOTH_PRINTER_ROUTE = "bluetooth_printer"
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -32,8 +44,139 @@ class MainActivity : ComponentActivity() {
                 var showSplash by remember { mutableStateOf(true) }
                 var currentRoute by rememberSaveable { mutableStateOf(CASES_ROUTE) }
                 var showAboutDialog by rememberSaveable { mutableStateOf(false) }
+                var atestadoReturnRoute by rememberSaveable { mutableStateOf(CASES_ROUTE) }
+                var printerReturnRoute by rememberSaveable { mutableStateOf(ATESTADO_DATA_ROUTE) }
+                val actuantesStorage = remember { ActuantesStorage(applicationContext) }
+                val personaStorage = remember { PersonaInvestigadaStorage(applicationContext) }
+                val vehiculoStorage = remember { VehiculoStorage(applicationContext) }
+                val tipHistory = actuantesStorage.getTipHistory()
+                val unitHistory = actuantesStorage.getUnitHistory()
+
+                // Estado en memoria de todas las firmas de la sesión actual de la app.
+                val signaturesBySigner = remember { mutableStateMapOf<String, ImageBitmap>() }
+
+                // Estado en memoria de datos de actuantes para el atestado actual.
+                var instructorEmployment by rememberSaveable { mutableStateOf("") }
+                var instructorTip by rememberSaveable { mutableStateOf("") }
+                var instructorUnit by rememberSaveable { mutableStateOf("") }
+                var secretaryEmployment by rememberSaveable { mutableStateOf("") }
+                var secretaryTip by rememberSaveable { mutableStateOf("") }
+                var secretaryUnit by rememberSaveable { mutableStateOf("") }
+                var sameUnit by rememberSaveable { mutableStateOf(false) }
+                var actingStatusMessage by rememberSaveable { mutableStateOf("") }
+                var canRecoverActingData by rememberSaveable { mutableStateOf(false) }
+
+                // Estado en memoria de datos de persona investigada para el atestado actual.
+                var investigatedNationality by rememberSaveable { mutableStateOf("España") }
+                var investigatedSex by rememberSaveable { mutableStateOf(getString(R.string.person_data_sex_unknown)) }
+                var investigatedFirstName by rememberSaveable { mutableStateOf("") }
+                var investigatedLastName1 by rememberSaveable { mutableStateOf("") }
+                var investigatedLastName2 by rememberSaveable { mutableStateOf("") }
+                var investigatedAddress by rememberSaveable { mutableStateOf("") }
+                var investigatedBirthDate by rememberSaveable { mutableStateOf("") }
+                var investigatedBirthPlace by rememberSaveable { mutableStateOf("") }
+                var investigatedFatherName by rememberSaveable { mutableStateOf("") }
+                var investigatedMotherName by rememberSaveable { mutableStateOf("") }
+                var investigatedPhone by rememberSaveable { mutableStateOf("") }
+                var investigatedEmail by rememberSaveable { mutableStateOf("") }
+
+                // Estado en memoria de datos del vehículo para el atestado actual.
+                var vehicleBrand by rememberSaveable { mutableStateOf("") }
+                var vehicleModel by rememberSaveable { mutableStateOf("") }
+                var vehiclePlate by rememberSaveable { mutableStateOf("") }
+                var vehicleRegistrationDate by rememberSaveable { mutableStateOf("") }
+                var vehicleNationality by rememberSaveable { mutableStateOf("España") }
+                var vehicleItvDate by rememberSaveable { mutableStateOf("") }
+                var vehicleInsurer by rememberSaveable { mutableStateOf("") }
+                var vehicleType by rememberSaveable { mutableStateOf("") }
+                var vehicleOwnerIsOther by rememberSaveable { mutableStateOf(false) }
+                var vehicleOwnerName by rememberSaveable { mutableStateOf("") }
+                var vehicleOwnerLastNames by rememberSaveable { mutableStateOf("") }
+                var vehicleOwnerDni by rememberSaveable { mutableStateOf("") }
+                var vehicleOwnerAddress by rememberSaveable { mutableStateOf("") }
+                var vehicleOwnerPhone by rememberSaveable { mutableStateOf("") }
+
+                fun applyVehiculoData(data: VehiculoData) {
+                    vehicleBrand = data.brand
+                    vehicleModel = data.model
+                    vehiclePlate = data.plate
+                    vehicleRegistrationDate = data.registrationDate
+                    vehicleNationality = data.nationality
+                    vehicleItvDate = data.itvDate
+                    vehicleInsurer = data.insurer
+                    vehicleType = data.vehicleType
+                    vehicleOwnerIsOther = data.ownerIsOther
+                    vehicleOwnerName = data.ownerName
+                    vehicleOwnerLastNames = data.ownerLastNames
+                    vehicleOwnerDni = data.ownerDni
+                    vehicleOwnerAddress = data.ownerAddress
+                    vehicleOwnerPhone = data.ownerPhone
+                }
+
+                fun applyActuantesData(data: ActuantesData) {
+                    instructorEmployment = data.instructorEmployment
+                    instructorTip = data.instructorTip
+                    instructorUnit = data.instructorUnit
+                    secretaryEmployment = data.secretaryEmployment
+                    secretaryTip = data.secretaryTip
+                    secretaryUnit = data.secretaryUnit
+                    sameUnit = data.sameUnit
+                }
+
+                fun applyPersonaData(data: PersonaInvestigadaData) {
+                    investigatedNationality = data.nationality
+                    investigatedSex = data.sex
+                    investigatedFirstName = data.firstName
+                    investigatedLastName1 = data.lastName1
+                    investigatedLastName2 = data.lastName2
+                    investigatedAddress = data.address
+                    investigatedBirthDate = data.birthDate
+                    investigatedBirthPlace = data.birthPlace
+                    investigatedFatherName = data.fatherName
+                    investigatedMotherName = data.motherName
+                    investigatedPhone = data.phone
+                    investigatedEmail = data.email
+                }
+
+                val resetAtestadoSession: () -> Unit = {
+                    signaturesBySigner.clear()
+                    actingStatusMessage = ""
+                    investigatedNationality = "España"
+                    investigatedSex = getString(R.string.person_data_sex_unknown)
+                    investigatedFirstName = ""
+                    investigatedLastName1 = ""
+                    investigatedLastName2 = ""
+                    investigatedAddress = ""
+                    investigatedBirthDate = ""
+                    investigatedBirthPlace = ""
+                    investigatedFatherName = ""
+                    investigatedMotherName = ""
+                    investigatedPhone = ""
+                    investigatedEmail = ""
+                    vehicleBrand = ""
+                    vehicleModel = ""
+                    vehiclePlate = ""
+                    vehicleRegistrationDate = ""
+                    vehicleNationality = "España"
+                    vehicleItvDate = ""
+                    vehicleInsurer = ""
+                    vehicleType = ""
+                    vehicleOwnerIsOther = false
+                    vehicleOwnerName = ""
+                    vehicleOwnerLastNames = ""
+                    vehicleOwnerDni = ""
+                    vehicleOwnerAddress = ""
+                    vehicleOwnerPhone = ""
+                }
+
+                // Quién está firmando actualmente
+                var currentSignerKey by rememberSaveable { mutableStateOf("") }
 
                 LaunchedEffect(Unit) {
+                    applyActuantesData(actuantesStorage.loadCurrent())
+                    applyPersonaData(personaStorage.loadCurrent())
+                    applyVehiculoData(vehiculoStorage.loadCurrent())
+                    canRecoverActingData = actuantesStorage.hasRecoverableBackup()
                     delay(3000)
                     showSplash = false
                 }
@@ -48,41 +191,317 @@ class MainActivity : ComponentActivity() {
                     } else {
                         when (currentRoute) {
                             EXPIRED_VALIDITY_ROUTE -> ExpiredValidityScreen(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .padding(innerPadding),
-                                onBackClick = { currentRoute = CASES_ROUTE }
+                                modifier = Modifier.fillMaxSize().padding(innerPadding),
+                                onBackClick = { currentRoute = CASES_ROUTE },
+                                onStartAtestadoClick = {
+                                    resetAtestadoSession()
+                                    atestadoReturnRoute = EXPIRED_VALIDITY_ROUTE
+                                    currentRoute = ATESTADO_DATA_ROUTE
+                                }
                             )
 
                             JUDICIAL_SUSPENSION_ROUTE -> JudicialSuspensionScreen(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .padding(innerPadding),
-                                onBackClick = { currentRoute = CASES_ROUTE }
+                                modifier = Modifier.fillMaxSize().padding(innerPadding),
+                                onBackClick = { currentRoute = CASES_ROUTE },
+                                onStartAtestadoClick = {
+                                    resetAtestadoSession()
+                                    atestadoReturnRoute = JUDICIAL_SUSPENSION_ROUTE
+                                    currentRoute = ATESTADO_DATA_ROUTE
+                                }
                             )
 
                             WITHOUT_PERMIT_ROUTE -> WithoutPermitScreen(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .padding(innerPadding),
-                                onBackClick = { currentRoute = CASES_ROUTE }
+                                modifier = Modifier.fillMaxSize().padding(innerPadding),
+                                onBackClick = { currentRoute = CASES_ROUTE },
+                                onStartAtestadoClick = {
+                                    resetAtestadoSession()
+                                    atestadoReturnRoute = WITHOUT_PERMIT_ROUTE
+                                    currentRoute = ATESTADO_DATA_ROUTE
+                                }
                             )
 
                             SPECIAL_CASES_ROUTE -> SpecialCasesScreen(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .padding(innerPadding),
+                                modifier = Modifier.fillMaxSize().padding(innerPadding),
                                 onBackClick = { currentRoute = CASES_ROUTE }
                             )
 
+                            COURTS_ROUTE -> ConsultaJuzgadosScreen(
+                                modifier = Modifier.fillMaxSize().padding(innerPadding),
+                                onBackClick = { currentRoute = CASES_ROUTE }
+                            )
+
+                            ATESTADO_DATA_ROUTE -> TomaDatosAtestadoScreen(
+                                modifier = Modifier.fillMaxSize().padding(innerPadding),
+                                onBackClick = { currentRoute = atestadoReturnRoute },
+                                onPrintClick = {
+                                    printerReturnRoute = ATESTADO_DATA_ROUTE
+                                    currentRoute = BLUETOOTH_PRINTER_ROUTE
+                                },
+                                onPersonDataClick = { currentRoute = ATESTADO_PERSON_DATA_ROUTE },
+                                onVehicleDataClick = { currentRoute = ATESTADO_VEHICLE_DATA_ROUTE },
+                                onCourtDataClick = { currentRoute = ATESTADO_COURT_DATA_ROUTE },
+                                onActingDataClick = { currentRoute = ATESTADO_ACTING_DATA_ROUTE },
+                                onSignaturesClick = {
+                                    currentRoute = ATESTADO_SIGNATURES_ROUTE
+                                }
+                            )
+
+                            ATESTADO_COURT_DATA_ROUTE -> DatosJuzgadoAtestadoScreen(
+                                modifier = Modifier.fillMaxSize().padding(innerPadding),
+                                onBackClick = { currentRoute = ATESTADO_DATA_ROUTE },
+                                onPrintClick = {
+                                    printerReturnRoute = ATESTADO_COURT_DATA_ROUTE
+                                    currentRoute = BLUETOOTH_PRINTER_ROUTE
+                                }
+                            )
+
+                            BLUETOOTH_PRINTER_ROUTE -> BluetoothPrinterScreen(
+                                modifier = Modifier.fillMaxSize().padding(innerPadding),
+                                onBackClick = { currentRoute = printerReturnRoute }
+                            )
+
+                            ATESTADO_VEHICLE_DATA_ROUTE -> DatosVehiculoScreen(
+                                modifier = Modifier.fillMaxSize().padding(innerPadding),
+                                onBackClick = { currentRoute = ATESTADO_DATA_ROUTE },
+                                brand = vehicleBrand,
+                                onBrandChange = { vehicleBrand = it },
+                                model = vehicleModel,
+                                onModelChange = { vehicleModel = it },
+                                plate = vehiclePlate,
+                                onPlateChange = { vehiclePlate = it },
+                                registrationDate = vehicleRegistrationDate,
+                                onRegistrationDateChange = { vehicleRegistrationDate = it },
+                                nationality = vehicleNationality,
+                                onNationalityChange = { vehicleNationality = it },
+                                itvDate = vehicleItvDate,
+                                onItvDateChange = { vehicleItvDate = it },
+                                insurer = vehicleInsurer,
+                                onInsurerChange = { vehicleInsurer = it },
+                                vehicleType = vehicleType,
+                                onVehicleTypeChange = { vehicleType = it },
+                                ownerIsOther = vehicleOwnerIsOther,
+                                onOwnerIsOtherChange = { vehicleOwnerIsOther = it },
+                                ownerName = vehicleOwnerName,
+                                onOwnerNameChange = { vehicleOwnerName = it },
+                                ownerLastNames = vehicleOwnerLastNames,
+                                onOwnerLastNamesChange = { vehicleOwnerLastNames = it },
+                                ownerDni = vehicleOwnerDni,
+                                onOwnerDniChange = { vehicleOwnerDni = it },
+                                ownerAddress = vehicleOwnerAddress,
+                                onOwnerAddressChange = { vehicleOwnerAddress = it },
+                                ownerPhone = vehicleOwnerPhone,
+                                onOwnerPhoneChange = { vehicleOwnerPhone = it },
+                                onSaveClick = {
+                                    vehiculoStorage.saveCurrent(
+                                        VehiculoData(
+                                            brand = vehicleBrand,
+                                            model = vehicleModel,
+                                            plate = vehiclePlate,
+                                            registrationDate = vehicleRegistrationDate,
+                                            nationality = vehicleNationality,
+                                            itvDate = vehicleItvDate,
+                                            insurer = vehicleInsurer,
+                                            vehicleType = vehicleType,
+                                            ownerIsOther = vehicleOwnerIsOther,
+                                            ownerName = vehicleOwnerName,
+                                            ownerLastNames = vehicleOwnerLastNames,
+                                            ownerDni = vehicleOwnerDni,
+                                            ownerAddress = vehicleOwnerAddress,
+                                            ownerPhone = vehicleOwnerPhone
+                                        )
+                                    )
+                                },
+                                onDeleteClick = {
+                                    vehiculoStorage.clearCurrent()
+                                    applyVehiculoData(VehiculoData())
+                                }
+                            )
+
+                            ATESTADO_PERSON_DATA_ROUTE -> DatosPersonaInvestigadaScreen(
+                                modifier = Modifier.fillMaxSize().padding(innerPadding),
+                                onBackClick = { currentRoute = ATESTADO_DATA_ROUTE },
+                                nationality = investigatedNationality,
+                                onNationalityChange = { investigatedNationality = it },
+                                sex = investigatedSex,
+                                onSexChange = { investigatedSex = it },
+                                firstName = investigatedFirstName,
+                                onFirstNameChange = { investigatedFirstName = it },
+                                lastName1 = investigatedLastName1,
+                                onLastName1Change = { investigatedLastName1 = it },
+                                lastName2 = investigatedLastName2,
+                                onLastName2Change = { investigatedLastName2 = it },
+                                address = investigatedAddress,
+                                onAddressChange = { investigatedAddress = it },
+                                birthDate = investigatedBirthDate,
+                                onBirthDateChange = { investigatedBirthDate = it },
+                                birthPlace = investigatedBirthPlace,
+                                onBirthPlaceChange = { investigatedBirthPlace = it },
+                                fatherName = investigatedFatherName,
+                                onFatherNameChange = { investigatedFatherName = it },
+                                motherName = investigatedMotherName,
+                                onMotherNameChange = { investigatedMotherName = it },
+                                phone = investigatedPhone,
+                                onPhoneChange = { investigatedPhone = it },
+                                email = investigatedEmail,
+                                onEmailChange = { investigatedEmail = it },
+                                onSaveClick = {
+                                    personaStorage.saveCurrent(
+                                        PersonaInvestigadaData(
+                                            nationality = investigatedNationality,
+                                            sex = investigatedSex,
+                                            firstName = investigatedFirstName,
+                                            lastName1 = investigatedLastName1,
+                                            lastName2 = investigatedLastName2,
+                                            address = investigatedAddress,
+                                            birthDate = investigatedBirthDate,
+                                            birthPlace = investigatedBirthPlace,
+                                            fatherName = investigatedFatherName,
+                                            motherName = investigatedMotherName,
+                                            phone = investigatedPhone,
+                                            email = investigatedEmail
+                                        )
+                                    )
+                                },
+                                onDeleteClick = {
+                                    personaStorage.clearCurrent()
+                                    applyPersonaData(
+                                        PersonaInvestigadaData(
+                                            sex = getString(R.string.person_data_sex_unknown)
+                                        )
+                                    )
+                                },
+                                onRightsClick = {
+                                    // Se implementará en una iteración posterior.
+                                }
+                            )
+
+                            ATESTADO_ACTING_DATA_ROUTE -> DatosActuantesScreen(
+                                modifier = Modifier.fillMaxSize().padding(innerPadding),
+                                onBackClick = { currentRoute = ATESTADO_DATA_ROUTE },
+                                instructorEmployment = instructorEmployment,
+                                onInstructorEmploymentChange = { instructorEmployment = it },
+                                instructorTip = instructorTip,
+                                onInstructorTipChange = { instructorTip = it },
+                                instructorUnit = instructorUnit,
+                                onInstructorUnitChange = {
+                                    instructorUnit = it
+                                    if (sameUnit) secretaryUnit = it
+                                },
+                                secretaryEmployment = secretaryEmployment,
+                                onSecretaryEmploymentChange = { secretaryEmployment = it },
+                                secretaryTip = secretaryTip,
+                                onSecretaryTipChange = { secretaryTip = it },
+                                secretaryUnit = secretaryUnit,
+                                onSecretaryUnitChange = { secretaryUnit = it },
+                                sameUnit = sameUnit,
+                                onSameUnitChange = {
+                                    sameUnit = it
+                                    if (it) secretaryUnit = instructorUnit
+                                },
+                                 tipHistory = tipHistory,
+                                 unitHistory = unitHistory,
+                                 onSaveClick = {
+                                     actuantesStorage.saveCurrent(
+                                         ActuantesData(
+                                             instructorEmployment = instructorEmployment,
+                                             instructorTip = instructorTip,
+                                             instructorUnit = instructorUnit,
+                                             secretaryEmployment = secretaryEmployment,
+                                             secretaryTip = secretaryTip,
+                                             secretaryUnit = secretaryUnit,
+                                             sameUnit = sameUnit
+                                         )
+                                     )
+                                     actuantesStorage.addTipToHistory(instructorTip, true)
+                                     actuantesStorage.addTipToHistory(secretaryTip, false)
+                                     actuantesStorage.addUnitToHistory(instructorUnit, true)
+                                     actuantesStorage.addUnitToHistory(secretaryUnit, false)
+                                     canRecoverActingData = actuantesStorage.hasRecoverableBackup()
+                                     actingStatusMessage = getString(R.string.atestado_acting_saved_message)
+                                     currentRoute = ATESTADO_DATA_ROUTE
+                                 },
+                                onDeleteClick = {
+                                    actuantesStorage.deleteCurrentWithBackup()
+                                    applyActuantesData(ActuantesData())
+                                    canRecoverActingData = actuantesStorage.hasRecoverableBackup()
+                                    actingStatusMessage = getString(R.string.atestado_acting_deleted_message)
+                                },
+                                onRecoverClick = {
+                                    val recovered = actuantesStorage.recoverDeleted()
+                                    if (recovered != null) {
+                                        applyActuantesData(recovered)
+                                        actingStatusMessage = getString(R.string.atestado_acting_recovered_message)
+                                    }
+                                    canRecoverActingData = actuantesStorage.hasRecoverableBackup()
+                                },
+                                canRecover = canRecoverActingData,
+                                statusMessage = actingStatusMessage
+                            )
+
+                            ATESTADO_SIGNATURES_ROUTE -> FirmasAtestadoScreen(
+                                modifier = Modifier.fillMaxSize().padding(innerPadding),
+                                onBackClick = { currentRoute = ATESTADO_DATA_ROUTE },
+                                onPrintClick = {
+                                    printerReturnRoute = ATESTADO_SIGNATURES_ROUTE
+                                    currentRoute = BLUETOOTH_PRINTER_ROUTE
+                                },
+                                instructorSignature = signaturesBySigner[SIGNER_INSTRUCTOR],
+                                secretarySignature = signaturesBySigner[SIGNER_SECRETARY],
+                                investigatedSignature = signaturesBySigner[SIGNER_INVESTIGATED],
+                                secondDriverSignature = signaturesBySigner[SIGNER_SECOND_DRIVER],
+                                onInstructorClick = {
+                                    currentSignerKey = SIGNER_INSTRUCTOR
+                                    currentRoute = FIRMA_SCREEN_ROUTE
+                                },
+                                onSecretaryClick = {
+                                    currentSignerKey = SIGNER_SECRETARY
+                                    currentRoute = FIRMA_SCREEN_ROUTE
+                                },
+                                onInvestigatedClick = {
+                                    currentSignerKey = SIGNER_INVESTIGATED
+                                    currentRoute = FIRMA_SCREEN_ROUTE
+                                },
+                                onSecondDriverClick = {
+                                    currentSignerKey = SIGNER_SECOND_DRIVER
+                                    currentRoute = FIRMA_SCREEN_ROUTE
+                                },
+                                onGenerateAtestadoClick = { wantsToSign ->
+                                    // Deja preparado el mapeo por rol para la futura capa PDF.
+                                    mapSignaturesForPdf(
+                                        signaturesBySigner = signaturesBySigner,
+                                        investigatedWantsToSign = wantsToSign
+                                    )
+                                }
+                            )
+
+                            FIRMA_SCREEN_ROUTE -> FirmaManuscritaScreen(
+                                modifier = Modifier.fillMaxSize().padding(innerPadding),
+                                signerName = when (currentSignerKey) {
+                                    SIGNER_INSTRUCTOR -> stringResource(R.string.atestado_signature_instructor)
+                                    SIGNER_SECRETARY -> stringResource(R.string.atestado_signature_secretary)
+                                    SIGNER_INVESTIGATED -> stringResource(R.string.atestado_signature_investigated)
+                                    SIGNER_SECOND_DRIVER -> stringResource(R.string.atestado_signature_second_driver)
+                                    else -> ""
+                                },
+                                onSignatureSaved = { bitmap ->
+                                    when (currentSignerKey) {
+                                        SIGNER_INSTRUCTOR,
+                                        SIGNER_SECRETARY,
+                                        SIGNER_INVESTIGATED,
+                                        SIGNER_SECOND_DRIVER -> signaturesBySigner[currentSignerKey] = bitmap
+                                    }
+                                    currentRoute = ATESTADO_SIGNATURES_ROUTE
+                                },
+                                onCancel = { currentRoute = ATESTADO_SIGNATURES_ROUTE }
+                            )
+
                             else -> CasesScreen(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .padding(innerPadding),
+                                modifier = Modifier.fillMaxSize().padding(innerPadding),
                                 onExpiredValidityClick = { currentRoute = EXPIRED_VALIDITY_ROUTE },
                                 onJudicialSuspensionClick = { currentRoute = JUDICIAL_SUSPENSION_ROUTE },
                                 onWithoutPermitClick = { currentRoute = WITHOUT_PERMIT_ROUTE },
                                 onSpecialCasesClick = { currentRoute = SPECIAL_CASES_ROUTE },
+                                onCourtsClick = { currentRoute = COURTS_ROUTE },
                                 onAboutClick = { showAboutDialog = true }
                             )
                         }
@@ -96,4 +515,3 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
-

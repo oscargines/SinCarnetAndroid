@@ -41,7 +41,8 @@ import com.oscar.sincarnet.ui.theme.SinCarnetTheme
 @Composable
 fun ExpiredValidityScreen(
     modifier: Modifier = Modifier,
-    onBackClick: () -> Unit = {}
+    onBackClick: () -> Unit = {},
+    onStartAtestadoClick: () -> Unit = {}
 ) {
     val options = listOf(
         stringResource(R.string.expired_validity_option_1),
@@ -159,7 +160,9 @@ fun ExpiredValidityScreen(
                 Color(0xFF2E7D32)
             } else {
                 Color.Transparent
-            }
+            },
+            showAtestadoButton = decision.isCrimeCase,
+            onAtestadoClick = onStartAtestadoClick
         )
 
         Row(
@@ -370,7 +373,8 @@ internal enum class BorderBehavior {
 
 internal data class ExpiredValidityDecision(
     val messageRes: Int?,
-    val borderBehavior: BorderBehavior
+    val borderBehavior: BorderBehavior,
+    val isCrimeCase: Boolean = false
 )
 
 internal fun resolveExpiredValidityDecision(
@@ -385,7 +389,8 @@ internal fun resolveExpiredValidityDecision(
         selectedOption == 0 || (selectedOption == 1 && hasAnyNegativeAnswer) -> {
             ExpiredValidityDecision(
                 messageRes = R.string.expired_validity_crime_message,
-                borderBehavior = BorderBehavior.RED_BLINK
+                borderBehavior = BorderBehavior.RED_BLINK,
+                isCrimeCase = true
             )
         }
 
@@ -406,7 +411,8 @@ internal fun resolveExpiredValidityDecision(
         selectedOption == 2 && hasKnowledge == true && isInAppealPeriod == false -> {
             ExpiredValidityDecision(
                 messageRes = R.string.expired_validity_crime_message,
-                borderBehavior = BorderBehavior.RED_BLINK
+                borderBehavior = BorderBehavior.RED_BLINK,
+                isCrimeCase = true
             )
         }
 
