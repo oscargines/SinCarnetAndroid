@@ -74,11 +74,29 @@ internal class BluetoothPrinterStorage(private val context: Context) {
 
     fun getDefaultPrinter(): SavedBluetoothPrinter? {
         val defaultMac = prefs.getString(KEY_DEFAULT_PRINTER_MAC, null) ?: return null
-        return loadSavedPrinters().firstOrNull { it.mac == defaultMac }
+        val printer = loadSavedPrinters().firstOrNull { it.mac == defaultMac }
+        if (printer == null) {
+            clearDefaultPrinter()
+        }
+        return printer
     }
 
     fun setDefaultPrinterMac(mac: String) {
-        prefs.edit().putString(KEY_DEFAULT_PRINTER_MAC, mac).apply()
+        if (mac.isBlank()) {
+            clearDefaultPrinter()
+            return
+        }
+
+        val exists = loadSavedPrinters().any { it.mac == mac }
+        if (exists) {
+            prefs.edit().putString(KEY_DEFAULT_PRINTER_MAC, mac).apply()
+        } else {
+            clearDefaultPrinter()
+        }
+    }
+
+    private fun clearDefaultPrinter() {
+        prefs.edit().remove(KEY_DEFAULT_PRINTER_MAC).apply()
     }
 
     private companion object {

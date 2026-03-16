@@ -1,6 +1,9 @@
 package com.oscar.sincarnet
 
+import android.content.ActivityNotFoundException
+import android.content.Intent
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -17,8 +20,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.res.stringResource
+import androidx.core.content.FileProvider
 import com.oscar.sincarnet.ui.theme.SinCarnetTheme
 import kotlinx.coroutines.delay
+import java.io.File
 
 private const val CASES_ROUTE = "cases"
 private const val EXPIRED_VALIDITY_ROUTE = "expired_validity"
@@ -46,6 +51,7 @@ class MainActivity : ComponentActivity() {
                 var showAboutDialog by rememberSaveable { mutableStateOf(false) }
                 var atestadoReturnRoute by rememberSaveable { mutableStateOf(CASES_ROUTE) }
                 var printerReturnRoute by rememberSaveable { mutableStateOf(ATESTADO_DATA_ROUTE) }
+                var lastGeneratedPdfPath by rememberSaveable { mutableStateOf("") }
                 val actuantesStorage = remember { ActuantesStorage(applicationContext) }
                 val personaStorage = remember { PersonaInvestigadaStorage(applicationContext) }
                 val vehiculoStorage = remember { VehiculoStorage(applicationContext) }
@@ -465,12 +471,50 @@ class MainActivity : ComponentActivity() {
                                     currentSignerKey = SIGNER_SECOND_DRIVER
                                     currentRoute = FIRMA_SCREEN_ROUTE
                                 },
-                                onGenerateAtestadoClick = { wantsToSign ->
-                                    // Deja preparado el mapeo por rol para la futura capa PDF.
-                                    mapSignaturesForPdf(
-                                        signaturesBySigner = signaturesBySigner,
-                                        investigatedWantsToSign = wantsToSign
-                                    )
+                                onGenerateAtestadoClick = { wantsToSign, hasSecondDriver ->
+                                    runCatching {
+                                        val signaturesToUse = signaturesBySigner.toMutableMap().apply {
+                                            if (!hasSecondDriver) remove(SIGNER_SECOND_DRIVER)
+                                        }
+                                        val mappedSignatures = mapSignaturesForPdf(
+                                            signaturesBySigner = signaturesToUse,
+                                            investigatedWantsToSign = wantsToSign,
+                                            investigatedNoSignText = getString(R.string.atestado_signature_no_desire)
+                                        )
+                                        generateAtestadoSignaturesPdf(
+                                            context = applicationContext,
+                                            signatures = mappedSignatures,
+                                            investigatedNoSignText = getString(R.string.atestado_signature_no_desire)
+                                        )
+                                    }.onSuccess { result ->
+                                        lastGeneratedPdfPath = result.file.absolutePath
+                                        val opened = openGeneratedPdf(result.file)
+                                        if (!opened) {
+                                            Toast.makeText(
+                                                applicationContext,
+                                                getString(R.string.atestado_pdf_open_error),
+                                                Toast.LENGTH_LONG
+                                            ).show()
+                                        }
+                                    }.onFailure {
+                                        Toast.makeText(
+                                            applicationContext,
+                                            getString(R.string.atestado_pdf_generated_error),
+                                            Toast.LENGTH_LONG
+                                        ).show()
+                                    }
+                                },
+                                shareEnabled = lastGeneratedPdfPath.isNotBlank(),
+                                onSharePdfClick = {
+                                    val pdfFile = File(lastGeneratedPdfPath)
+                                    val shared = pdfFile.exists() && shareGeneratedPdf(pdfFile)
+                                    if (!shared) {
+                                        Toast.makeText(
+                                            applicationContext,
+                                            getString(R.string.atestado_pdf_share_error),
+                                            Toast.LENGTH_LONG
+                                        ).show()
+                                    }
                                 }
                             )
 
@@ -513,5 +557,53 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    private fun openGeneratedPdf(pdfFile: File): Boolean {
+        return runCatching {
+            val uri = FileProvider.getUriForFile(
+                this,
+                "$packageName.fileprovider",
+                pdfFile
+            )
+            val intent = Intent(Intent.ACTION_VIEW).apply {
+                setDataAndType(uri, "application/pdf")
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            startActivity(intent)
+            true
+        }.recoverCatching {
+            if (it is ActivityNotFoundException) {
+                false
+            } else {
+                throw it
+            }
+        }.getOrDefault(false)
+    }
+
+    private fun shareGeneratedPdf(pdfFile: File): Boolean {
+        return runCatching {
+            val uri = FileProvider.getUriForFile(
+                this,
+                "$packageName.fileprovider",
+                pdfFile
+            )
+            val intent = Intent(Intent.ACTION_SEND).apply {
+                type = "application/pdf"
+                putExtra(Intent.EXTRA_STREAM, uri)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            val chooser = Intent.createChooser(intent, getString(R.string.atestado_signature_share_pdf)).apply {
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            startActivity(chooser)
+            true
+        }.recoverCatching {
+            if (it is ActivityNotFoundException) {
+                false
+            } else {
+                throw it
+            }
+        }.getOrDefault(false)
     }
 }

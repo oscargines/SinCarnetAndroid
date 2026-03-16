@@ -49,6 +49,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -62,7 +63,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import com.oscar.sincarnet.ui.theme.SinCarnetTheme
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 private const val BT_TAG = "BluetoothPrinter"
 
@@ -93,6 +97,8 @@ fun BluetoothPrinterScreen(
     var isScanning by rememberSaveable { mutableStateOf(false) }
     var scanSecondsLeft by rememberSaveable { mutableStateOf(10) }
     var showSaveConfirmation by rememberSaveable { mutableStateOf(false) }
+    var isValidatingPrinter by rememberSaveable { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
 
     val discoveredPrinters = remember { mutableStateListOf<ScannedBluetoothPrinter>() }
     var selectedDiscoveredPrinterMac by rememberSaveable { mutableStateOf("") }
@@ -260,7 +266,10 @@ fun BluetoothPrinterScreen(
                         Log.d(BT_TAG, "ACTION_DISCOVERY_FINISHED: found ${discoveredPrinters.size} devices")
                         isScanning = false
                         statusMessage = if (discoveredPrinters.isEmpty()) {
-                            context?.getString(R.string.bluetooth_printer_no_results).orEmpty()
+                            context?.getString(
+                                R.string.bluetooth_printer_no_supported_results,
+                                supportedBluetoothPrinterModelsText()
+                            ).orEmpty()
                         } else {
                             context?.getString(R.string.bluetooth_printer_scan_finished).orEmpty()
                         }
@@ -320,7 +329,10 @@ fun BluetoothPrinterScreen(
             if (isScanning) {
                 isScanning = false
                 statusMessage = if (discoveredPrinters.isEmpty()) {
-                    context.getString(R.string.bluetooth_printer_no_results)
+                    context.getString(
+                        R.string.bluetooth_printer_no_supported_results,
+                        supportedBluetoothPrinterModelsText()
+                    )
                 } else {
                     context.getString(R.string.bluetooth_printer_scan_finished)
                 }
@@ -521,22 +533,60 @@ fun BluetoothPrinterScreen(
                     val scannedSelection = discoveredPrinters.firstOrNull { it.mac == selectedDiscoveredPrinterMac }
                     when {
                         scannedSelection != null -> {
-                            val saved = storage.savePrinter(scannedSelection.nombre, scannedSelection.mac)
-                            refreshSavedPrinters()
-                            selectedSavedPrinterMac = saved.mac
-                            defaultPrinterName = saved.nombre
-                            statusMessage = context.getString(R.string.bluetooth_printer_saved_status, saved.nombre)
-                            showSaveConfirmation = true
+                            coroutineScope.launch {
+                                isValidatingPrinter = true
+                                statusMessage = context.getString(R.string.bluetooth_printer_validating)
+                                val detectedModel = withContext(Dispatchers.IO) {
+                                    probeZebraPrinterModelByMacSdk(scannedSelection.mac)
+                                }
+                                isValidatingPrinter = false
+
+                                if (!isAllowedZebraPrinterModel(detectedModel)) {
+                                    val modelText = detectedModel ?: context.getString(R.string.bluetooth_printer_unknown_model)
+                                    statusMessage = context.getString(
+                                        R.string.bluetooth_printer_not_supported_model,
+                                        modelText,
+                                        supportedBluetoothPrinterModelsText()
+                                    )
+                                    return@launch
+                                }
+
+                                val saved = storage.savePrinter(scannedSelection.nombre, scannedSelection.mac)
+                                refreshSavedPrinters()
+                                selectedSavedPrinterMac = saved.mac
+                                defaultPrinterName = saved.nombre
+                                statusMessage = context.getString(R.string.bluetooth_printer_saved_status, saved.nombre)
+                                showSaveConfirmation = true
+                            }
                         }
 
                         savedPrinters.any { it.mac == selectedSavedPrinterMac } -> {
-                            storage.setDefaultPrinterMac(selectedSavedPrinterMac)
-                            defaultPrinterName = savedPrinters.firstOrNull { it.mac == selectedSavedPrinterMac }?.nombre.orEmpty()
-                            statusMessage = context.getString(
-                                R.string.bluetooth_printer_saved_status,
-                                defaultPrinterName.ifBlank { context.getString(R.string.bluetooth_printer_not_linked) }
-                            )
-                            showSaveConfirmation = true
+                            coroutineScope.launch {
+                                isValidatingPrinter = true
+                                statusMessage = context.getString(R.string.bluetooth_printer_validating)
+                                val detectedModel = withContext(Dispatchers.IO) {
+                                    probeZebraPrinterModelByMacSdk(selectedSavedPrinterMac)
+                                }
+                                isValidatingPrinter = false
+
+                                if (!isAllowedZebraPrinterModel(detectedModel)) {
+                                    val modelText = detectedModel ?: context.getString(R.string.bluetooth_printer_unknown_model)
+                                    statusMessage = context.getString(
+                                        R.string.bluetooth_printer_not_supported_model,
+                                        modelText,
+                                        supportedBluetoothPrinterModelsText()
+                                    )
+                                    return@launch
+                                }
+
+                                storage.setDefaultPrinterMac(selectedSavedPrinterMac)
+                                defaultPrinterName = savedPrinters.firstOrNull { it.mac == selectedSavedPrinterMac }?.nombre.orEmpty()
+                                statusMessage = context.getString(
+                                    R.string.bluetooth_printer_saved_status,
+                                    defaultPrinterName.ifBlank { context.getString(R.string.bluetooth_printer_not_linked) }
+                                )
+                                showSaveConfirmation = true
+                            }
                         }
 
                         else -> {
@@ -545,6 +595,7 @@ fun BluetoothPrinterScreen(
                     }
                 },
                 modifier = Modifier.weight(1f),
+                enabled = !isValidatingPrinter,
                 shape = MaterialTheme.shapes.medium,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.secondary,
@@ -603,6 +654,7 @@ fun BluetoothPrinterScreen(
         )
     }
 }
+
 
 private fun requiredBluetoothPermissions(): Array<String> =
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {

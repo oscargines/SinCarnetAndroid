@@ -46,7 +46,9 @@ fun FirmasAtestadoScreen(
     onSecretaryClick: () -> Unit = {},
     onInvestigatedClick: () -> Unit = {},
     onSecondDriverClick: () -> Unit = {},
-    onGenerateAtestadoClick: (wantsToSign: Boolean) -> Unit = {}
+    onGenerateAtestadoClick: (wantsToSign: Boolean, hasSecondDriver: Boolean) -> Unit = { _, _ -> },
+    shareEnabled: Boolean = false,
+    onSharePdfClick: () -> Unit = {}
 ) {
     var wantsToSign by rememberSaveable { mutableStateOf(true) }
     var hasSecondDriver by rememberSaveable { mutableStateOf(false) }
@@ -155,7 +157,16 @@ fun FirmasAtestadoScreen(
                     text = stringResource(R.string.atestado_signature_generate),
                     enabled = generateEnabled,
                     isSigned = false,
-                    onClick = { onGenerateAtestadoClick(wantsToSign) }
+                    onClick = { onGenerateAtestadoClick(wantsToSign, hasSecondDriver) }
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                AtestadoSignatureButton(
+                    text = stringResource(R.string.atestado_signature_share_pdf),
+                    enabled = shareEnabled,
+                    isSigned = false,
+                    onClick = onSharePdfClick
                 )
             }
         }

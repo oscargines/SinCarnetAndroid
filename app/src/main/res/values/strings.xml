@@ -115,6 +115,12 @@
     <string name="atestado_signature_wants_to_sign">Desea firmar</string>
     <string name="atestado_signature_has_second_driver">¿Existe segundo conductor?</string>
     <string name="atestado_signature_generate">Generar Atestado</string>
+    <string name="atestado_signature_share_pdf">Compartir PDF</string>
+    <string name="atestado_signature_no_desire">NO DESEA FIRMAR</string>
+    <string name="atestado_pdf_generated_success">PDF generado: %1$s</string>
+    <string name="atestado_pdf_generated_error">No se pudo generar el PDF del atestado.</string>
+    <string name="atestado_pdf_open_error">PDF generado, pero no hay una app disponible para abrirlo.</string>
+    <string name="atestado_pdf_share_error">No se pudo compartir el PDF.</string>
 
     <!-- Pantalla de captura de firma manuscrita -->
     <string name="firma_screen_title">Firma de %1$s</string>
@@ -240,10 +246,15 @@
     <string name="bluetooth_printer_location_disabled">Debes activar la ubicación (GPS) del dispositivo para buscar impresoras Bluetooth.</string>
     <string name="bluetooth_printer_showing_paired_only">No se pudo iniciar la búsqueda activa; se muestran los dispositivos Bluetooth emparejados.</string>
     <string name="bluetooth_printer_no_results">No se han encontrado dispositivos.</string>
+    <string name="bluetooth_printer_no_supported_results">No se han encontrado impresoras compatibles (%1$s).</string>
     <string name="bluetooth_printer_ready">Pantalla preparada para buscar y guardar impresoras.</string>
     <string name="bluetooth_printer_saved_title">Impresora guardada</string>
     <string name="bluetooth_printer_saved_status">Impresora predeterminada guardada: %1$s</string>
     <string name="bluetooth_printer_select_one">Debes seleccionar una impresora encontrada o una guardada.</string>
+    <string name="bluetooth_printer_only_supported_models">Solo se admiten estas impresoras: %1$s.</string>
+    <string name="bluetooth_printer_validating">Validando modelo real de la impresora...</string>
+    <string name="bluetooth_printer_unknown_model">modelo desconocido</string>
+    <string name="bluetooth_printer_not_supported_model">Modelo detectado no compatible (%1$s). Solo se admiten: %2$s.</string>
     <string name="bluetooth_printer_unknown_name">Dispositivo sin nombre (%1$s)</string>
     <string name="obs_special_case_missing_requirements_actuacion">Denuncia art. 12.6.5A RGCond. (Se entrega copia al denunciado). NO Imputación Penal.</string>
 </resources>
