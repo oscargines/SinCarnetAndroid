@@ -55,6 +55,7 @@
     <string name="observations_action">Observaciones</string>
     <string name="atestado_action">Iniciar Atestado</string>
     <string name="atestado_data_title">Toma de datos del atestado</string>
+    <string name="atestado_data_location_time">Lugar y Hora</string>
     <string name="atestado_data_person">Persona</string>
     <string name="atestado_data_vehicle">Vehículo</string>
     <string name="atestado_data_court">Juzgado</string>
@@ -213,6 +214,7 @@
     <string name="vehicle_type_other">Otro</string>
     <string name="atestado_court_title">Juzgado destinatario del atestado</string>
     <string name="atestado_court_trial_section_title">Datos de celebración del juicio</string>
+    <string name="atestado_court_proceedings_number">Número de diligencias</string>
     <string name="atestado_court_trial_rapid">Juicio rápido</string>
     <string name="atestado_court_trial_ordinary">Juicio ordinario</string>
     <string name="atestado_court_trial_abbreviated">Juicio abreviado</string>
@@ -228,6 +230,21 @@
     <string name="atestado_court_save_confirm_message">Los datos del juzgado del atestado se han guardado correctamente.</string>
     <string name="atestado_court_required_fields_title">Faltan datos obligatorios</string>
     <string name="atestado_court_required_fields_message">Debes completar estos campos antes de guardar: %1$s</string>
+    <string name="ocurrencia_delit_title">Lugar y hora de ocurrencia del delito</string>
+    <string name="ocurrencia_delit_carretera">Carretera</string>
+    <string name="ocurrencia_delit_pk">PK</string>
+    <string name="ocurrencia_delit_localidad">Localidad</string>
+    <string name="ocurrencia_delit_termino_municipal">Término municipal</string>
+    <string name="ocurrencia_delit_fecha">Fecha</string>
+    <string name="ocurrencia_delit_hora">Hora</string>
+    <string name="ocurrencia_delit_select_date">Seleccionar fecha</string>
+    <string name="ocurrencia_delit_select_time">Seleccionar hora</string>
+    <string name="ocurrencia_delit_save">Guardar</string>
+    <string name="ocurrencia_delit_delete">Borrar</string>
+    <string name="ocurrencia_delit_delete_confirm_title">Confirmar borrado</string>
+    <string name="ocurrencia_delit_delete_confirm_message">¿Quieres borrar los datos de lugar y hora del delito?</string>
+    <string name="ocurrencia_delit_save_confirm_title">Datos guardados</string>
+    <string name="ocurrencia_delit_save_confirm_message">Los datos de lugar y hora se han guardado correctamente.</string>
     <string name="bluetooth_printer_title">Búsqueda de impresora Bluetooth</string>
     <string name="bluetooth_printer_scan_action">Scan</string>
     <string name="bluetooth_printer_save_action">Guardar</string>

@@ -38,6 +38,12 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.oscar.sincarnet.ui.theme.SinCarnetTheme
 
+private val SIGNATURE_COLOR = Color(0xFF474787)
+private const val SIGNATURE_STROKE_WIDTH_DP = 10f
+private const val SIGNATURE_DOT_RADIUS_DP = 3.5f
+private const val SIGNATURE_STROKE_WIDTH_PX = 12f
+private const val SIGNATURE_DOT_RADIUS_PX = 3.5f
+
 @Composable
 fun FirmaManuscritaScreen(
     modifier: Modifier = Modifier,
@@ -107,7 +113,7 @@ fun FirmaManuscritaScreen(
                 canvasHeightPx = size.height.toInt()
 
                 val strokeStyle = Stroke(
-                    width = 5.dp.toPx(),
+                    width = SIGNATURE_STROKE_WIDTH_DP.dp.toPx(),
                     cap = StrokeCap.Round,
                     join = StrokeJoin.Round
                 )
@@ -124,11 +130,11 @@ fun FirmaManuscritaScreen(
                                 moveTo(pts.first().x, pts.first().y)
                                 pts.drop(1).forEach { lineTo(it.x, it.y) }
                             }
-                            drawPath(path = path, color = Color(0xFF1565C0), style = strokeStyle)
+                            drawPath(path = path, color = SIGNATURE_COLOR, style = strokeStyle)
                         }
                         pts.size == 1 -> drawCircle(
-                            color = Color(0xFF1565C0),
-                            radius = 3.dp.toPx(),
+                            color = SIGNATURE_COLOR,
+                            radius = SIGNATURE_DOT_RADIUS_DP.dp.toPx(),
                             center = pts.first()
                         )
                     }
@@ -198,8 +204,8 @@ private fun renderSignatureToBitmap(
     canvas.drawColor(android.graphics.Color.WHITE)
 
     val paint = android.graphics.Paint().apply {
-        color = android.graphics.Color.rgb(21, 101, 192)
-        strokeWidth = 6f
+        color = android.graphics.Color.rgb(44, 44, 84)
+        strokeWidth = SIGNATURE_STROKE_WIDTH_PX
         style = android.graphics.Paint.Style.STROKE
         strokeCap = android.graphics.Paint.Cap.ROUND
         strokeJoin = android.graphics.Paint.Join.ROUND
@@ -214,7 +220,7 @@ private fun renderSignatureToBitmap(
                 pts.drop(1).forEach { p.lineTo(it.x, it.y) }
                 canvas.drawPath(p, paint)
             }
-            pts.size == 1 -> canvas.drawCircle(pts.first().x, pts.first().y, 3f, paint)
+            pts.size == 1 -> canvas.drawCircle(pts.first().x, pts.first().y, SIGNATURE_DOT_RADIUS_PX, paint)
         }
     }
 
@@ -228,4 +234,3 @@ private fun FirmaManuscritaScreenPreview() {
         FirmaManuscritaScreen(signerName = "Instructor")
     }
 }
-

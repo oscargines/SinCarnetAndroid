@@ -13,6 +13,7 @@ internal data class JuzgadoAtestadoData(
     val sedeDireccion: String = "",
     val sedeTelefono: String = "",
     val sedeCodigoPostal: String = "",
+    val numeroDiligencias: String = "",
     val tipoJuicio: String = "",
     val fechaJuicioRapido: String = "",
     val horaJuicioRapido: String = ""
@@ -32,6 +33,7 @@ internal class JuzgadoAtestadoStorage(context: Context) {
         sedeDireccion = prefs.getString(KEY_SEDE_DIRECCION, "").orEmpty(),
         sedeTelefono = prefs.getString(KEY_SEDE_TELEFONO, "").orEmpty(),
         sedeCodigoPostal = prefs.getString(KEY_SEDE_CP, "").orEmpty(),
+        numeroDiligencias = prefs.getString(KEY_NUM_DILIGENCIAS, "").orEmpty(),
         tipoJuicio = prefs.getString(KEY_TIPO_JUICIO, "").orEmpty(),
         fechaJuicioRapido = prefs.getString(KEY_FECHA_RAPIDO, "").orEmpty(),
         horaJuicioRapido = prefs.getString(KEY_HORA_RAPIDO, "").orEmpty()
@@ -49,6 +51,7 @@ internal class JuzgadoAtestadoStorage(context: Context) {
             .putString(KEY_SEDE_DIRECCION, data.sedeDireccion)
             .putString(KEY_SEDE_TELEFONO, data.sedeTelefono)
             .putString(KEY_SEDE_CP, data.sedeCodigoPostal)
+            .putString(KEY_NUM_DILIGENCIAS, data.numeroDiligencias)
             .putString(KEY_TIPO_JUICIO, data.tipoJuicio)
             .putString(KEY_FECHA_RAPIDO, data.fechaJuicioRapido)
             .putString(KEY_HORA_RAPIDO, data.horaJuicioRapido)
@@ -67,6 +70,7 @@ internal class JuzgadoAtestadoStorage(context: Context) {
             .remove(KEY_SEDE_DIRECCION)
             .remove(KEY_SEDE_TELEFONO)
             .remove(KEY_SEDE_CP)
+            .remove(KEY_NUM_DILIGENCIAS)
             .remove(KEY_TIPO_JUICIO)
             .remove(KEY_FECHA_RAPIDO)
             .remove(KEY_HORA_RAPIDO)
@@ -92,6 +96,7 @@ internal class JuzgadoAtestadoStorage(context: Context) {
         const val KEY_SEDE_DIRECCION = "sede_direccion"
         const val KEY_SEDE_TELEFONO = "sede_telefono"
         const val KEY_SEDE_CP = "sede_codigo_postal"
+        const val KEY_NUM_DILIGENCIAS = "num_diligencias"
         const val KEY_TIPO_JUICIO = "tipo_juicio"
         const val KEY_FECHA_RAPIDO = "fecha_juicio_rapido"
         const val KEY_HORA_RAPIDO = "hora_juicio_rapido"

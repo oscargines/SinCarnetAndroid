@@ -7,10 +7,10 @@ import org.junit.Test
 class BluetoothPrinterPolicyTest {
 
     @Test
-    fun allows_rw520_variants() {
-        assertTrue(isAllowedZebraPrinterModel("RW520"))
-        assertTrue(isAllowedZebraPrinterModel("RW-520"))
-        assertTrue(isAllowedZebraPrinterModel("RW 520"))
+    fun allows_rw420_variants() {
+        assertTrue(isAllowedZebraPrinterModel("RW420"))
+        assertTrue(isAllowedZebraPrinterModel("RW-420"))
+        assertTrue(isAllowedZebraPrinterModel("RW 420"))
     }
 
     @Test
@@ -23,7 +23,7 @@ class BluetoothPrinterPolicyTest {
     @Test
     fun rejects_other_or_empty_models() {
         assertFalse(isAllowedZebraPrinterModel("ZQ520"))
-        assertFalse(isAllowedZebraPrinterModel("RW420"))
+        assertFalse(isAllowedZebraPrinterModel("RW520"))
         assertFalse(isAllowedZebraPrinterModel(""))
         assertFalse(isAllowedZebraPrinterModel(null))
     }

@@ -60,7 +60,8 @@ private const val TIPO_JUICIO_ABREVIADO = "abreviado"
 fun DatosJuzgadoAtestadoScreen(
     modifier: Modifier = Modifier,
     onBackClick: () -> Unit = {},
-    onPrintClick: () -> Unit = {}
+    onPrintClick: () -> Unit = {},
+    onPrintSummons: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val isInPreview = LocalInspectionMode.current
@@ -78,6 +79,7 @@ fun DatosJuzgadoAtestadoScreen(
                 sedeDireccion = "Calle Comandante Caballero, 3",
                 sedeTelefono = "985000111",
                 sedeCodigoPostal = "33005",
+                numeroDiligencias = "123/2026",
                 tipoJuicio = TIPO_JUICIO_RAPIDO,
                 fechaJuicioRapido = "16-03-2026",
                 horaJuicioRapido = "10:30"
@@ -111,6 +113,7 @@ fun DatosJuzgadoAtestadoScreen(
     var selectedSedeDireccion by rememberSaveable { mutableStateOf(initialData.sedeDireccion) }
     var selectedSedeTelefono by rememberSaveable { mutableStateOf(initialData.sedeTelefono) }
     var selectedSedeCodigoPostal by rememberSaveable { mutableStateOf(initialData.sedeCodigoPostal) }
+    var numeroDiligencias by rememberSaveable { mutableStateOf(initialData.numeroDiligencias) }
     var trialType by rememberSaveable { mutableStateOf(initialData.tipoJuicio) }
     var quickTrialDate by rememberSaveable { mutableStateOf(initialData.fechaJuicioRapido) }
     var quickTrialTime by rememberSaveable { mutableStateOf(initialData.horaJuicioRapido) }
@@ -120,6 +123,45 @@ fun DatosJuzgadoAtestadoScreen(
     var showRequiredFieldsError by rememberSaveable { mutableStateOf(false) }
     var requiredFieldsErrorText by rememberSaveable { mutableStateOf("") }
     var showQuickTrialDatePicker by rememberSaveable { mutableStateOf(false) }
+
+    // Guarda los datos y dispara onPrintSummons, o muestra el error de campos obligatorios.
+    val performSaveAndPrint: () -> Unit = {
+        val missing = mutableListOf<String>()
+        if (selectedCcaaId == null) missing += context.getString(R.string.courts_combo_label)
+        if (selectedProvinciaId == null) missing += context.getString(R.string.courts_province_label)
+        if (selectedMunicipioName.isBlank()) missing += context.getString(R.string.courts_municipality_label)
+        if (selectedSedeId == null) missing += context.getString(R.string.courts_sede_label)
+        if (trialType.isBlank()) missing += context.getString(R.string.atestado_court_trial_section_title)
+        if (trialType == TIPO_JUICIO_RAPIDO && quickTrialDate.isBlank())
+            missing += context.getString(R.string.atestado_court_trial_date)
+        if (trialType == TIPO_JUICIO_RAPIDO && quickTrialTime.isBlank())
+            missing += context.getString(R.string.atestado_court_trial_time)
+
+        if (missing.isNotEmpty()) {
+            requiredFieldsErrorText = missing.joinToString(", ")
+            showRequiredFieldsError = true
+        } else {
+            storage.saveCurrent(
+                JuzgadoAtestadoData(
+                    ccaaId = selectedCcaaId,
+                    ccaaNombre = selectedCcaaName,
+                    provinciaId = selectedProvinciaId,
+                    provinciaNombre = selectedProvinciaName,
+                    municipioNombre = selectedMunicipioName,
+                    sedeId = selectedSedeId,
+                    sedeNombre = selectedSedeName,
+                    sedeDireccion = selectedSedeDireccion,
+                    sedeTelefono = selectedSedeTelefono,
+                    sedeCodigoPostal = selectedSedeCodigoPostal,
+                    numeroDiligencias = numeroDiligencias,
+                    tipoJuicio = trialType,
+                    fechaJuicioRapido = quickTrialDate,
+                    horaJuicioRapido = quickTrialTime
+                )
+            )
+            onPrintSummons()
+        }
+    }
 
     LaunchedEffect(Unit) {
         if (isInPreview) {
@@ -462,6 +504,14 @@ fun DatosJuzgadoAtestadoScreen(
                             style = MaterialTheme.typography.titleMedium
                         )
 
+                        OutlinedTextField(
+                            value = numeroDiligencias,
+                            onValueChange = { numeroDiligencias = it },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            label = { Text(stringResource(R.string.atestado_court_proceedings_number)) }
+                        )
+
                         OptionRadioRow(
                             text = stringResource(R.string.atestado_court_trial_rapid),
                             selected = trialType == TIPO_JUICIO_RAPIDO,
@@ -574,6 +624,7 @@ fun DatosJuzgadoAtestadoScreen(
                                 sedeDireccion = selectedSedeDireccion,
                                 sedeTelefono = selectedSedeTelefono,
                                 sedeCodigoPostal = selectedSedeCodigoPostal,
+                                numeroDiligencias = numeroDiligencias,
                                 tipoJuicio = trialType,
                                 fechaJuicioRapido = quickTrialDate,
                                 horaJuicioRapido = quickTrialTime
@@ -606,7 +657,7 @@ fun DatosJuzgadoAtestadoScreen(
         }
 
         Button(
-            onClick = onPrintClick,
+            onClick = performSaveAndPrint,
             modifier = Modifier.fillMaxWidth(),
             shape = MaterialTheme.shapes.medium,
             colors = ButtonDefaults.buttonColors(
@@ -657,6 +708,7 @@ fun DatosJuzgadoAtestadoScreen(
                         selectedSedeTelefono = ""
                         selectedSedeCodigoPostal = ""
                         selectedSede = null
+                        numeroDiligencias = ""
                         trialType = ""
                         quickTrialDate = ""
                         quickTrialTime = ""

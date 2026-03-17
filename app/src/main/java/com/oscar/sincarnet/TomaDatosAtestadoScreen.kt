@@ -30,6 +30,7 @@ fun TomaDatosAtestadoScreen(
     modifier: Modifier = Modifier,
     onBackClick: () -> Unit = {},
     onPrintClick: () -> Unit = {},
+    onLocationTimeClick: () -> Unit = {},
     onPersonDataClick: () -> Unit = {},
     onVehicleDataClick: () -> Unit = {},
     onCourtDataClick: () -> Unit = {},
@@ -59,6 +60,10 @@ fun TomaDatosAtestadoScreen(
                     style = MaterialTheme.typography.titleMedium
                 )
 
+                AtestadoActionButton(
+                    text = stringResource(R.string.atestado_data_location_time),
+                    onClick = onLocationTimeClick
+                )
                 AtestadoActionButton(
                     text = stringResource(R.string.atestado_data_person),
                     onClick = onPersonDataClick

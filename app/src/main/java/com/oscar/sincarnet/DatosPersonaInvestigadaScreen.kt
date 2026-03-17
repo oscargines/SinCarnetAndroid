@@ -10,6 +10,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DatePicker
@@ -18,15 +21,12 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -58,36 +58,26 @@ private val PERSON_DATE_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPatte
 fun DatosPersonaInvestigadaScreen(
     modifier: Modifier = Modifier,
     onBackClick: () -> Unit = {},
-    nationality: String = "España",
-    onNationalityChange: (String) -> Unit = {},
-    sex: String = "Desconocido",
-    onSexChange: (String) -> Unit = {},
-    firstName: String = "",
-    onFirstNameChange: (String) -> Unit = {},
-    lastName1: String = "",
-    onLastName1Change: (String) -> Unit = {},
-    lastName2: String = "",
-    onLastName2Change: (String) -> Unit = {},
-    address: String = "",
-    onAddressChange: (String) -> Unit = {},
-    birthDate: String = "",
-    onBirthDateChange: (String) -> Unit = {},
-    birthPlace: String = "",
-    onBirthPlaceChange: (String) -> Unit = {},
-    fatherName: String = "",
-    onFatherNameChange: (String) -> Unit = {},
-    motherName: String = "",
-    onMotherNameChange: (String) -> Unit = {},
-    phone: String = "",
-    onPhoneChange: (String) -> Unit = {},
-    email: String = "",
-    onEmailChange: (String) -> Unit = {},
-    onSaveClick: () -> Unit = {},
-    onDeleteClick: () -> Unit = {},
     onRightsClick: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val isInPreview = LocalInspectionMode.current
+    val storage = PersonaInvestigadaStorage(context)
+    val initialData = storage.loadCurrent()
+
+    var nationality by rememberSaveable { mutableStateOf(initialData.nationality) }
+    var sex by rememberSaveable { mutableStateOf(initialData.sex) }
+    var firstName by rememberSaveable { mutableStateOf(initialData.firstName) }
+    var lastName1 by rememberSaveable { mutableStateOf(initialData.lastName1) }
+    var lastName2 by rememberSaveable { mutableStateOf(initialData.lastName2) }
+    var address by rememberSaveable { mutableStateOf(initialData.address) }
+    var birthDate by rememberSaveable { mutableStateOf(initialData.birthDate) }
+    var birthPlace by rememberSaveable { mutableStateOf(initialData.birthPlace) }
+    var fatherName by rememberSaveable { mutableStateOf(initialData.fatherName) }
+    var motherName by rememberSaveable { mutableStateOf(initialData.motherName) }
+    var phone by rememberSaveable { mutableStateOf(initialData.phone) }
+    var email by rememberSaveable { mutableStateOf(initialData.email) }
+
     var nationalityOptions by remember { mutableStateOf(NATIONALITY_FALLBACK) }
     var showDeleteConfirmation by rememberSaveable { mutableStateOf(false) }
     var showSaveConfirmation by rememberSaveable { mutableStateOf(false) }
@@ -96,16 +86,10 @@ fun DatosPersonaInvestigadaScreen(
     var showBirthDatePicker by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
-        if (isInPreview) {
-            nationalityOptions = NATIONALITY_FALLBACK
-            return@LaunchedEffect
-        }
-
-        val result = runCatching {
+        if (isInPreview) { nationalityOptions = NATIONALITY_FALLBACK; return@LaunchedEffect }
+        nationalityOptions = runCatching {
             withContext(Dispatchers.IO) { loadNationalitiesFromDatabase(context) }
-        }
-
-        nationalityOptions = result.getOrElse { NATIONALITY_FALLBACK }
+        }.getOrElse { NATIONALITY_FALLBACK }
     }
 
     val sexOptions = listOf(
@@ -113,6 +97,8 @@ fun DatosPersonaInvestigadaScreen(
         stringResource(R.string.person_data_sex_female),
         stringResource(R.string.person_data_sex_unknown)
     )
+
+    // Labels para la validación
     val nationalityLabel = stringResource(R.string.person_data_nationality)
     val sexLabel = stringResource(R.string.person_data_sex)
     val nameLabel = stringResource(R.string.person_data_name)
@@ -133,9 +119,7 @@ fun DatosPersonaInvestigadaScreen(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f),
+            modifier = Modifier.fillMaxWidth().weight(1f),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
         ) {
             Column(
@@ -145,197 +129,88 @@ fun DatosPersonaInvestigadaScreen(
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                Text(
-                    text = stringResource(R.string.person_data_title),
-                    style = MaterialTheme.typography.titleMedium
-                )
+                Text(text = stringResource(R.string.person_data_title), style = MaterialTheme.typography.titleMedium)
 
-                DropdownField(
-                    label = stringResource(R.string.person_data_nationality),
-                    value = nationality,
-                    options = nationalityOptions,
-                    onValueSelected = onNationalityChange
-                )
+                DropdownField(label = stringResource(R.string.person_data_nationality), value = nationality, options = nationalityOptions, onValueSelected = { nationality = it })
+                DropdownField(label = stringResource(R.string.person_data_sex), value = sex, options = sexOptions, onValueSelected = { sex = it })
 
-                DropdownField(
-                    label = stringResource(R.string.person_data_sex),
-                    value = sex,
-                    options = sexOptions,
-                    onValueSelected = onSexChange
-                )
+                OutlinedTextField(value = firstName, onValueChange = { firstName = it.uppercase() }, modifier = Modifier.fillMaxWidth(), singleLine = true, label = { Text(stringResource(R.string.person_data_name)) })
+                OutlinedTextField(value = lastName1, onValueChange = { lastName1 = it.uppercase() }, modifier = Modifier.fillMaxWidth(), singleLine = true, label = { Text(stringResource(R.string.person_data_last_name_1)) })
+                OutlinedTextField(value = lastName2, onValueChange = { lastName2 = it.uppercase() }, modifier = Modifier.fillMaxWidth(), singleLine = true, label = { Text(stringResource(R.string.person_data_last_name_2)) })
+                OutlinedTextField(value = address, onValueChange = { address = it }, modifier = Modifier.fillMaxWidth(), label = { Text(stringResource(R.string.person_data_address)) })
 
-                OutlinedTextField(
-                    value = firstName,
-                    onValueChange = { onFirstNameChange(it.uppercase()) },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    label = { Text(stringResource(R.string.person_data_name)) }
-                )
-
-                OutlinedTextField(
-                    value = lastName1,
-                    onValueChange = { onLastName1Change(it.uppercase()) },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    label = { Text(stringResource(R.string.person_data_last_name_1)) }
-                )
-
-                OutlinedTextField(
-                    value = lastName2,
-                    onValueChange = { onLastName2Change(it.uppercase()) },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    label = { Text(stringResource(R.string.person_data_last_name_2)) }
-                )
-
-                OutlinedTextField(
-                    value = address,
-                    onValueChange = onAddressChange,
-                    modifier = Modifier.fillMaxWidth(),
-                    label = { Text(stringResource(R.string.person_data_address)) }
-                )
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.Top
-                ) {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Top) {
                     OutlinedTextField(
-                        value = birthDate,
-                        onValueChange = {},
-                        modifier = Modifier.weight(1f),
-                        readOnly = true,
-                        singleLine = true,
+                        value = birthDate, onValueChange = {}, modifier = Modifier.weight(1f),
+                        readOnly = true, singleLine = true,
                         label = { Text(stringResource(R.string.person_data_birth_date)) },
                         supportingText = { Text(stringResource(R.string.person_data_birth_date_hint)) }
                     )
-
-                    IconButton(
-                        onClick = { showBirthDatePicker = true },
-                        modifier = Modifier
-                            .size(65.dp)
-                            .padding(top = 8.dp)
-                            .align(Alignment.Top)
-                    ) {
-                        AssetImage(
-                            assetPath = "icons/calendar.png",
-                            contentDescription = stringResource(R.string.person_data_birth_date_select_action),
-                            modifier = Modifier.fillMaxSize()
-                        )
+                    IconButton(onClick = { showBirthDatePicker = true }, modifier = Modifier.size(65.dp).padding(top = 8.dp).align(Alignment.Top)) {
+                        AssetImage(assetPath = "icons/calendar.png", contentDescription = stringResource(R.string.person_data_birth_date_select_action), modifier = Modifier.fillMaxSize())
                     }
                 }
 
-                OutlinedTextField(
-                    value = birthPlace,
-                    onValueChange = onBirthPlaceChange,
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    label = { Text(stringResource(R.string.person_data_birth_place)) }
-                )
-
-                OutlinedTextField(
-                    value = fatherName,
-                    onValueChange = onFatherNameChange,
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    label = { Text(stringResource(R.string.person_data_father_name)) }
-                )
-
-                OutlinedTextField(
-                    value = motherName,
-                    onValueChange = onMotherNameChange,
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    label = { Text(stringResource(R.string.person_data_mother_name)) }
-                )
-
-                OutlinedTextField(
-                    value = phone,
-                    onValueChange = onPhoneChange,
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
-                    label = { Text(stringResource(R.string.person_data_phone)) }
-                )
-
-                OutlinedTextField(
-                    value = email,
-                    onValueChange = onEmailChange,
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-                    label = { Text(stringResource(R.string.person_data_email)) }
-                )
+                OutlinedTextField(value = birthPlace, onValueChange = { birthPlace = it }, modifier = Modifier.fillMaxWidth(), singleLine = true, label = { Text(stringResource(R.string.person_data_birth_place)) })
+                OutlinedTextField(value = fatherName, onValueChange = { fatherName = it }, modifier = Modifier.fillMaxWidth(), singleLine = true, label = { Text(stringResource(R.string.person_data_father_name)) })
+                OutlinedTextField(value = motherName, onValueChange = { motherName = it }, modifier = Modifier.fillMaxWidth(), singleLine = true, label = { Text(stringResource(R.string.person_data_mother_name)) })
+                OutlinedTextField(value = phone, onValueChange = { phone = it }, modifier = Modifier.fillMaxWidth(), singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone), label = { Text(stringResource(R.string.person_data_phone)) })
+                OutlinedTextField(value = email, onValueChange = { email = it }, modifier = Modifier.fillMaxWidth(), singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email), label = { Text(stringResource(R.string.person_data_email)) })
             }
         }
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Button(
                 onClick = {
                     val requiredFields = listOf(
-                        nationalityLabel to nationality,
-                        sexLabel to sex,
-                        nameLabel to firstName,
-                        lastName1Label to lastName1,
-                        lastName2Label to lastName2,
-                        addressLabel to address,
-                        birthDateLabel to birthDate,
-                        birthPlaceLabel to birthPlace,
-                        fatherNameLabel to fatherName,
-                        motherNameLabel to motherName,
-                        phoneLabel to phone,
-                        emailLabel to email
+                        nationalityLabel to nationality, sexLabel to sex,
+                        nameLabel to firstName, lastName1Label to lastName1,
+                        lastName2Label to lastName2, addressLabel to address,
+                        birthDateLabel to birthDate, birthPlaceLabel to birthPlace,
+                        fatherNameLabel to fatherName, motherNameLabel to motherName,
+                        phoneLabel to phone, emailLabel to email
                     )
-
-                    val missingFieldNames = requiredFields
-                        .filter { it.second.trim().isEmpty() }
-                        .map { it.first }
-
-                    if (missingFieldNames.isNotEmpty()) {
-                        requiredFieldsErrorText = missingFieldNames.joinToString(", ")
+                    val missing = requiredFields.filter { it.second.trim().isEmpty() }.map { it.first }
+                    if (missing.isNotEmpty()) {
+                        requiredFieldsErrorText = missing.joinToString(", ")
                         showRequiredFieldsError = true
                     } else {
-                        onSaveClick()
+                        storage.saveCurrent(PersonaInvestigadaData(
+                            nationality = nationality, sex = sex,
+                            firstName = firstName, lastName1 = lastName1, lastName2 = lastName2,
+                            address = address, birthDate = birthDate, birthPlace = birthPlace,
+                            fatherName = fatherName, motherName = motherName,
+                            phone = phone, email = email
+                        ))
                         showSaveConfirmation = true
                     }
                 },
-                modifier = Modifier.weight(1f),
-                shape = MaterialTheme.shapes.medium,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary
-                )
-            ) {
-                Text(text = stringResource(R.string.person_data_save))
-            }
+                modifier = Modifier.weight(1f), shape = MaterialTheme.shapes.medium,
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary)
+            ) { Text(stringResource(R.string.person_data_save)) }
 
             Button(
                 onClick = { showDeleteConfirmation = true },
-                modifier = Modifier.weight(1f),
-                shape = MaterialTheme.shapes.medium,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.error,
-                    contentColor = MaterialTheme.colorScheme.onError
-                )
-            ) {
-                Text(text = stringResource(R.string.person_data_delete))
-            }
+                modifier = Modifier.weight(1f), shape = MaterialTheme.shapes.medium,
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error, contentColor = MaterialTheme.colorScheme.onError)
+            ) { Text(stringResource(R.string.person_data_delete)) }
+        }
 
-            Button(
-                onClick = onRightsClick,
-                modifier = Modifier.weight(1f),
-                shape = MaterialTheme.shapes.medium
-            ) {
-                Text(text = stringResource(R.string.person_data_rights))
-            }
+        Button(
+            onClick = onRightsClick,
+            modifier = Modifier.fillMaxWidth(),
+            shape = MaterialTheme.shapes.medium,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.secondary,
+                contentColor = MaterialTheme.colorScheme.onSecondary
+            )
+        ) {
+            Text(stringResource(R.string.person_data_rights))
         }
 
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.End,
+            horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
             verticalAlignment = Alignment.CenterVertically
         ) {
             BackIconButton(onClick = onBackClick)
@@ -345,22 +220,21 @@ fun DatosPersonaInvestigadaScreen(
     if (showDeleteConfirmation) {
         AlertDialog(
             onDismissRequest = { showDeleteConfirmation = false },
-            title = { Text(text = stringResource(R.string.person_data_delete_confirm_title)) },
-            text = { Text(text = stringResource(R.string.person_data_delete_confirm_message)) },
+            title = { Text(stringResource(R.string.person_data_delete_confirm_title)) },
+            text = { Text(stringResource(R.string.person_data_delete_confirm_message)) },
             confirmButton = {
-                TextButton(
-                    onClick = {
-                        showDeleteConfirmation = false
-                        onDeleteClick()
-                    }
-                ) {
-                    Text(text = stringResource(R.string.person_data_delete))
-                }
+                TextButton(onClick = {
+                    showDeleteConfirmation = false
+                    storage.clearCurrent()
+                    nationality = "España"
+                    sex = context.getString(R.string.person_data_sex_unknown)
+                    firstName = ""; lastName1 = ""; lastName2 = ""
+                    address = ""; birthDate = ""; birthPlace = ""
+                    fatherName = ""; motherName = ""; phone = ""; email = ""
+                }) { Text(stringResource(R.string.person_data_delete)) }
             },
             dismissButton = {
-                TextButton(onClick = { showDeleteConfirmation = false }) {
-                    Text(text = stringResource(R.string.no_option))
-                }
+                TextButton(onClick = { showDeleteConfirmation = false }) { Text(stringResource(R.string.no_option)) }
             }
         )
     }
@@ -368,11 +242,11 @@ fun DatosPersonaInvestigadaScreen(
     if (showSaveConfirmation) {
         AlertDialog(
             onDismissRequest = { showSaveConfirmation = false },
-            title = { Text(text = stringResource(R.string.person_data_save_confirm_title)) },
-            text = { Text(text = stringResource(R.string.person_data_save_confirm_message)) },
+            title = { Text(stringResource(R.string.person_data_save_confirm_title)) },
+            text = { Text(stringResource(R.string.person_data_save_confirm_message)) },
             confirmButton = {
-                TextButton(onClick = { showSaveConfirmation = false }) {
-                    Text(text = stringResource(R.string.close_action))
+                TextButton(onClick = { showSaveConfirmation = false; onBackClick() }) {
+                    Text(stringResource(R.string.close_action))
                 }
             }
         )
@@ -381,105 +255,53 @@ fun DatosPersonaInvestigadaScreen(
     if (showRequiredFieldsError) {
         AlertDialog(
             onDismissRequest = { showRequiredFieldsError = false },
-            title = { Text(text = stringResource(R.string.person_data_required_fields_title)) },
-            text = {
-                Text(
-                    text = stringResource(
-                        R.string.person_data_required_fields_message,
-                        requiredFieldsErrorText
-                    )
-                )
-            },
+            title = { Text(stringResource(R.string.person_data_required_fields_title)) },
+            text = { Text(stringResource(R.string.person_data_required_fields_message, requiredFieldsErrorText)) },
             confirmButton = {
-                TextButton(onClick = { showRequiredFieldsError = false }) {
-                    Text(text = stringResource(R.string.accept_action))
-                }
+                TextButton(onClick = { showRequiredFieldsError = false }) { Text(stringResource(R.string.accept_action)) }
             }
         )
     }
 
     if (showBirthDatePicker) {
-        val datePickerState = rememberDatePickerState(
-            initialSelectedDateMillis = birthDate.toDateMillisOrNull()
-        )
-
+        val datePickerState = rememberDatePickerState(initialSelectedDateMillis = birthDate.toDateMillisOrNull())
         DatePickerDialog(
             onDismissRequest = { showBirthDatePicker = false },
             confirmButton = {
-                TextButton(
-                    onClick = {
-                        datePickerState.selectedDateMillis
-                            ?.toFormattedBirthDate()
-                            ?.let(onBirthDateChange)
-                        showBirthDatePicker = false
-                    }
-                ) {
-                    Text(text = stringResource(R.string.person_data_birth_date_select_action))
-                }
+                TextButton(onClick = {
+                    datePickerState.selectedDateMillis?.toFormattedBirthDate()?.let { birthDate = it }
+                    showBirthDatePicker = false
+                }) { Text(stringResource(R.string.person_data_birth_date_select_action)) }
             },
             dismissButton = {
-                TextButton(onClick = { showBirthDatePicker = false }) {
-                    Text(text = stringResource(R.string.no_option))
-                }
+                TextButton(onClick = { showBirthDatePicker = false }) { Text(stringResource(R.string.no_option)) }
             }
-        ) {
-            DatePicker(state = datePickerState)
-        }
+        ) { DatePicker(state = datePickerState) }
     }
 }
 
-
 private fun Long.toFormattedBirthDate(): String =
-    Instant.ofEpochMilli(this)
-        .atZone(ZoneId.systemDefault())
-        .toLocalDate()
-        .format(PERSON_DATE_FORMATTER)
+    Instant.ofEpochMilli(this).atZone(ZoneId.systemDefault()).toLocalDate().format(PERSON_DATE_FORMATTER)
 
 private fun String.toDateMillisOrNull(): Long? = runCatching {
-    LocalDate.parse(this, PERSON_DATE_FORMATTER)
-        .atStartOfDay(ZoneId.systemDefault())
-        .toInstant()
-        .toEpochMilli()
+    LocalDate.parse(this, PERSON_DATE_FORMATTER).atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
 }.getOrNull()
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun DropdownField(
-    label: String,
-    value: String,
-    options: List<String>,
-    onValueSelected: (String) -> Unit
-) {
+private fun DropdownField(label: String, value: String, options: List<String>, onValueSelected: (String) -> Unit) {
     var expanded by remember { mutableStateOf(false) }
-
-    ExposedDropdownMenuBox(
-        expanded = expanded,
-        onExpandedChange = { expanded = !expanded }
-    ) {
+    ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = !expanded }) {
         OutlinedTextField(
-            value = value,
-            onValueChange = {},
-            modifier = Modifier
-                .menuAnchor()
-                .fillMaxWidth(),
-            readOnly = true,
-            singleLine = true,
+            value = value, onValueChange = {},
+            modifier = Modifier.menuAnchor().fillMaxWidth(),
+            readOnly = true, singleLine = true,
             label = { Text(label) },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) }
         )
-
-        androidx.compose.material3.DropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false }
-        ) {
+        androidx.compose.material3.DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             options.forEach { option ->
-                DropdownMenuItem(
-                    text = { Text(option) },
-                    onClick = {
-                        onValueSelected(option)
-                        expanded = false
-                    }
-                )
+                DropdownMenuItem(text = { Text(option) }, onClick = { onValueSelected(option); expanded = false })
             }
         }
     }
@@ -488,8 +310,5 @@ private fun DropdownField(
 @Preview(showBackground = true)
 @Composable
 private fun DatosPersonaInvestigadaScreenPreview() {
-    SinCarnetTheme {
-        DatosPersonaInvestigadaScreen()
-    }
+    SinCarnetTheme { DatosPersonaInvestigadaScreen() }
 }
-

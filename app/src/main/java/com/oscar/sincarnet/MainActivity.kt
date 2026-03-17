@@ -32,6 +32,7 @@ private const val WITHOUT_PERMIT_ROUTE = "without_permit"
 private const val SPECIAL_CASES_ROUTE = "special_cases"
 private const val COURTS_ROUTE = "courts"
 private const val ATESTADO_DATA_ROUTE = "atestado_data"
+private const val ATESTADO_OCURRENCIA_DELIT_ROUTE = "atestado_ocurrencia_delit"
 private const val ATESTADO_PERSON_DATA_ROUTE = "atestado_person_data"
 private const val ATESTADO_VEHICLE_DATA_ROUTE = "atestado_vehicle_data"
 private const val ATESTADO_COURT_DATA_ROUTE = "atestado_court_data"
@@ -177,10 +178,11 @@ class MainActivity : ComponentActivity() {
 
                 // Quién está firmando actualmente
                 var currentSignerKey by rememberSaveable { mutableStateOf("") }
+                // Indica que FirmasAtestadoScreen fue abierto desde DatosJuzgadoAtestadoScreen
+                var signaturesOpenedFromCourt by rememberSaveable { mutableStateOf(false) }
 
                 LaunchedEffect(Unit) {
                     applyActuantesData(actuantesStorage.loadCurrent())
-                    applyPersonaData(personaStorage.loadCurrent())
                     applyVehiculoData(vehiculoStorage.loadCurrent())
                     canRecoverActingData = actuantesStorage.hasRecoverableBackup()
                     delay(3000)
@@ -243,6 +245,7 @@ class MainActivity : ComponentActivity() {
                                     printerReturnRoute = ATESTADO_DATA_ROUTE
                                     currentRoute = BLUETOOTH_PRINTER_ROUTE
                                 },
+                                onLocationTimeClick = { currentRoute = ATESTADO_OCURRENCIA_DELIT_ROUTE },
                                 onPersonDataClick = { currentRoute = ATESTADO_PERSON_DATA_ROUTE },
                                 onVehicleDataClick = { currentRoute = ATESTADO_VEHICLE_DATA_ROUTE },
                                 onCourtDataClick = { currentRoute = ATESTADO_COURT_DATA_ROUTE },
@@ -252,12 +255,61 @@ class MainActivity : ComponentActivity() {
                                 }
                             )
 
+                            ATESTADO_OCURRENCIA_DELIT_ROUTE -> DatosOcurrenciaDelitScreen(
+                                modifier = Modifier.fillMaxSize().padding(innerPadding),
+                                onBackClick = { currentRoute = ATESTADO_DATA_ROUTE },
+                                onPrintClick = {
+                                    printerReturnRoute = ATESTADO_OCURRENCIA_DELIT_ROUTE
+                                    currentRoute = BLUETOOTH_PRINTER_ROUTE
+                                }
+                            )
+
                             ATESTADO_COURT_DATA_ROUTE -> DatosJuzgadoAtestadoScreen(
                                 modifier = Modifier.fillMaxSize().padding(innerPadding),
                                 onBackClick = { currentRoute = ATESTADO_DATA_ROUTE },
                                 onPrintClick = {
                                     printerReturnRoute = ATESTADO_COURT_DATA_ROUTE
                                     currentRoute = BLUETOOTH_PRINTER_ROUTE
+                                },
+                                onPrintSummons = {
+                                    val hasMinimumSignatures =
+                                        signaturesBySigner.containsKey(SIGNER_INSTRUCTOR) &&
+                                        signaturesBySigner.containsKey(SIGNER_SECRETARY)
+                                    if (!hasMinimumSignatures) {
+                                        signaturesOpenedFromCourt = true
+                                        currentRoute = ATESTADO_SIGNATURES_ROUTE
+                                    } else {
+                                        runCatching {
+                                            val courtData = JuzgadoAtestadoStorage(applicationContext).loadCurrent()
+                                            val pdfPersonData = PersonaInvestigadaStorage(applicationContext).loadCurrent()
+                                            val citacionDoc = loadCitacionDocument(applicationContext, courtData.tipoJuicio)
+                                            val ocurrenciaData = OcurrenciaDelitStorage(applicationContext).loadCurrent()
+                                            val investigatedWantsToSign = signaturesBySigner.containsKey(SIGNER_INVESTIGATED)
+                                            val mappedSignatures = mapSignaturesForPdf(
+                                                signaturesBySigner = signaturesBySigner,
+                                                investigatedWantsToSign = investigatedWantsToSign,
+                                                investigatedNoSignText = getString(R.string.atestado_signature_no_desire)
+                                            )
+                                            generateAtestadoSignaturesPdf(
+                                                context = applicationContext,
+                                                signatures = mappedSignatures,
+                                                investigatedNoSignText = getString(R.string.atestado_signature_no_desire),
+                                                courtData = courtData,
+                                                personData = pdfPersonData,
+                                                ocurrenciaData = ocurrenciaData,
+                                                citacionDocument = citacionDoc,
+                                                instructorTip = instructorTip,
+                                                secretaryTip = secretaryTip,
+                                                instructorUnit = instructorUnit
+                                            )
+                                        }.onSuccess { result ->
+                                            lastGeneratedPdfPath = result.file.absolutePath
+                                            val opened = openGeneratedPdf(result.file)
+                                            if (!opened) Toast.makeText(applicationContext, getString(R.string.atestado_pdf_open_error), Toast.LENGTH_LONG).show()
+                                        }.onFailure {
+                                            Toast.makeText(applicationContext, getString(R.string.atestado_pdf_generated_error), Toast.LENGTH_LONG).show()
+                                        }
+                                    }
                                 }
                             )
 
@@ -326,56 +378,6 @@ class MainActivity : ComponentActivity() {
                             ATESTADO_PERSON_DATA_ROUTE -> DatosPersonaInvestigadaScreen(
                                 modifier = Modifier.fillMaxSize().padding(innerPadding),
                                 onBackClick = { currentRoute = ATESTADO_DATA_ROUTE },
-                                nationality = investigatedNationality,
-                                onNationalityChange = { investigatedNationality = it },
-                                sex = investigatedSex,
-                                onSexChange = { investigatedSex = it },
-                                firstName = investigatedFirstName,
-                                onFirstNameChange = { investigatedFirstName = it },
-                                lastName1 = investigatedLastName1,
-                                onLastName1Change = { investigatedLastName1 = it },
-                                lastName2 = investigatedLastName2,
-                                onLastName2Change = { investigatedLastName2 = it },
-                                address = investigatedAddress,
-                                onAddressChange = { investigatedAddress = it },
-                                birthDate = investigatedBirthDate,
-                                onBirthDateChange = { investigatedBirthDate = it },
-                                birthPlace = investigatedBirthPlace,
-                                onBirthPlaceChange = { investigatedBirthPlace = it },
-                                fatherName = investigatedFatherName,
-                                onFatherNameChange = { investigatedFatherName = it },
-                                motherName = investigatedMotherName,
-                                onMotherNameChange = { investigatedMotherName = it },
-                                phone = investigatedPhone,
-                                onPhoneChange = { investigatedPhone = it },
-                                email = investigatedEmail,
-                                onEmailChange = { investigatedEmail = it },
-                                onSaveClick = {
-                                    personaStorage.saveCurrent(
-                                        PersonaInvestigadaData(
-                                            nationality = investigatedNationality,
-                                            sex = investigatedSex,
-                                            firstName = investigatedFirstName,
-                                            lastName1 = investigatedLastName1,
-                                            lastName2 = investigatedLastName2,
-                                            address = investigatedAddress,
-                                            birthDate = investigatedBirthDate,
-                                            birthPlace = investigatedBirthPlace,
-                                            fatherName = investigatedFatherName,
-                                            motherName = investigatedMotherName,
-                                            phone = investigatedPhone,
-                                            email = investigatedEmail
-                                        )
-                                    )
-                                },
-                                onDeleteClick = {
-                                    personaStorage.clearCurrent()
-                                    applyPersonaData(
-                                        PersonaInvestigadaData(
-                                            sex = getString(R.string.person_data_sex_unknown)
-                                        )
-                                    )
-                                },
                                 onRightsClick = {
                                     // Se implementará en una iteración posterior.
                                 }
@@ -446,7 +448,14 @@ class MainActivity : ComponentActivity() {
 
                             ATESTADO_SIGNATURES_ROUTE -> FirmasAtestadoScreen(
                                 modifier = Modifier.fillMaxSize().padding(innerPadding),
-                                onBackClick = { currentRoute = ATESTADO_DATA_ROUTE },
+                                onBackClick = {
+                                    if (signaturesOpenedFromCourt) {
+                                        signaturesOpenedFromCourt = false
+                                        currentRoute = ATESTADO_COURT_DATA_ROUTE
+                                    } else {
+                                        currentRoute = ATESTADO_DATA_ROUTE
+                                    }
+                                },
                                 onPrintClick = {
                                     printerReturnRoute = ATESTADO_SIGNATURES_ROUTE
                                     currentRoute = BLUETOOTH_PRINTER_ROUTE
@@ -481,10 +490,22 @@ class MainActivity : ComponentActivity() {
                                             investigatedWantsToSign = wantsToSign,
                                             investigatedNoSignText = getString(R.string.atestado_signature_no_desire)
                                         )
+                                        // Incluir siempre datos del juzgado y persona investigada en el PDF
+                                        val courtData = JuzgadoAtestadoStorage(applicationContext).loadCurrent()
+                                        val pdfPersonData = PersonaInvestigadaStorage(applicationContext).loadCurrent()
+                                        val citacionDoc = loadCitacionDocument(applicationContext, courtData.tipoJuicio)
+                                        val ocurrenciaData = OcurrenciaDelitStorage(applicationContext).loadCurrent()
                                         generateAtestadoSignaturesPdf(
                                             context = applicationContext,
                                             signatures = mappedSignatures,
-                                            investigatedNoSignText = getString(R.string.atestado_signature_no_desire)
+                                            investigatedNoSignText = getString(R.string.atestado_signature_no_desire),
+                                            courtData = courtData,
+                                            personData = pdfPersonData,
+                                            ocurrenciaData = ocurrenciaData,
+                                            citacionDocument = citacionDoc,
+                                            instructorTip = instructorTip,
+                                            secretaryTip = secretaryTip,
+                                            instructorUnit = instructorUnit
                                         )
                                     }.onSuccess { result ->
                                         lastGeneratedPdfPath = result.file.absolutePath
@@ -495,6 +516,11 @@ class MainActivity : ComponentActivity() {
                                                 getString(R.string.atestado_pdf_open_error),
                                                 Toast.LENGTH_LONG
                                             ).show()
+                                        }
+                                        // Si veníamos de la pantalla de juzgado, volver a ella
+                                        if (signaturesOpenedFromCourt) {
+                                            signaturesOpenedFromCourt = false
+                                            currentRoute = ATESTADO_COURT_DATA_ROUTE
                                         }
                                     }.onFailure {
                                         Toast.makeText(

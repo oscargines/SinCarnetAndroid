@@ -2,7 +2,7 @@ package com.oscar.sincarnet
 
 import java.util.Locale
 
-private val ALLOWED_ZEBRA_MODELS = setOf("RW520", "ZQ521")
+private val ALLOWED_ZEBRA_MODELS = setOf("RW420", "ZQ521")
 
 internal fun normalizeZebraModel(model: String): String =
     model
@@ -16,5 +16,5 @@ internal fun isAllowedZebraPrinterModel(model: String?): Boolean {
     return normalizeZebraModel(model) in ALLOWED_ZEBRA_MODELS
 }
 
-internal fun supportedBluetoothPrinterModelsText(): String = "RW520, ZQ521"
+internal fun supportedBluetoothPrinterModelsText(): String = "RW420, ZQ521"
 
