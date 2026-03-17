@@ -114,10 +114,16 @@ internal fun generateAtestadoSignaturesPdf(
         textSize = 9f
         typeface = calibriRegular
     }
+    val numeroDiligencias = courtData?.numeroDiligencias.orEmpty().trim()
+    val atestadoNumeroText = if (numeroDiligencias.isBlank()) {
+        "ATESTADO NUMERO:"
+    } else {
+        "ATESTADO NUMERO:   $numeroDiligencias"
+    }
     val textX = atestadoBoxLeft + 4f
     // Texto interior con padding: 4 mm desde el borde izquierdo de la caja
     val textY = atestadoBoxTop + (atestadoBoxHeight + textPaintSmall.textSize) / 2f
-    canvas.drawText("ATESTADO NÚMERO:", textX, textY, textPaintSmall)
+    canvas.drawText(atestadoNumeroText, textX, textY, textPaintSmall)
 
     // ════════════════════════════════════════════════════════════════════════════
     // ELEMENTO 2: Caja "FOLIO Nº" (arriba a la derecha)
@@ -308,10 +314,10 @@ internal fun generateAtestadoSignaturesPdf(
     // Espacio entre cajas de Instructor y Secretario: 20 mm
     val previousTopRowHeight = (availableHeight * 0.42f).coerceAtLeast(92f)
     val previousBottomRowHeight = (availableHeight - previousTopRowHeight - signatureGap).coerceAtLeast(92f)
-    val topRowHeight = (previousTopRowHeight - mmToPt(3f)).coerceAtLeast(80f)
-    // Altura de fila superior (Instructor + Secretario): reducida 3 mm
-    val bottomRowHeight = (previousBottomRowHeight - mmToPt(5f)).coerceAtLeast(80f)
-    // Altura de fila inferior (Investigado): reducida 5 mm
+    val topRowHeight = (previousTopRowHeight - mmToPt(1f)).coerceAtLeast(80f)
+    // Altura de fila superior (Instructor + Secretario): +2 mm respecto al ajuste anterior
+    val bottomRowHeight = (previousBottomRowHeight - mmToPt(3f)).coerceAtLeast(80f)
+    // Altura de fila inferior (Investigado): reducida 3 mm
     
     val topRowWidth = centerColRightX - centerColLeftX
     // Ancho disponible fila superior: ${topRowWidth.toInt()} pt
@@ -335,7 +341,7 @@ internal fun generateAtestadoSignaturesPdf(
     )
     // TOP: ${cursorY.toInt()} pt
     // LEFT: ${(centerColLeftX + leftPadding).toInt()} pt (centrada)
-    // Altura: reducida 3 mm desde original
+    // Altura: ajustada (+2 mm respecto al ajuste previo)
     // BOTTOM: ${(A4_HEIGHT_PT - (cursorY + topRowHeight)).toInt()} pt
     
     // ════════════════════════════════════════════════════════════════════════════
@@ -350,7 +356,7 @@ internal fun generateAtestadoSignaturesPdf(
     // TOP: ${cursorY.toInt()} pt
     // LEFT: ${(centerColLeftX + leftPadding + topBoxWidth + spaceBetweenSignatures).toInt()} pt
     // Espacio desde Instructor: 20 mm
-    // Altura: reducida 3 mm desde original
+    // Altura: ajustada (+2 mm respecto al ajuste previo)
     // BOTTOM: ${(A4_HEIGHT_PT - (cursorY + topRowHeight)).toInt()} pt
 
     drawSignatureBlock(
@@ -389,7 +395,7 @@ internal fun generateAtestadoSignaturesPdf(
     // TOP: ${cursorY.toInt()} pt (después de gap)
     // LEFT: ${(centerColLeftX + investigatedLeftPadding).toInt()} pt (centrada)
     // Ancho: ${investigatedBoxWidth.toInt()} pt
-    // Altura: reducida 5 mm desde original
+    // Altura: reducida 3 mm desde original
     // BOTTOM: ${(A4_HEIGHT_PT - investigatedRect.bottom).toInt()} pt (~15 mm)
     
     drawSignatureBlock(
@@ -468,7 +474,8 @@ private fun drawSignatureBlock(
 ) {
     canvas.drawText(title, rect.left + 8f, rect.top + 14f, textPaint)
 
-    val tipAreaHeight = if (tip.isNullOrBlank()) 0f else 18f
+    val tipText = tip?.takeIf { it.isNotBlank() }?.let { "TIP: $it" }
+    val tipAreaHeight = if (tipText == null) 0f else 18f
     val targetTop = rect.top + 22f
     val targetBottom = rect.bottom - 8f - tipAreaHeight
     val targetLeft = rect.left + 8f
@@ -481,6 +488,7 @@ private fun drawSignatureBlock(
             val targetHeight = (targetBottom - targetTop).coerceAtLeast(1f)
             val srcWidth = bitmap.width.toFloat().coerceAtLeast(1f)
             val srcHeight = bitmap.height.toFloat().coerceAtLeast(1f)
+            // Mantiene la proporcion de la imagen de firma.
             val scale = minOf(targetWidth / srcWidth, targetHeight / srcHeight)
             val drawWidth = srcWidth * scale
             val drawHeight = srcHeight * scale
@@ -499,8 +507,10 @@ private fun drawSignatureBlock(
         }
     }
 
-    if (!tip.isNullOrBlank()) {
-        canvas.drawText("TIP: $tip", rect.left + 8f, rect.bottom - 8f, tipPaint)
+    if (tipText != null) {
+        val tipX = rect.left + ((rect.width() - tipPaint.measureText(tipText)) / 2f)
+        val tipY = rect.bottom - 8f
+        canvas.drawText(tipText, tipX, tipY, tipPaint)
     }
 }
 
@@ -530,4 +540,3 @@ private fun drawMultilineText(
     for (line in lines) { canvas.drawText(line, x, cy, paint); cy += lineHeight }
     return cy
 }
-

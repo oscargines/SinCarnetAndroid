@@ -155,9 +155,22 @@ internal fun replaceCitacionPlaceholders(
     result = result.replace("[[nombrecompletoinvestigado]]", nombreCompleto)
     result = result.replace("[[documentoidentificacion]]", "")
 
-    // Datos del juzgado
-    val datosJuzgado = listOf(courtData.sedeNombre, courtData.municipioNombre)
-        .filter { it.isNotBlank() }.joinToString(" de ")
+    // Datos del juzgado (campos individuales)
+    result = result.replace("[[nombrejuzgado]]", courtData.sedeNombre)
+    result = result.replace("[[direccionjuzgado]]", courtData.sedeDireccion)
+    result = result.replace("[[telefonojuzgado]]", courtData.sedeTelefono)
+    result = result.replace("[[codigopostaljuzgado]]", courtData.sedeCodigoPostal)
+
+    // Datos del juzgado (composición completa)
+    val datosJuzgado = listOf(
+        courtData.sedeNombre,
+        courtData.sedeDireccion,
+        courtData.sedeTelefono,
+        courtData.sedeCodigoPostal
+    ).map { it.trim() }
+        .filter { it.isNotBlank() }
+        .joinToString(", ")
+        .ifBlank { courtData.sedeNombre.ifBlank { courtData.municipioNombre } }
     result = result.replace("[[datosjuzgado]]", datosJuzgado)
 
     // Juicio rápido
