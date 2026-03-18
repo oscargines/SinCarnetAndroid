@@ -1,0 +1,123 @@
+{
+  "documento": {
+    "titulo": "DILIGENCIA DE MANIFESTACIÓN DE UNA PERSONA INVESTIGADA NO DETENIDA",
+    "cuerpo": {
+      "descripcion": "A las [[horafechamanifestacion]], término municipal de [[terminomunicipal]] y Partido Judicial de [[partidojudicial]], se procede a la toma de manifestación de D./DÑA. [[nombrecompletoinvestigado]] ([[documentoidentificacion]]) una vez ha sido informado/a de los motivos por los cuales está siendo investigado/a no detenido/a y de los derechos constitucionales que le asisten, entre ellos, que puede prestar declaración voluntariamente si lo desea.",
+      "campos_variables": {
+        "hora_fecha_manifestacion": "[[horafechamanifestacion]]",
+        "termino_municipal": "[[terminomunicipal]]",
+        "partido_judicial": "[[partidojudicial]]",
+        "nombre_completo_investigado": "[[nombrecompletoinvestigado]]",
+        "documento_identificacion": "[[documentoidentificacion]]"
+      }
+    },
+    "opciones_investigado": {
+      "descripcion": "Ante lo que el investigado/a responde que:",
+      "opciones": [
+        {
+          "id": 1,
+          "texto": "RENUNCIA EXPRESAMENTE A LA ASISTENCIA DE LETRADO (Delito contra la Seguridad Vial)",
+          "respuesta": "SI/NO"
+        },
+        {
+          "id": 2,
+          "texto": "DESEA DECLARAR",
+          "respuesta": "SI/NO"
+        }
+      ]
+    },
+    "documentacion": {
+      "descripcion": "El reseñado/a anteriormente, presenta y retira la siguiente documentación que es adjuntada como copia cotejada y compulsada a las presentes Diligencias.",
+      "anexos": [
+        {
+          "id": "Anexo I",
+          "texto": "DOCUMENTO DE IDENTIDAD [[documentoidentificacion]].",
+          "campos_variables": {
+            "documento_identificacion": "[[documentoidentificacion]]"
+          }
+        },
+        {
+          "id": "Anexo II",
+          "texto": "PERMISO DE CONDUCCIÓN."
+        },
+        {
+          "id": "Anexo III",
+          "texto": "PERMISO DE CIRCULACIÓN correspondiente al vehículo con matrícula [[matricula]].",
+          "campos_variables": {
+            "matricula": "[[matricula]]"
+          }
+        },
+        {
+          "id": "Anexo IV",
+          "texto": "TARJETA DE INSPECCIÓN TÉCNICA correspondiente al vehículo con matrícula [[matricula]].",
+          "campos_variables": {
+            "matricula": "[[matricula]]"
+          }
+        },
+        {
+          "id": "Anexo V",
+          "texto": "POLIZA Y RECIBO DEL SOA correspondiente al vehículo con matrícula [[matricula]].",
+          "campos_variables": {
+            "matricula": "[[matricula]]"
+          }
+        },
+        {
+          "id": "Anexo VI",
+          "texto": "Autorizaciones Especiales y otros Documentos [[otrosdocumentos]].",
+          "campos_variables": {
+            "otros_documentos": "[[otrosdocumentos]]"
+          }
+        }
+      ]
+    },
+    "preguntas": [
+      {
+        "id": 1,
+        "pregunta": "Si en el momento en el que se encontraba realizando la acción de la conducción del vehículo reseñado era conocedor de que carecía del derecho a la conducción de vehículos a motor.",
+        "campo_variable": "[[primerapregunta]]"
+      },
+      {
+        "id": 2,
+        "pregunta": "Si es consciente de los peligros que entraña la conducción careciendo de título habilitante para ello.",
+        "campo_variable": "[[segundapregunta]]"
+      },
+      {
+        "id": 3,
+        "pregunta": "Si realiza comúnmente la acción de conducción, de este o cualquier vehículo.",
+        "campo_variable": "[[tercerapregunta]]"
+      },
+      {
+        "id": 4,
+        "pregunta": "Si cuando conduce, lo realiza solo o acompañado de otras personas.",
+        "campo_variable": "[[cuartapregunta]]"
+      },
+      {
+        "id": 5,
+        "pregunta": "Si conoce los mecanismos de los que dispone la DGT para comprobar los datos personales y el vigor de la documentación de la que dispone, así como de las infracciones existentes anotadas en los distintos registros de la administración.",
+        "campo_variable": "[[quintapregunta]]"
+      },
+      {
+        "id": 6,
+        "pregunta": "Que en caso de responder afirmativamente a la pregunta anterior, ha hecho alguna vez uso de esos mecanismos para realizar la comprobación del estado legal de su autorización para conducir.",
+        "campo_variable": "[[sextapregunta]]"
+      },
+      {
+        "id": 7,
+        "pregunta": "Si es consciente de las repercusiones legales que acarrean la conducción sin tener autorización en vigor, o habiendo sido privado del derecho a la conducción de vehículos a motor.",
+        "campo_variable": "[[septimapregunta]]"
+      },
+      {
+        "id": 8,
+        "pregunta": "Si tiene algo más que declarar o desea realizar alguna ampliación o aclaración a lo arriba afirmado.",
+        "campo_variable": "[[octavapregunta]]"
+      }
+    ],
+    "cierre": {
+      "texto": "Y para que conste, se extiende la presente diligencia, que firma la persona investigada no detenida, tras haberla leído por sí, a las [[segundafechahora]] y de la fuerza actuante.",
+      "campos_variables": {
+        "segunda_fecha_hora": "[[segundafechahora]]"
+      }
+    }
+  }
+}
+

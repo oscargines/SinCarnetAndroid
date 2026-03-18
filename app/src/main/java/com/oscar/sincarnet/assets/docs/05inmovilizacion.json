@@ -1,0 +1,97 @@
+{
+  "documento": {
+    "titulo": "ACTA DE INMOVILIZACIÓN DE UN VEHÍCULO",
+    "cuerpo": {
+      "descripcion": "En [[lugarhechos]], a las [[horafecha]], se procede a formalizar la presente Acta de inmovilización del vehículo marca [[marca]], modelo [[modelo]], matrícula [[matricula]] que era conducido por de D./Dña. [[datosconductorydocumento]], y que tras someterse a las pruebas de alcoholemia en aire espirado y según consta en este atestado hay indicios racionales que permiten establecer que presuntamente ha cometido un delito contra la seguridad vial tipificado en el artículo 379 del Código Penal.",
+      "campos_variables": {
+        "lugar_hechos": "[[lugarhechos]]",
+        "hora_fecha": "[[horafecha]]",
+        "marca": "[[marca]]",
+        "modelo": "[[modelo]]",
+        "matricula": "[[matricula]]",
+        "datos_conductor_y_documento": "[[datosconductorydocumento]]"
+      }
+    },
+    "normativa_aplicable": {
+      "descripcion": "En relación con esta diligencia se aplicará la normativa vigente, cuyo extracto se inserta a continuación:",
+      "normas": [
+        {
+          "id": 1,
+          "referencia": "Artículo 770.6ª de la Ley de Enjuiciamiento Criminal",
+          "texto": "La Policía Judicial acudirá de inmediato al lugar de los hechos e intervendrá, de resultar procedente, el vehículo y retendrá el permiso de circulación del mismo y el permiso de conducir de la persona a la que se impute el hecho."
+        },
+        {
+          "id": 2,
+          "referencia": "Artículo 104.1 del Real Decreto Legislativo 6/2015",
+          "texto": "Los agentes de la autoridad encargados de la vigilancia del tráfico en el ejercicio de las funciones que tienen encomendadas podrán proceder a la inmovilización del vehículo, como consecuencia de presuntas infracciones a lo dispuesto en esta ley, cuando: d) Se produzca la negativa a efectuar las pruebas a que se refiere el artículo 14.2 y 3, o cuando éstas arrojen un resultado positivo."
+        },
+        {
+          "id": 3,
+          "referencia": "Artículo 104.5 del Real Decreto Legislativo 6/2015",
+          "texto": "La inmovilización del vehículo se producirá en el lugar señalado por los agentes de la autoridad."
+        },
+        {
+          "id": 4,
+          "referencia": "Artículo 104.6 del Real Decreto Legislativo 6/2015",
+          "texto": "Salvo en los casos de sustracción u otras formas de utilización del vehículo en contra de la voluntad de su titular, debidamente justificadas, los gastos que se originen como consecuencia de la inmovilización del vehículo serán por cuenta del conductor que cometió la infracción. En su defecto, serán por cuenta del conductor habitual o del arrendatario, y a falta de éstos, del titular. Los gastos deberán ser abonados como requisito previo a levantar la medida de inmovilización, sin perjuicio del correspondiente derecho de recurso y de la posibilidad de repercutirlos sobre la persona responsable que haya dado lugar a que la Administración adopte dicha medida. Los agentes podrán retirar el permiso de circulación del vehículo hasta que se haya acreditado el abono de los gastos referidos."
+        },
+        {
+          "id": 5,
+          "referencia": "Artículo 104.7 del Real Decreto Legislativo 6/2015",
+          "texto": "Si el vehículo inmovilizado fuese utilizado en régimen de arrendamiento, la inmovilización del vehículo se sustituirá por la prohibición de uso del vehículo por el infractor."
+        },
+        {
+          "id": 6,
+          "referencia": "Artículo 104.2 del Real Decreto Legislativo 6/2015",
+          "texto": "La inmovilización se levantará en el momento en que cese la causa que la motivó."
+        },
+        {
+          "id": 7,
+          "referencia": "Artículo 25.3 del Reglamento General de Circulación",
+          "texto": "Salvo en los casos en que la autoridad judicial hubiera ordenado su depósito o intervención, en los cuales se estará a lo dispuesto por dicha autoridad, la inmovilización del vehículo se dejará sin efecto tan pronto como desaparezca la causa que la motivó o pueda sustituir al conductor otro habilitado para ello que ofrezca garantía suficiente a los agentes de la autoridad y cuya actuación haya sido requerida por el interesado."
+        }
+      ]
+    },
+    "manifestaciones": [
+      {
+        "id": 1,
+        "texto": "Conductor habilitado se hace cargo",
+        "respuesta": "SI/NO",
+        "datos_conductor_habilitado": {
+          "descripcion": "Datos de la persona que se hace cargo del vehículo:",
+          "campo_variable": "[[personasehacecargo]]",
+          "condiciones": "Con permiso de conducción en vigor y convenientemente autorizada por la persona interesada abajo firmante. Antes de hacerse cargo del vehículo se ha sometido voluntariamente a una prueba de alcoholemia en aire espirado y a la prueba de detección de drogas que han resultado negativas y se ha comprobado que posee permiso o licencia de conducción válida para su conducción."
+        }
+      },
+      {
+        "id": 2,
+        "texto": "Esperar a que desaparezcan las causas de la inmovilización",
+        "respuesta": "SI/NO",
+        "informacion_levantamiento": "El levantamiento de la Inmovilización o Depósito deberá hacerse justificando ante los miembros de la Agrupación de Tráfico de la Guardia Civil, la desaparición de las causas que motivaron tal medida; mediante llamada a Central de Comunicaciones de la Guardia Civil (062) puede ponerse en contacto, una vez desaparezcan las causas que motivaron la inmovilización, para solicitar esa presencia en el lugar de la inmovilización y, después, de realizar las pruebas de alcoholemia proceder a levantarla."
+      },
+      {
+        "id": 3,
+        "texto": "Queda enterado de las consecuencias del quebrantamiento de la inmovilización",
+        "respuesta": "SI/NO"
+      }
+    ],
+    "responsabilidades_penales": {
+      "descripcion": "Se le informa en este acto de las posibles responsabilidades penales en las que incurriría si volviera a utilizar el vehículo inmovilizado:",
+      "articulos": [
+        {
+          "referencia": "Artículo 556.1 del Código Penal",
+          "texto": "Serán castigados con la pena de prisión de tres meses a un año o multa de seis a dieciocho meses, los que, sin estar comprendidos en el artículo 550, resistieren o desobedecieren gravemente a la autoridad o sus agentes en el ejercicio de sus funciones, o al personal de seguridad privada, debidamente identificado, que desarrolle actividades de seguridad privada en cooperación y bajo el mando de las Fuerzas y Cuerpos de Seguridad."
+        },
+        {
+          "referencia": "Artículo 265 del Código Penal",
+          "texto": "El que destruyere, dañare de modo grave, o inutilizare para el servicio, aun de forma temporal, obras, establecimientos o instalaciones militares, buques de guerra, aeronaves militares, medios de transporte o transmisión militar, material de guerra, aprovisionamiento u otros medios o recursos afectados al servicio de las Fuerzas Armadas o de las Fuerzas y Cuerpos de Seguridad, será castigado con la pena de prisión de dos a cuatro años si el daño causado excediere de mil euros."
+        },
+        {
+          "referencia": "Artículo 380.1 del Código Penal",
+          "texto": "El que condujere un vehículo a motor o un ciclomotor con temeridad manifiesta y pusiere en concreto peligro la vida o la integridad de las personas será castigado con las penas de prisión de seis meses a dos años y privación del derecho a conducir vehículos a motor y ciclomotores por tiempo superior a uno y hasta seis años."
+        }
+      ]
+    },
+    "cierre": "Y para que conste, en el lugar, fecha y hora arriba consignados, se extiende la presente acta para constancia, que firman el Instructor y el Secretario, junto a la persona que conducía el vehículo y fue sometida a las pruebas de alcoholemia y, en su caso, el conductor expresamente autorizado para hacerse cargo del vehículo, tras haberla leído por sí."
+  }
+}

@@ -1,0 +1,96 @@
+{
+  "documento": {
+    "titulo": "DILIGENCIA DE CONOCIMIENTO E INICIO DE DILIGENCIAS",
+    "cuerpo": {
+      "descripcion": "En [[lugar]], término municipal de [[terminomunicipal]] y Partido Judicial de [[partidojudicial]], siendo las [[hora]] horas del día [[fechacompleta]], siendo el Instructor de las presentes el Guardia Civil con TIP número [[instructor]], y actuando como Secretario el Guardia Civil con TIP numero [[secretario]], mediante la presente, se hace constar que se procede a la identificación de D./Dña. [[nombrecompletoinvestigado]] con documento nacional de identidad número [[documentoidentificacion]], identidad acreditada documentalmente, nacido/a el [[fechanacimiento]], en la localidad de [[lugarnacimiento]], hijo de [[nombrepadre]] y de [[nombremadre]], con domicilio en [[domicilio]] con teléfono móvil [[telefono]] y correo electrónico [[correoelectronico]].",
+      "campos_variables": {
+        "lugar": "[[lugar]]",
+        "termino_municipal": "[[terminomunicipal]]",
+        "partido_judicial": "[[partidojudicial]]",
+        "hora_diligencia": "[[hora]]",
+        "fecha_completa": "[[fechacompleta]]",
+        "instructor_tip": "[[instructor]]",
+        "secretario_tip": "[[secretario]]",
+        "nombre_completo_investigado": "[[nombrecompletoinvestigado]]",
+        "documento_identificacion": "[[documentoidentificacion]]",
+        "fecha_nacimiento": "[[fechanacimiento]]",
+        "lugar_nacimiento": "[[lugarnacimiento]]",
+        "nombre_padre": "[[nombrepadre]]",
+        "nombre_madre": "[[nombremadre]]",
+        "domicilio": "[[domicilio]]",
+        "telefono": "[[telefono]]",
+        "correo_electronico": "[[correoelectronico]]"
+      }
+    },
+    "vehiculo": {
+      "descripcion": "La persona reseñada es conductor/a del vehículo tipo [[tipovehiculo]], marca [[marcavehiculo]], modelo [[modelovehiculo]] y placas de matrícula [[matricula]], siendo necesario para ello estar en posesión del Permiso de Conducción de la clase [[tipopermisoconducir]].",
+      "campos_variables": {
+        "tipo_vehiculo": "[[tipovehiculo]]",
+        "marca_vehiculo": "[[marcavehiculo]]",
+        "modelo_vehiculo": "[[modelovehiculo]]",
+        "matricula": "[[matricula]]",
+        "tipo_permiso_conducir": "[[tipopermisoconducir]]"
+      }
+    },
+    "motivo_identificacion": {
+      "descripcion": "La persona es identificada con motivo de:",
+      "opciones": [
+        {
+          "id": 1,
+          "texto": "Siniestro vial."
+        },
+        {
+          "id": 2,
+          "texto": "En el marco de actividad de control preventivo de las actividades que afectan a la conducción."
+        },
+        {
+          "id": 3,
+          "texto": "Por cometer una infracción tipificada en el Art. [[articulo]] del [[norma]]."
+        }
+      ]
+    },
+    "constatacion_carencia_autorizacion": {
+      "descripcion": "La Fuerza Actuante constató por medios oficiales que en el momento de ser identificado carecía de autorización administrativa para conducir el vehículo reseñado, información ratificada por la Central Operativa de Tráfico (COTA) de la Guardia Civil.",
+      "situaciones": [
+        {
+          "id": 1,
+          "texto": "No consta en los ficheros o Registro de Conductores de la Dirección General de Tráfico (DGT)."
+        },
+        {
+          "id": 2,
+          "texto": "No existe constancia de que ha obtenido licencia o permiso de conducción, expedido por un organismo competente en materia de tráfico y seguridad vial de un tercer país o países pertenecientes a la Unión Europea."
+        },
+        {
+          "id": 3,
+          "texto": "Existe registro en la Base de Datos de Conductores e Infractores de la DGT.",
+          "subopciones": [
+            {
+              "id": "3a",
+              "texto": "No ha obtenido licencia o permiso de conducción."
+            },
+            {
+              "id": "3b",
+              "texto": "Consta la pérdida de vigencia del permiso por resolución firme de la Jefatura Provincial de [[jefaturatrafico]] por pérdida total de puntos asignados.",
+              "campos_variables": {
+                "jefatura_trafico": "[[jefaturatrafico]]"
+              }
+            },
+            {
+              "id": "3c",
+              "texto": "Consta una condena judicial en firme, en vigor, siendo privado/a del derecho a conducir, por un tiempo de [[tiempoperdidavigenciajudicial]], decretada por el Juzgado de [[juzgadoquecondena]].",
+              "campos_variables": {
+                "tiempo_perdida_vigencia_judicial": "[[tiempoperdidavigenciajudicial]]",
+                "juzgado_que_condena": "[[juzgadoquecondena]]"
+              }
+            },
+            {
+              "id": "3d",
+              "texto": "Habiendo sido privado del derecho de conducir, no consta la realización y superación de los cursos de reeducación y sensibilización vial."
+            }
+          ]
+        }
+      ]
+    },
+    "cierre": "Y para que conste, en el lugar, fecha y hora arriba consignados, se extiende la presente diligencia que firman el Instructor y el Secretario en unión de la persona investigada, tras haberla leído por sí, y a la cual se hace entrega de una copia."
+  }
+}

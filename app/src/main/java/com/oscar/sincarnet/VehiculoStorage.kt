@@ -11,6 +11,7 @@ internal data class VehiculoData(
     val itvDate: String = "",
     val insurer: String = "",
     val vehicleType: String = "",
+    val clasePermiso: String = "",
     val ownerIsOther: Boolean = false,
     val ownerName: String = "",
     val ownerLastNames: String = "",
@@ -31,6 +32,7 @@ internal class VehiculoStorage(context: Context) {
         itvDate = prefs.getString(KEY_ITV_DATE, "").orEmpty(),
         insurer = prefs.getString(KEY_INSURER, "").orEmpty(),
         vehicleType = prefs.getString(KEY_VEHICLE_TYPE, "").orEmpty(),
+        clasePermiso = prefs.getString(KEY_CLASE_PERMISO, "").orEmpty(),
         ownerIsOther = prefs.getBoolean(KEY_OWNER_IS_OTHER, false),
         ownerName = prefs.getString(KEY_OWNER_NAME, "").orEmpty(),
         ownerLastNames = prefs.getString(KEY_OWNER_LAST_NAMES, "").orEmpty(),
@@ -49,6 +51,7 @@ internal class VehiculoStorage(context: Context) {
             .putString(KEY_ITV_DATE, data.itvDate)
             .putString(KEY_INSURER, data.insurer)
             .putString(KEY_VEHICLE_TYPE, data.vehicleType)
+            .putString(KEY_CLASE_PERMISO, data.clasePermiso)
             .putBoolean(KEY_OWNER_IS_OTHER, data.ownerIsOther)
             .putString(KEY_OWNER_NAME, data.ownerName)
             .putString(KEY_OWNER_LAST_NAMES, data.ownerLastNames)
@@ -68,6 +71,7 @@ internal class VehiculoStorage(context: Context) {
             .remove(KEY_ITV_DATE)
             .remove(KEY_INSURER)
             .remove(KEY_VEHICLE_TYPE)
+            .remove(KEY_CLASE_PERMISO)
             .remove(KEY_OWNER_IS_OTHER)
             .remove(KEY_OWNER_NAME)
             .remove(KEY_OWNER_LAST_NAMES)
@@ -87,6 +91,7 @@ internal class VehiculoStorage(context: Context) {
         const val KEY_ITV_DATE = "itv_date"
         const val KEY_INSURER = "insurer"
         const val KEY_VEHICLE_TYPE = "vehicle_type"
+        const val KEY_CLASE_PERMISO = "clase_permiso"
         const val KEY_OWNER_IS_OTHER = "owner_is_other"
         const val KEY_OWNER_NAME = "owner_name"
         const val KEY_OWNER_LAST_NAMES = "owner_last_names"

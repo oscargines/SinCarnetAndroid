@@ -4,6 +4,8 @@ import android.content.Context
 import org.json.JSONObject
 import java.io.InputStreamReader
 import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
@@ -124,22 +126,43 @@ internal fun replaceCitacionPlaceholders(
     ocurrenciaData: OcurrenciaDelitData,
     instructorTip: String,
     secretaryTip: String,
-    instructorUnit: String
+    instructorUnit: String,
+    vehicleData: VehiculoData = VehiculoData(),
+    manifestacionData: ManifestacionData? = null
 ): String {
     var result = text
 
-    // Lugar y fecha de la diligencia (desde OcurrenciaDelitStorage)
-    result = result.replace("[[lugar]]", ocurrenciaData.localidad)
-    result = result.replace("[[terminomunicipal]]", ocurrenciaData.terminoMunicipal)
-    result = result.replace("[[hora]]", ocurrenciaData.hora)
+    val isoLocale = Locale("es", "ES")
+    val inputDateFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy")
+    val inputTimeFormatter = DateTimeFormatter.ofPattern("HH:mm")
 
-    // Fecha con formato legible: "17 de marzo de 2026"
-    val fechaFormateada = runCatching {
-        val parsed = LocalDate.parse(ocurrenciaData.fecha, DateTimeFormatter.ofPattern("dd-MM-yyyy"))
-        val formatter = DateTimeFormatter.ofPattern("d 'de' MMMM 'de' yyyy", Locale("es", "ES"))
-        parsed.format(formatter)
-    }.getOrElse { ocurrenciaData.fecha }
-    result = result.replace("[[fechacompleta]]", fechaFormateada)
+    val shiftedDateTime = runCatching {
+        val baseDate = LocalDate.parse(ocurrenciaData.fecha, inputDateFormatter)
+        val baseTime = LocalTime.parse(ocurrenciaData.hora, inputTimeFormatter)
+        LocalDateTime.of(baseDate, baseTime).plusMinutes(10)
+    }.getOrNull()
+
+    val shiftedHour = shiftedDateTime?.toLocalTime()?.format(inputTimeFormatter)
+        ?: ocurrenciaData.hora
+    val shiftedDateRaw = shiftedDateTime?.toLocalDate()?.format(inputDateFormatter)
+        ?: ocurrenciaData.fecha
+    val shiftedDatePretty = runCatching {
+        val parsed = shiftedDateTime?.toLocalDate() ?: LocalDate.parse(ocurrenciaData.fecha, inputDateFormatter)
+        parsed.format(DateTimeFormatter.ofPattern("d 'de' MMMM 'de' yyyy", isoLocale))
+    }.getOrElse { shiftedDateRaw }
+
+    val lugarFormateado = buildList {
+        val carretera = ocurrenciaData.carretera.trim()
+        if (carretera.isNotBlank()) add(carretera.uppercase(isoLocale))
+        val pk = ocurrenciaData.pk.trim()
+        if (pk.isNotBlank()) add("PK $pk")
+    }.joinToString(", ").ifBlank { ocurrenciaData.localidad }
+
+    // Lugar y fecha de la diligencia (desde OcurrenciaDelitStorage)
+    result = result.replace("[[lugar]]", lugarFormateado)
+    result = result.replace("[[terminomunicipal]]", ocurrenciaData.terminoMunicipal)
+    result = result.replace("[[hora]]", shiftedHour)
+    result = result.replace("[[fechacompleta]]", shiftedDatePretty)
 
     // Partido judicial = municipio del juzgado
     result = result.replace("[[partidojudicial]]", courtData.municipioNombre)
@@ -153,7 +176,52 @@ internal fun replaceCitacionPlaceholders(
     val nombreCompleto = listOf(personData.firstName, personData.lastName1, personData.lastName2)
         .filter { it.isNotBlank() }.joinToString(" ")
     result = result.replace("[[nombrecompletoinvestigado]]", nombreCompleto)
-    result = result.replace("[[documentoidentificacion]]", "")
+    result = result.replace("[[documentoidentificacion]]", personData.documentIdentification)
+    result = result.replace("[[fechanacimiento]]", personData.birthDate)
+    result = result.replace("[[lugarnacimiento]]", personData.birthPlace)
+    result = result.replace("[[nombrepadre]]", personData.fatherName)
+    result = result.replace("[[nombremadre]]", personData.motherName)
+    result = result.replace("[[domicilio]]", personData.address)
+    result = result.replace("[[telefono]]", personData.phone)
+    result = result.replace("[[correoelectronico]]", personData.email)
+
+    // Datos del vehículo
+    result = result.replace("[[tipovehiculo]]", vehicleData.vehicleType)
+    result = result.replace("[[marcavehiculo]]", vehicleData.brand)
+    result = result.replace("[[modelovehiculo]]", vehicleData.model)
+    result = result.replace("[[matricula]]", vehicleData.plate)
+    result = result.replace("[[tipopermisoconducir]]", vehicleData.clasePermiso)
+
+    // Placeholders de otras diligencias
+    val fechaHoraBase = listOf(shiftedHour, shiftedDateRaw)
+        .filter { it.isNotBlank() }
+        .joinToString(" del día ")
+    result = result.replace("[[lugarhechos]]", ocurrenciaData.localidad)
+    result = result.replace("[[horafecha]]", fechaHoraBase)
+    result = result.replace("[[datosconductorydocumento]]", nombreCompleto)
+    result = result.replace("[[marca]]", vehicleData.brand)
+    result = result.replace("[[modelo]]", vehicleData.model)
+    result = result.replace("[[lugarfechahoralecturaderechos]]", "$fechaHoraBase en ${ocurrenciaData.localidad}")
+    result = result.replace("[[lugarfechahoracomisióndelito]]", "$fechaHoraBase en ${ocurrenciaData.terminoMunicipal}")
+    result = result.replace("[[nombreletrado]]", "")
+    result = result.replace("[[articulo]]", "")
+    result = result.replace("[[norma]]", "")
+    result = result.replace("[[jefaturatrafico]]", "")
+    result = result.replace("[[tiempoperdidavigenciajudicial]]", "")
+    result = result.replace("[[juzgadoquecondena]]", courtData.sedeNombre)
+
+    // Manifestación
+    result = result.replace("[[horafechamanifestacion]]", fechaHoraBase)
+    result = result.replace("[[segundafechahora]]", fechaHoraBase)
+    val respuestasManifestacion = manifestacionData?.respuestasPreguntas.orEmpty()
+    result = result.replace("[[primerapregunta]]", respuestasManifestacion[1].orEmpty())
+    result = result.replace("[[segundapregunta]]", respuestasManifestacion[2].orEmpty())
+    result = result.replace("[[tercerapregunta]]", respuestasManifestacion[3].orEmpty())
+    result = result.replace("[[cuartapregunta]]", respuestasManifestacion[4].orEmpty())
+    result = result.replace("[[quintapregunta]]", respuestasManifestacion[5].orEmpty())
+    result = result.replace("[[sextapregunta]]", respuestasManifestacion[6].orEmpty())
+    result = result.replace("[[septimapregunta]]", respuestasManifestacion[7].orEmpty())
+    result = result.replace("[[octavapregunta]]", respuestasManifestacion[8].orEmpty())
 
     // Datos del juzgado (campos individuales)
     result = result.replace("[[nombrejuzgado]]", courtData.sedeNombre)

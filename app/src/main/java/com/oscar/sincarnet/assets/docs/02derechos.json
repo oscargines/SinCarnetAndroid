@@ -1,0 +1,140 @@
+{
+  "documento": {
+    "titulo": "DILIGENCIA DE INVESTIGACIÓN E INFORMACIÓN DE DERECHOS Y DE LOS ELEMENTOS ESENCIALES DE LAS ACTUACIONES PARA IMPUGNAR LA INVESTIGACIÓN DEL INVESTIGADO NO DETENIDO",
+    "cuerpo": {
+      "descripcion": "En [[lugar]], término municipal de [[terminomunicipal]] y Partido Judicial de [[partidojudicial]], siendo las [[hora]] horas del día [[fechacompleta]], siendo el Instructor de las presentes el Guardia Civil con TIP número [[instructor]], y actuando como Secretario el Guardia Civil con TIP numero [[secretario]], mediante la presente, se hace constar que se procede a la identificación de D./Dña. [[nombrecompletoinvestigado]] con documento nacional de identidad número [[documentoidentificacion]], identidad acreditada documentalmente, nacido/a el [[fechanacimiento]], en la localidad de [[lugarnacimiento]], hijo de [[nombrepadre]] y de [[nombremadre]], con domicilio en [[domicilio]] con teléfono móvil [[telefono]] y correo electrónico [[correoelectronico]].",
+      "campos_variables": {
+        "lugar": "[[lugar]]",
+        "termino_municipal": "[[terminomunicipal]]",
+        "partido_judicial": "[[partidojudicial]]",
+        "hora_diligencia": "[[hora]]",
+        "fecha_completa": "[[fechacompleta]]",
+        "instructor_tip": "[[instructor]]",
+        "secretario_tip": "[[secretario]]",
+        "nombre_completo_investigado": "[[nombrecompletoinvestigado]]",
+        "documento_identificacion": "[[documentoidentificacion]]",
+        "fecha_nacimiento": "[[fechanacimiento]]",
+        "lugar_nacimiento": "[[lugarnacimiento]]",
+        "nombre_padre": "[[nombrepadre]]",
+        "nombre_madre": "[[nombremadre]]",
+        "domicilio": "[[domicilio]]",
+        "telefono": "[[telefono]]",
+        "correo_electronico": "[[correoelectronico]]"
+      }
+    },
+    "momento_informacion_derechos": {
+      "descripcion": "El investigado/a ha sido informado de sus derechos en un lenguaje sencillo y accesible:",
+      "opciones": [
+        {
+          "id": 1,
+          "texto": "En el mismo momento de la actuación."
+        },
+        {
+          "id": 2,
+          "texto": "En el momento más inmediato posible, al no entender la lengua en que se instruyen las diligencias."
+        }
+      ]
+    },
+    "hechos_investigacion": {
+      "descripcion": "El investigado es informado por escrito de los siguientes hechos y razones motivadoras de su investigación:",
+      "puntos": [
+        {
+          "id": "1",
+          "titulo": "Lugar, fecha y hora de la investigación",
+          "campo_variable": "[[lugarfechahoralecturaderechos]]"
+        },
+        {
+          "id": "2",
+          "titulo": "Lugar, fecha y hora de la comisión del delito",
+          "campo_variable": "[[lugarfechahoracomisióndelito]]"
+        },
+        {
+          "id": "3",
+          "titulo": "Breve resumen de los hechos",
+          "texto": "CONDUCIR UN VEHÍCULO A MOTOR EN LOS CASOS DE PÉRDIDA DEL DERECHOS A CONDUCIR VEHÍCULOS A MOTOR"
+        },
+        {
+          "id": "4",
+          "titulo": "Calificación penal provisional de los hechos",
+          "texto": "DELITO CONTRA LA SEGURIDAD VIAL, CONDUCIR UN VEHÍCULO A MOTOR CARECIENDO DE PERMISO EN VIGOR EN LOS CASOS ESTIPULADOS EN EL ARTÍCULO 384 DEL CÓDIGO PENAL"
+        },
+        {
+          "id": "5",
+          "titulo": "Relación de indicios de los que se deduce la participación del investigado en el hecho",
+          "texto": "OBSERVACIÓN DIRECTA DE LA ACTITUD DELICITIVA"
+        }
+      ]
+    },
+    "derechos_articulo_520": {
+      "descripcion": "Seguidamente el investigado, de conformidad con lo dispuesto en el artículo 520 de la LECrim, es informado de los derechos que le asisten y especialmente de los siguientes:",
+      "derechos": [
+        {
+          "id": "a",
+          "texto": "Derecho a guardar silencio no declarando si no quiere, a no contestar alguna o algunas de las preguntas que le formulen, o a manifestar que sólo declarará ante el juez."
+        },
+        {
+          "id": "b",
+          "texto": "Derecho a no declarar contra sí mismo y a no confesarse culpable."
+        },
+        {
+          "id": "c",
+          "texto": "Derecho a designar Abogado y a ser asistido por él sin demora injustificada, que incluye el derecho a entrevistarse con el letrado previamente y con posterioridad a su declaración. Si el investigado/a no asignara Abogado, se procederá a la designación de uno del turno de oficio. En caso de que, debido a la lejanía geográfica no sea posible de inmediato la asistencia de letrado, se facilitará al investigado/a comunicación telefónica o por videoconferencia con aquél, salvo que dicha comunicación sea imposible."
+        },
+        {
+          "id": "d",
+          "texto": "Derecho a que se le comuniquen los elementos esenciales de las actuaciones para impugnar la legalidad de la investigación."
+        },
+        {
+          "id": "h",
+          "texto": "Derecho a ser asistido gratuitamente por un intérprete, cuando se trate de extranjero que no comprenda o no hable el castellano o la lengua oficial de la actuación de que se trate, o de personas sordas o con discapacidad auditiva, así como de otras personas con dificultades del lenguaje."
+        },
+        {
+          "id": "j",
+          "texto": "Derecho a solicitar asistencia jurídica gratuita, procedimiento para hacerlo y condiciones para obtenerla. (En el folio siguiente a esta diligencia consta el procedimiento para hacerlo y las condiciones para obtenerla)."
+        }
+      ]
+    },
+    "manifestacion_investigado": {
+      "descripcion": "En uso de los expresados derechos, el investigado manifiesta su deseo de:",
+      "opciones": [
+        {
+          "id": 1,
+          "texto": "PRESTAR DECLARACIÓN",
+          "respuesta": "SI/NO"
+        },
+        {
+          "id": 2,
+          "texto": "RENUNCIA A LA ASISTENCIA LETRADA",
+          "nota": "Únicamente si los hechos son constitutivos de un presunto delito contra la seguridad vial.",
+          "respuesta": "SI/NO"
+        },
+        {
+          "id": 3,
+          "texto": "SER ASISTIDO POR EL LETRADO/A D./DÑA.",
+          "campo_variable": "[[nombreletrado]]",
+          "respuesta": "SI/NO"
+        },
+        {
+          "id": 4,
+          "texto": "SER ASISTIDO POR EL LETRADO DEL TURNO DE OFICIO.",
+          "respuesta": "SI/NO"
+        },
+        {
+          "id": 5,
+          "texto": "ACCEDER A LOS ELEMENTOS ESENCIALES PARA IMPUGNAR LA LEGALIDAD DE LA INVESTIGACIÓN.",
+          "respuesta": "SI/NO"
+        },
+        {
+          "id": 6,
+          "texto": "SER ASISTIDO POR UN INTÉRPRETE.",
+          "respuesta": "SI/NO"
+        }
+      ]
+    },
+    "elementos_esenciales_impugnacion": {
+      "descripcion": "Asimismo, y a su requerimiento, se le informa de los siguientes elementos esenciales de las actuaciones para impugnar la legalidad de la investigación:",
+      "texto": "EXPOSICIÓN SUCINTA DE LOS HECHOS OBSERVADOS"
+    },
+    "cierre": "Y para que conste, en el lugar, fecha y hora arriba consignados, se extiende la presente diligencia que firma el Instructor y el Secretario, junto al investigado, que tras haberla leído por sí, asegura quedar enterado y al cual se hace entrega de un resumen de la presente diligencia."
+  }
+}

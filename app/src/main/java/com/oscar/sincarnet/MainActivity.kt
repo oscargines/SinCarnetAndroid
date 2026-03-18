@@ -34,6 +34,7 @@ private const val COURTS_ROUTE = "courts"
 private const val ATESTADO_DATA_ROUTE = "atestado_data"
 private const val ATESTADO_OCURRENCIA_DELIT_ROUTE = "atestado_ocurrencia_delit"
 private const val ATESTADO_PERSON_DATA_ROUTE = "atestado_person_data"
+private const val ATESTADO_MANIFESTACION_ROUTE = "atestado_manifestacion"
 private const val ATESTADO_VEHICLE_DATA_ROUTE = "atestado_vehicle_data"
 private const val ATESTADO_COURT_DATA_ROUTE = "atestado_court_data"
 private const val ATESTADO_ACTING_DATA_ROUTE = "atestado_acting_data"
@@ -56,6 +57,7 @@ class MainActivity : ComponentActivity() {
                 val actuantesStorage = remember { ActuantesStorage(applicationContext) }
                 val personaStorage = remember { PersonaInvestigadaStorage(applicationContext) }
                 val vehiculoStorage = remember { VehiculoStorage(applicationContext) }
+                val manifestacionStorage = remember { ManifestacionStorage(applicationContext) }
                 val tipHistory = actuantesStorage.getTipHistory()
                 val unitHistory = actuantesStorage.getUnitHistory()
 
@@ -96,6 +98,7 @@ class MainActivity : ComponentActivity() {
                 var vehicleItvDate by rememberSaveable { mutableStateOf("") }
                 var vehicleInsurer by rememberSaveable { mutableStateOf("") }
                 var vehicleType by rememberSaveable { mutableStateOf("") }
+                var vehicleClasePermiso by rememberSaveable { mutableStateOf("") }
                 var vehicleOwnerIsOther by rememberSaveable { mutableStateOf(false) }
                 var vehicleOwnerName by rememberSaveable { mutableStateOf("") }
                 var vehicleOwnerLastNames by rememberSaveable { mutableStateOf("") }
@@ -112,6 +115,7 @@ class MainActivity : ComponentActivity() {
                     vehicleItvDate = data.itvDate
                     vehicleInsurer = data.insurer
                     vehicleType = data.vehicleType
+                    vehicleClasePermiso = data.clasePermiso
                     vehicleOwnerIsOther = data.ownerIsOther
                     vehicleOwnerName = data.ownerName
                     vehicleOwnerLastNames = data.ownerLastNames
@@ -148,6 +152,7 @@ class MainActivity : ComponentActivity() {
                 val resetAtestadoSession: () -> Unit = {
                     signaturesBySigner.clear()
                     actingStatusMessage = ""
+                    manifestacionStorage.clearCurrent()
                     investigatedNationality = "España"
                     investigatedSex = getString(R.string.person_data_sex_unknown)
                     investigatedFirstName = ""
@@ -168,6 +173,7 @@ class MainActivity : ComponentActivity() {
                     vehicleItvDate = ""
                     vehicleInsurer = ""
                     vehicleType = ""
+                    vehicleClasePermiso = ""
                     vehicleOwnerIsOther = false
                     vehicleOwnerName = ""
                     vehicleOwnerLastNames = ""
@@ -282,22 +288,24 @@ class MainActivity : ComponentActivity() {
                                         runCatching {
                                             val courtData = JuzgadoAtestadoStorage(applicationContext).loadCurrent()
                                             val pdfPersonData = PersonaInvestigadaStorage(applicationContext).loadCurrent()
-                                            val citacionDoc = loadCitacionDocument(applicationContext, courtData.tipoJuicio)
                                             val ocurrenciaData = OcurrenciaDelitStorage(applicationContext).loadCurrent()
+                                            val vehicleData = VehiculoStorage(applicationContext).loadCurrent()
+                                            val manifestacionData = ManifestacionStorage(applicationContext).loadCurrent()
                                             val investigatedWantsToSign = signaturesBySigner.containsKey(SIGNER_INVESTIGATED)
                                             val mappedSignatures = mapSignaturesForPdf(
                                                 signaturesBySigner = signaturesBySigner,
                                                 investigatedWantsToSign = investigatedWantsToSign,
                                                 investigatedNoSignText = getString(R.string.atestado_signature_no_desire)
                                             )
-                                            generateAtestadoSignaturesPdf(
+                                            generateAtestadoContinuousPdf(
                                                 context = applicationContext,
-                                                signatures = mappedSignatures,
-                                                investigatedNoSignText = getString(R.string.atestado_signature_no_desire),
                                                 courtData = courtData,
                                                 personData = pdfPersonData,
                                                 ocurrenciaData = ocurrenciaData,
-                                                citacionDocument = citacionDoc,
+                                                vehicleData = vehicleData,
+                                                manifestacionData = manifestacionData,
+                                                signatures = mappedSignatures,
+                                                investigatedNoSignText = getString(R.string.atestado_signature_no_desire),
                                                 instructorTip = instructorTip,
                                                 secretaryTip = secretaryTip,
                                                 instructorUnit = instructorUnit
@@ -337,6 +345,8 @@ class MainActivity : ComponentActivity() {
                                 onInsurerChange = { vehicleInsurer = it },
                                 vehicleType = vehicleType,
                                 onVehicleTypeChange = { vehicleType = it },
+                                clasePermiso = vehicleClasePermiso,
+                                onClasePermisoChange = { vehicleClasePermiso = it },
                                 ownerIsOther = vehicleOwnerIsOther,
                                 onOwnerIsOtherChange = { vehicleOwnerIsOther = it },
                                 ownerName = vehicleOwnerName,
@@ -360,6 +370,7 @@ class MainActivity : ComponentActivity() {
                                             itvDate = vehicleItvDate,
                                             insurer = vehicleInsurer,
                                             vehicleType = vehicleType,
+                                            clasePermiso = vehicleClasePermiso,
                                             ownerIsOther = vehicleOwnerIsOther,
                                             ownerName = vehicleOwnerName,
                                             ownerLastNames = vehicleOwnerLastNames,
@@ -380,7 +391,15 @@ class MainActivity : ComponentActivity() {
                                 onBackClick = { currentRoute = ATESTADO_DATA_ROUTE },
                                 onRightsClick = {
                                     // Se implementará en una iteración posterior.
+                                },
+                                onManifestacionClick = {
+                                    currentRoute = ATESTADO_MANIFESTACION_ROUTE
                                 }
+                            )
+
+                            ATESTADO_MANIFESTACION_ROUTE -> ManifestacionScreen(
+                                modifier = Modifier.fillMaxSize().padding(innerPadding),
+                                onBackClick = { currentRoute = ATESTADO_PERSON_DATA_ROUTE }
                             )
 
                             ATESTADO_ACTING_DATA_ROUTE -> DatosActuantesScreen(
@@ -482,6 +501,12 @@ class MainActivity : ComponentActivity() {
                                 },
                                 onGenerateAtestadoClick = { wantsToSign, hasSecondDriver ->
                                     runCatching {
+                                        // Incluir siempre datos del juzgado y persona investigada en el PDF
+                                        val courtData = JuzgadoAtestadoStorage(applicationContext).loadCurrent()
+                                        val pdfPersonData = PersonaInvestigadaStorage(applicationContext).loadCurrent()
+                                        val ocurrenciaData = OcurrenciaDelitStorage(applicationContext).loadCurrent()
+                                        val vehicleData = VehiculoStorage(applicationContext).loadCurrent()
+                                        val manifestacionData = ManifestacionStorage(applicationContext).loadCurrent()
                                         val signaturesToUse = signaturesBySigner.toMutableMap().apply {
                                             if (!hasSecondDriver) remove(SIGNER_SECOND_DRIVER)
                                         }
@@ -490,19 +515,15 @@ class MainActivity : ComponentActivity() {
                                             investigatedWantsToSign = wantsToSign,
                                             investigatedNoSignText = getString(R.string.atestado_signature_no_desire)
                                         )
-                                        // Incluir siempre datos del juzgado y persona investigada en el PDF
-                                        val courtData = JuzgadoAtestadoStorage(applicationContext).loadCurrent()
-                                        val pdfPersonData = PersonaInvestigadaStorage(applicationContext).loadCurrent()
-                                        val citacionDoc = loadCitacionDocument(applicationContext, courtData.tipoJuicio)
-                                        val ocurrenciaData = OcurrenciaDelitStorage(applicationContext).loadCurrent()
-                                        generateAtestadoSignaturesPdf(
+                                        generateAtestadoContinuousPdf(
                                             context = applicationContext,
-                                            signatures = mappedSignatures,
-                                            investigatedNoSignText = getString(R.string.atestado_signature_no_desire),
                                             courtData = courtData,
                                             personData = pdfPersonData,
                                             ocurrenciaData = ocurrenciaData,
-                                            citacionDocument = citacionDoc,
+                                            vehicleData = vehicleData,
+                                            manifestacionData = manifestacionData,
+                                            signatures = mappedSignatures,
+                                            investigatedNoSignText = getString(R.string.atestado_signature_no_desire),
                                             instructorTip = instructorTip,
                                             secretaryTip = secretaryTip,
                                             instructorUnit = instructorUnit

@@ -5,6 +5,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.graphics.Paint
+import android.graphics.Path
 import android.graphics.RectF
 import android.graphics.Typeface
 import android.graphics.pdf.PdfDocument
@@ -123,7 +124,7 @@ internal fun generateAtestadoSignaturesPdf(
     val textX = atestadoBoxLeft + 4f
     // Texto interior con padding: 4 mm desde el borde izquierdo de la caja
     val textY = atestadoBoxTop + (atestadoBoxHeight + textPaintSmall.textSize) / 2f
-    canvas.drawText(atestadoNumeroText, textX, textY, textPaintSmall)
+    drawTextEmbedded(canvas, atestadoNumeroText, textX, textY, textPaintSmall)
 
     // ════════════════════════════════════════════════════════════════════════════
     // ELEMENTO 2: Caja "FOLIO Nº" (arriba a la derecha)
@@ -149,7 +150,7 @@ internal fun generateAtestadoSignaturesPdf(
     val folioTextX = folioBoxLeft + 2f
     // Texto interior con padding: 2 mm desde el borde izquierdo de la caja
     val folioTextY = folioBoxTop + (folioBoxHeight + textPaintSmall.textSize) / 2f
-    canvas.drawText("FOLIO Nº", folioTextX, folioTextY, textPaintSmall)
+    drawTextEmbedded(canvas, "FOLIO Nº", folioTextX, folioTextY, textPaintSmall)
 
     // ════════════════════════════════════════════════════════════════════════════
     // ELEMENTO 3: Líneas guía laterales (dividisoras de columnas)
@@ -178,12 +179,17 @@ internal fun generateAtestadoSignaturesPdf(
     // Distancia LEFT: $contentLeft pt (margen izquierdo: 5 mm)
     // Dimensiones: 8 mm ancho x variable altura (proporcional)
     loadBitmapFromAssets(context, "images/EscEspana.png")?.let { bmp ->
+        val aspect = bmp.height.toFloat() / bmp.width.toFloat().coerceAtLeast(1f)
+        val baseWidth = mmToPt(ESC_ESPANA_WIDTH_MM)
+        val baseHeight = baseWidth * aspect
+        val targetHeight = baseHeight + mmToPt(1f)
+        val targetWidth = (targetHeight / aspect).coerceAtLeast(1f)
         drawBitmapAlignedTopLeft(
             canvas = canvas,
             bitmap = bmp,
             left = contentLeft,
             top = headerTop,
-            targetWidth = mmToPt(ESC_ESPANA_WIDTH_MM)
+            targetWidth = targetWidth
         )
     }
 
@@ -195,12 +201,17 @@ internal fun generateAtestadoSignaturesPdf(
     // Distancia RIGHT: 1 mm del borde derecho de columna derecha
     // Dimensiones: 7 mm ancho x variable altura (proporcional)
     loadBitmapFromAssets(context, "images/EscGuardiaCivil.png")?.let { bmp ->
+        val aspect = bmp.height.toFloat() / bmp.width.toFloat().coerceAtLeast(1f)
+        val baseWidth = mmToPt(ESC_GC_WIDTH_MM)
+        val baseHeight = baseWidth * aspect
+        val targetHeight = (baseHeight - mmToPt(1f)).coerceAtLeast(mmToPt(1f))
+        val targetWidth = (targetHeight / aspect).coerceAtLeast(1f)
         drawBitmapAlignedTopRight(
             canvas = canvas,
             bitmap = bmp,
-            right = centerColRightX + mmToPt(1f) + mmToPt(ESC_GC_WIDTH_MM),
+            right = centerColRightX + mmToPt(1f) + targetWidth,
             top = headerTop,
-            targetWidth = mmToPt(ESC_GC_WIDTH_MM)
+            targetWidth = targetWidth
         )
     }
 
@@ -233,7 +244,7 @@ internal fun generateAtestadoSignaturesPdf(
     // BOTTOM: antes de $bottomMargin pt
     citacionDocument?.let { citacion ->
         // Título
-        canvas.drawText(citacion.titulo, bodyLeft, cursorY, titlePaint)
+        drawTextEmbedded(canvas, citacion.titulo, bodyLeft, cursorY, titlePaint)
         cursorY += titlePaint.fontMetrics.descent + TITLE_BODY_GAP_PT
         
         // Cuerpo principal
@@ -251,7 +262,7 @@ internal fun generateAtestadoSignaturesPdf(
         // Secciones
         citacion.secciones.forEach { seccion ->
             if (seccion.titulo.isNotBlank()) {
-                canvas.drawText(seccion.titulo, bodyLeft, cursorY, Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                drawTextEmbedded(canvas, seccion.titulo, bodyLeft, cursorY, Paint(Paint.ANTI_ALIAS_FLAG).apply {
                     color = Color.BLACK
                     textSize = 11f
                     typeface = calibriBold
@@ -287,7 +298,7 @@ internal fun generateAtestadoSignaturesPdf(
         
         // Enterado
         if (citacion.enteradoTitulo.isNotBlank()) {
-            canvas.drawText(citacion.enteradoTitulo, bodyLeft, cursorY, Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            drawTextEmbedded(canvas, citacion.enteradoTitulo, bodyLeft, cursorY, Paint(Paint.ANTI_ALIAS_FLAG).apply {
                 color = Color.BLACK
                 textSize = 11f
                 typeface = calibriBold
@@ -312,18 +323,28 @@ internal fun generateAtestadoSignaturesPdf(
     // Espacio entre fila superior e inferior de firmas: $signatureGap pt
     val spaceBetweenSignatures = mmToPt(20f)
     // Espacio entre cajas de Instructor y Secretario: 20 mm
+    val maxSignatureBoxWidth = mmToPt(50f)
+    val maxSignatureBoxHeight = mmToPt(40f)
     val previousTopRowHeight = (availableHeight * 0.42f).coerceAtLeast(92f)
     val previousBottomRowHeight = (availableHeight - previousTopRowHeight - signatureGap).coerceAtLeast(92f)
-    val topRowHeight = (previousTopRowHeight - mmToPt(1f)).coerceAtLeast(80f)
+    val topRowHeight = (previousTopRowHeight - mmToPt(1f))
+        .coerceAtLeast(80f)
+        .coerceAtMost(maxSignatureBoxHeight)
     // Altura de fila superior (Instructor + Secretario): +2 mm respecto al ajuste anterior
-    val bottomRowHeight = (previousBottomRowHeight - mmToPt(3f)).coerceAtLeast(80f)
+    val bottomRowHeight = (previousBottomRowHeight - mmToPt(3f))
+        .coerceAtLeast(80f)
+        .coerceAtMost(maxSignatureBoxHeight)
     // Altura de fila inferior (Investigado): reducida 3 mm
     
     val topRowWidth = centerColRightX - centerColLeftX
     // Ancho disponible fila superior: ${topRowWidth.toInt()} pt
-    val topBoxWidth = ((topRowWidth - spaceBetweenSignatures) / 2f).coerceAtLeast(40f)
+    val topBoxWidth = ((topRowWidth - spaceBetweenSignatures) / 2f)
+        .coerceAtLeast(40f)
+        .coerceAtMost(maxSignatureBoxWidth)
     // Ancho de cada caja (Instructor y Secretario): calculado para dejar 20 mm entre ellas
-    val investigatedBoxWidth = ((centerColRightX - centerColLeftX) / 3f).coerceAtLeast(40f)
+    val investigatedBoxWidth = ((centerColRightX - centerColLeftX) / 3f)
+        .coerceAtLeast(40f)
+        .coerceAtMost(maxSignatureBoxWidth)
     // Ancho de caja investigado: ${investigatedBoxWidth.toInt()} pt
 
     // Posicionamiento centralizado: calcular offset para centrar las dos cajas
@@ -472,7 +493,7 @@ private fun drawSignatureBlock(
     textPaint: Paint,
     tipPaint: Paint
 ) {
-    canvas.drawText(title, rect.left + 8f, rect.top + 14f, textPaint)
+    drawTextEmbedded(canvas, title, rect.left + 8f, rect.top + 14f, textPaint)
 
     val tipText = tip?.takeIf { it.isNotBlank() }?.let { "TIP: $it" }
     val tipAreaHeight = if (tipText == null) 0f else 18f
@@ -499,18 +520,18 @@ private fun drawSignatureBlock(
 
         is PdfSignatureContent.Text -> {
             val text = content.value.ifBlank { fallbackText }
-            canvas.drawText(text, rect.left + 12f, rect.centerY(), textPaint)
+            drawTextEmbedded(canvas, text, rect.left + 12f, rect.centerY(), textPaint)
         }
 
         null -> {
-            canvas.drawText(fallbackText, rect.left + 12f, rect.centerY(), textPaint)
+            drawTextEmbedded(canvas, fallbackText, rect.left + 12f, rect.centerY(), textPaint)
         }
     }
 
     if (tipText != null) {
         val tipX = rect.left + ((rect.width() - tipPaint.measureText(tipText)) / 2f)
         val tipY = rect.bottom - 8f
-        canvas.drawText(tipText, tipX, tipY, tipPaint)
+        drawTextEmbedded(canvas, tipText, tipX, tipY, tipPaint)
     }
 }
 
@@ -537,6 +558,20 @@ private fun drawMultilineText(
     }
     if (current.isNotEmpty()) lines.add(current.toString())
     var cy = y
-    for (line in lines) { canvas.drawText(line, x, cy, paint); cy += lineHeight }
+    for (line in lines) { drawTextEmbedded(canvas, line, x, cy, paint); cy += lineHeight }
     return cy
 }
+
+private fun drawTextEmbedded(
+    canvas: android.graphics.Canvas,
+    text: String,
+    x: Float,
+    y: Float,
+    paint: Paint
+) {
+    if (text.isEmpty()) return
+    val path = Path()
+    paint.getTextPath(text, 0, text.length, x, y, path)
+    canvas.drawPath(path, paint)
+}
+

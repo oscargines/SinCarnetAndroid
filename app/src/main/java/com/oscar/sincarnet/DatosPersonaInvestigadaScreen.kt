@@ -58,7 +58,8 @@ private val PERSON_DATE_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPatte
 fun DatosPersonaInvestigadaScreen(
     modifier: Modifier = Modifier,
     onBackClick: () -> Unit = {},
-    onRightsClick: () -> Unit = {}
+    onRightsClick: () -> Unit = {},
+    onManifestacionClick: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val isInPreview = LocalInspectionMode.current
@@ -70,6 +71,7 @@ fun DatosPersonaInvestigadaScreen(
     var firstName by rememberSaveable { mutableStateOf(initialData.firstName) }
     var lastName1 by rememberSaveable { mutableStateOf(initialData.lastName1) }
     var lastName2 by rememberSaveable { mutableStateOf(initialData.lastName2) }
+    var documentIdentification by rememberSaveable { mutableStateOf(initialData.documentIdentification) }
     var address by rememberSaveable { mutableStateOf(initialData.address) }
     var birthDate by rememberSaveable { mutableStateOf(initialData.birthDate) }
     var birthPlace by rememberSaveable { mutableStateOf(initialData.birthPlace) }
@@ -77,6 +79,12 @@ fun DatosPersonaInvestigadaScreen(
     var motherName by rememberSaveable { mutableStateOf(initialData.motherName) }
     var phone by rememberSaveable { mutableStateOf(initialData.phone) }
     var email by rememberSaveable { mutableStateOf(initialData.email) }
+    var rightToRemainSilentInformed by rememberSaveable { mutableStateOf(initialData.rightToRemainSilentInformed) }
+    var waivesLegalAssistance by rememberSaveable { mutableStateOf(initialData.waivesLegalAssistance) }
+    var requestsPrivateLawyer by rememberSaveable { mutableStateOf(initialData.requestsPrivateLawyer) }
+    var requestsDutyLawyer by rememberSaveable { mutableStateOf(initialData.requestsDutyLawyer) }
+    var accessesEssentialProceedings by rememberSaveable { mutableStateOf(initialData.accessesEssentialProceedings) }
+    var needsInterpreter by rememberSaveable { mutableStateOf(initialData.needsInterpreter) }
 
     var nationalityOptions by remember { mutableStateOf(NATIONALITY_FALLBACK) }
     var showDeleteConfirmation by rememberSaveable { mutableStateOf(false) }
@@ -84,6 +92,7 @@ fun DatosPersonaInvestigadaScreen(
     var showRequiredFieldsError by rememberSaveable { mutableStateOf(false) }
     var requiredFieldsErrorText by rememberSaveable { mutableStateOf("") }
     var showBirthDatePicker by rememberSaveable { mutableStateOf(false) }
+    var rightsDialogStep by rememberSaveable { mutableStateOf<Int?>(null) }
 
     LaunchedEffect(Unit) {
         if (isInPreview) { nationalityOptions = NATIONALITY_FALLBACK; return@LaunchedEffect }
@@ -104,6 +113,7 @@ fun DatosPersonaInvestigadaScreen(
     val nameLabel = stringResource(R.string.person_data_name)
     val lastName1Label = stringResource(R.string.person_data_last_name_1)
     val lastName2Label = stringResource(R.string.person_data_last_name_2)
+    val documentIdentificationLabel = stringResource(R.string.person_data_document_identification)
     val addressLabel = stringResource(R.string.person_data_address)
     val birthDateLabel = stringResource(R.string.person_data_birth_date)
     val birthPlaceLabel = stringResource(R.string.person_data_birth_place)
@@ -111,6 +121,14 @@ fun DatosPersonaInvestigadaScreen(
     val motherNameLabel = stringResource(R.string.person_data_mother_name)
     val phoneLabel = stringResource(R.string.person_data_phone)
     val emailLabel = stringResource(R.string.person_data_email)
+    val canOpenManifestacion = listOf(
+        rightToRemainSilentInformed,
+        waivesLegalAssistance,
+        requestsPrivateLawyer,
+        requestsDutyLawyer,
+        accessesEssentialProceedings,
+        needsInterpreter
+    ).any { it == true }
 
     Column(
         modifier = modifier
@@ -137,6 +155,7 @@ fun DatosPersonaInvestigadaScreen(
                 OutlinedTextField(value = firstName, onValueChange = { firstName = it.uppercase() }, modifier = Modifier.fillMaxWidth(), singleLine = true, label = { Text(stringResource(R.string.person_data_name)) })
                 OutlinedTextField(value = lastName1, onValueChange = { lastName1 = it.uppercase() }, modifier = Modifier.fillMaxWidth(), singleLine = true, label = { Text(stringResource(R.string.person_data_last_name_1)) })
                 OutlinedTextField(value = lastName2, onValueChange = { lastName2 = it.uppercase() }, modifier = Modifier.fillMaxWidth(), singleLine = true, label = { Text(stringResource(R.string.person_data_last_name_2)) })
+                OutlinedTextField(value = documentIdentification, onValueChange = { documentIdentification = it.uppercase() }, modifier = Modifier.fillMaxWidth(), singleLine = true, label = { Text(stringResource(R.string.person_data_document_identification)) })
                 OutlinedTextField(value = address, onValueChange = { address = it }, modifier = Modifier.fillMaxWidth(), label = { Text(stringResource(R.string.person_data_address)) })
 
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Top) {
@@ -165,7 +184,8 @@ fun DatosPersonaInvestigadaScreen(
                     val requiredFields = listOf(
                         nationalityLabel to nationality, sexLabel to sex,
                         nameLabel to firstName, lastName1Label to lastName1,
-                        lastName2Label to lastName2, addressLabel to address,
+                        lastName2Label to lastName2, documentIdentificationLabel to documentIdentification,
+                        addressLabel to address,
                         birthDateLabel to birthDate, birthPlaceLabel to birthPlace,
                         fatherNameLabel to fatherName, motherNameLabel to motherName,
                         phoneLabel to phone, emailLabel to email
@@ -178,9 +198,16 @@ fun DatosPersonaInvestigadaScreen(
                         storage.saveCurrent(PersonaInvestigadaData(
                             nationality = nationality, sex = sex,
                             firstName = firstName, lastName1 = lastName1, lastName2 = lastName2,
+                            documentIdentification = documentIdentification,
                             address = address, birthDate = birthDate, birthPlace = birthPlace,
                             fatherName = fatherName, motherName = motherName,
-                            phone = phone, email = email
+                            phone = phone, email = email,
+                            rightToRemainSilentInformed = rightToRemainSilentInformed,
+                            waivesLegalAssistance = waivesLegalAssistance,
+                            requestsPrivateLawyer = requestsPrivateLawyer,
+                            requestsDutyLawyer = requestsDutyLawyer,
+                            accessesEssentialProceedings = accessesEssentialProceedings,
+                            needsInterpreter = needsInterpreter
                         ))
                         showSaveConfirmation = true
                     }
@@ -197,7 +224,10 @@ fun DatosPersonaInvestigadaScreen(
         }
 
         Button(
-            onClick = onRightsClick,
+            onClick = {
+                onRightsClick()
+                rightsDialogStep = 1
+            },
             modifier = Modifier.fillMaxWidth(),
             shape = MaterialTheme.shapes.medium,
             colors = ButtonDefaults.buttonColors(
@@ -206,6 +236,20 @@ fun DatosPersonaInvestigadaScreen(
             )
         ) {
             Text(stringResource(R.string.person_data_rights))
+        }
+
+        if (canOpenManifestacion) {
+            Button(
+                onClick = onManifestacionClick,
+                modifier = Modifier.fillMaxWidth(),
+                shape = MaterialTheme.shapes.medium,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.tertiary,
+                    contentColor = MaterialTheme.colorScheme.onTertiary
+                )
+            ) {
+                Text(stringResource(R.string.manifestacion_button))
+            }
         }
 
         Row(
@@ -229,8 +273,15 @@ fun DatosPersonaInvestigadaScreen(
                     nationality = "España"
                     sex = context.getString(R.string.person_data_sex_unknown)
                     firstName = ""; lastName1 = ""; lastName2 = ""
+                    documentIdentification = ""
                     address = ""; birthDate = ""; birthPlace = ""
                     fatherName = ""; motherName = ""; phone = ""; email = ""
+                    rightToRemainSilentInformed = null
+                    waivesLegalAssistance = null
+                    requestsPrivateLawyer = null
+                    requestsDutyLawyer = null
+                    accessesEssentialProceedings = null
+                    needsInterpreter = null
                 }) { Text(stringResource(R.string.person_data_delete)) }
             },
             dismissButton = {
@@ -277,6 +328,198 @@ fun DatosPersonaInvestigadaScreen(
                 TextButton(onClick = { showBirthDatePicker = false }) { Text(stringResource(R.string.no_option)) }
             }
         ) { DatePicker(state = datePickerState) }
+    }
+
+    if (rightsDialogStep == 1) {
+        AlertDialog(
+            onDismissRequest = { rightsDialogStep = null },
+            title = { Text(stringResource(R.string.person_data_rights_dialog_title)) },
+            text = { Text(stringResource(R.string.person_data_rights_intro_message)) },
+            confirmButton = {
+                TextButton(onClick = { rightsDialogStep = 2 }) {
+                    Text(stringResource(R.string.continue_action))
+                }
+            }
+        )
+    }
+
+    if (rightsDialogStep == 2) {
+        AlertDialog(
+            onDismissRequest = { rightsDialogStep = null },
+            title = { Text(stringResource(R.string.person_data_rights_dialog_title)) },
+            text = {
+                YesNoQuestionBlock(
+                    questionText = stringResource(R.string.person_data_right_silence_message),
+                    selectedValue = rightToRemainSilentInformed,
+                    onValueChange = { value -> rightToRemainSilentInformed = value }
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        storage.saveRightsSelections(
+                            rightToRemainSilentInformed = rightToRemainSilentInformed,
+                            waivesLegalAssistance = waivesLegalAssistance,
+                            requestsPrivateLawyer = requestsPrivateLawyer,
+                            requestsDutyLawyer = requestsDutyLawyer,
+                            accessesEssentialProceedings = accessesEssentialProceedings,
+                            needsInterpreter = needsInterpreter
+                        )
+                        rightsDialogStep = 3
+                    },
+                    enabled = rightToRemainSilentInformed != null
+                ) {
+                    Text(stringResource(R.string.continue_action))
+                }
+            }
+        )
+    }
+
+    if (rightsDialogStep == 3) {
+        AlertDialog(
+            onDismissRequest = { rightsDialogStep = null },
+            title = { Text(stringResource(R.string.person_data_rights_dialog_title)) },
+            text = { Text(stringResource(R.string.person_data_right_non_self_incrimination_message)) },
+            confirmButton = {
+                TextButton(onClick = { rightsDialogStep = 4 }) {
+                    Text(stringResource(R.string.continue_action))
+                }
+            }
+        )
+    }
+
+    if (rightsDialogStep == 4) {
+        AlertDialog(
+            onDismissRequest = { rightsDialogStep = null },
+            title = { Text(stringResource(R.string.person_data_rights_dialog_title)) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(stringResource(R.string.person_data_right_lawyer_message))
+                    YesNoQuestionBlock(
+                        questionText = stringResource(R.string.person_data_right_lawyer_waive_question),
+                        selectedValue = waivesLegalAssistance,
+                        onValueChange = { waivesLegalAssistance = it }
+                    )
+                    YesNoQuestionBlock(
+                        questionText = stringResource(R.string.person_data_right_lawyer_private_question),
+                        selectedValue = requestsPrivateLawyer,
+                        onValueChange = { requestsPrivateLawyer = it }
+                    )
+                    YesNoQuestionBlock(
+                        questionText = stringResource(R.string.person_data_right_lawyer_duty_question),
+                        selectedValue = requestsDutyLawyer,
+                        onValueChange = { requestsDutyLawyer = it }
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        storage.saveRightsSelections(
+                            rightToRemainSilentInformed = rightToRemainSilentInformed,
+                            waivesLegalAssistance = waivesLegalAssistance,
+                            requestsPrivateLawyer = requestsPrivateLawyer,
+                            requestsDutyLawyer = requestsDutyLawyer,
+                            accessesEssentialProceedings = accessesEssentialProceedings,
+                            needsInterpreter = needsInterpreter
+                        )
+                        rightsDialogStep = 5
+                    },
+                    enabled = waivesLegalAssistance != null && requestsPrivateLawyer != null && requestsDutyLawyer != null
+                ) {
+                    Text(stringResource(R.string.continue_action))
+                }
+            }
+        )
+    }
+
+    if (rightsDialogStep == 5) {
+        AlertDialog(
+            onDismissRequest = { rightsDialogStep = null },
+            title = { Text(stringResource(R.string.person_data_rights_dialog_title)) },
+            text = {
+                YesNoQuestionBlock(
+                    questionText = stringResource(R.string.person_data_right_essential_elements_message),
+                    selectedValue = accessesEssentialProceedings,
+                    onValueChange = { accessesEssentialProceedings = it }
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        storage.saveRightsSelections(
+                            rightToRemainSilentInformed = rightToRemainSilentInformed,
+                            waivesLegalAssistance = waivesLegalAssistance,
+                            requestsPrivateLawyer = requestsPrivateLawyer,
+                            requestsDutyLawyer = requestsDutyLawyer,
+                            accessesEssentialProceedings = accessesEssentialProceedings,
+                            needsInterpreter = needsInterpreter
+                        )
+                        rightsDialogStep = 6
+                    },
+                    enabled = accessesEssentialProceedings != null
+                ) {
+                    Text(stringResource(R.string.continue_action))
+                }
+            }
+        )
+    }
+
+    if (rightsDialogStep == 6) {
+        AlertDialog(
+            onDismissRequest = { rightsDialogStep = null },
+            title = { Text(stringResource(R.string.person_data_rights_dialog_title)) },
+            text = {
+                YesNoQuestionBlock(
+                    questionText = stringResource(R.string.person_data_right_interpreter_message),
+                    selectedValue = needsInterpreter,
+                    onValueChange = { needsInterpreter = it }
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        storage.saveRightsSelections(
+                            rightToRemainSilentInformed = rightToRemainSilentInformed,
+                            waivesLegalAssistance = waivesLegalAssistance,
+                            requestsPrivateLawyer = requestsPrivateLawyer,
+                            requestsDutyLawyer = requestsDutyLawyer,
+                            accessesEssentialProceedings = accessesEssentialProceedings,
+                            needsInterpreter = needsInterpreter
+                        )
+                        rightsDialogStep = 7
+                    },
+                    enabled = needsInterpreter != null
+                ) {
+                    Text(stringResource(R.string.continue_action))
+                }
+            }
+        )
+    }
+
+    if (rightsDialogStep == 7) {
+        AlertDialog(
+            onDismissRequest = { rightsDialogStep = null },
+            title = { Text(stringResource(R.string.person_data_rights_dialog_title)) },
+            text = { Text(stringResource(R.string.person_data_right_free_legal_aid_message)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        storage.saveRightsSelections(
+                            rightToRemainSilentInformed = rightToRemainSilentInformed,
+                            waivesLegalAssistance = waivesLegalAssistance,
+                            requestsPrivateLawyer = requestsPrivateLawyer,
+                            requestsDutyLawyer = requestsDutyLawyer,
+                            accessesEssentialProceedings = accessesEssentialProceedings,
+                            needsInterpreter = needsInterpreter
+                        )
+                        rightsDialogStep = null
+                    }
+                ) {
+                    Text(stringResource(R.string.continue_action))
+                }
+            }
+        )
     }
 }
 

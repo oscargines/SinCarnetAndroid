@@ -70,6 +70,8 @@ fun DatosVehiculoScreen(
     onInsurerChange: (String) -> Unit = {},
     vehicleType: String = "",
     onVehicleTypeChange: (String) -> Unit = {},
+    clasePermiso: String = "",
+    onClasePermisoChange: (String) -> Unit = {},
     ownerIsOther: Boolean = false,
     onOwnerIsOtherChange: (Boolean) -> Unit = {},
     ownerName: String = "",
@@ -109,12 +111,18 @@ fun DatosVehiculoScreen(
         stringResource(R.string.vehicle_type_other)
     )
 
+    val clasePermisoOptions = listOf(
+        "Lic. Ciclo.", "AM", "A1", "A2", "A", "B1", "B", "C1", "C", "D1", "D",
+        "B+E", "C1+E", "C+E", "D1+E", "D+E"
+    )
+
     val brandLabel = stringResource(R.string.vehicle_brand)
     val modelLabel = stringResource(R.string.vehicle_model)
     val plateLabel = stringResource(R.string.vehicle_plate)
     val regDateLabel = stringResource(R.string.vehicle_registration_date)
     val nationalityLabel = stringResource(R.string.vehicle_nationality)
     val vehicleTypeLabel = stringResource(R.string.vehicle_type)
+    val clasePermisoLabel = stringResource(R.string.vehicle_required_license)
     val ownerNameLabel = stringResource(R.string.vehicle_owner_name)
     val ownerLastNamesLabel = stringResource(R.string.vehicle_owner_last_names)
     val ownerDniLabel = stringResource(R.string.vehicle_owner_dni)
@@ -207,6 +215,14 @@ fun DatosVehiculoScreen(
                     value = vehicleType,
                     options = vehicleTypeOptions,
                     onValueSelected = onVehicleTypeChange
+                )
+
+                // Permiso necesario conducción
+                VehicleDropdownField(
+                    label = stringResource(R.string.vehicle_required_license),
+                    value = clasePermiso,
+                    options = clasePermisoOptions,
+                    onValueSelected = onClasePermisoChange
                 )
 
                 // Fecha de ITV (opcional)
@@ -309,7 +325,8 @@ fun DatosVehiculoScreen(
                         plateLabel to plate,
                         regDateLabel to registrationDate,
                         nationalityLabel to nationality,
-                        vehicleTypeLabel to vehicleType
+                        vehicleTypeLabel to vehicleType,
+                        clasePermisoLabel to clasePermiso
                     )
 
                     if (ownerIsOther) {
