@@ -15,9 +15,13 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -46,12 +50,44 @@ fun FirmasAtestadoScreen(
     onSecretaryClick: () -> Unit = {},
     onInvestigatedClick: () -> Unit = {},
     onSecondDriverClick: () -> Unit = {},
-    onGenerateAtestadoClick: (wantsToSign: Boolean, hasSecondDriver: Boolean) -> Unit = { _, _ -> },
+    selectedGenerateReason: String = GenerateReasonOption.SiniestroVial.value,
+    onSelectedGenerateReasonChange: (String) -> Unit = {},
+    selectedArticleNorm: String = ArticleNormOption.LSV.value,
+    onSelectedArticleNormChange: (String) -> Unit = {},
+    selectedArticleText: String = "",
+    onSelectedArticleTextChange: (String) -> Unit = {},
+    dgtNoRecord: Boolean = false,
+    onDgtNoRecordChange: (Boolean) -> Unit = {},
+    internationalNoRecord: Boolean = false,
+    onInternationalNoRecordChange: (Boolean) -> Unit = {},
+    existsRecord: Boolean = false,
+    onExistsRecordChange: (Boolean) -> Unit = {},
+    vicisitudesOption: String = "",
+    onVicisitudesOptionChange: (String) -> Unit = {},
+    jefaturaProvincial: String = "",
+    onJefaturaProvincialChange: (String) -> Unit = {},
+    tiempoPrivacion: String = "",
+    onTiempoPrivacionChange: (String) -> Unit = {},
+    juzgadoDecreta: String = "",
+    onJuzgadoDecretaChange: (String) -> Unit = {},
+    onGenerateAtestadoClick: (wantsToSign: Boolean, hasSecondDriver: Boolean, reason: String, articleNorm: String?, articleText: String) -> Unit = { _, _, _, _, _ -> },
+    investigatedCopyEnabled: Boolean = false,
+    onPrintInvestigatedCopyClick: () -> Unit = {},
     shareEnabled: Boolean = false,
-    onSharePdfClick: () -> Unit = {}
+    onSharePdfClick: () -> Unit = {},
+    isGeneratingAtestado: Boolean = false
 ) {
     var wantsToSign by rememberSaveable { mutableStateOf(true) }
     var hasSecondDriver by rememberSaveable { mutableStateOf(false) }
+    var showGenerateReasonDialog by rememberSaveable { mutableStateOf(false) }
+    var showArticleNormDialog by rememberSaveable { mutableStateOf(false) }
+    var showBaseDatosDialog by rememberSaveable { mutableStateOf(false) }
+    var showVicisitudesDialog by rememberSaveable { mutableStateOf(false) }
+    var showJefaturaDialog by rememberSaveable { mutableStateOf(false) }
+    var showCondenaDetailsDialog by rememberSaveable { mutableStateOf(false) }
+
+    val selectedReasonOption = GenerateReasonOption.fromValue(selectedGenerateReason)
+    val selectedNormOption = ArticleNormOption.fromValue(selectedArticleNorm)
 
     // Las firmas vienen del estado externo en memoria.
     val instructorSigned = instructorSignature != null
@@ -155,9 +191,16 @@ fun FirmasAtestadoScreen(
 
                 AtestadoSignatureButton(
                     text = stringResource(R.string.atestado_signature_generate),
-                    enabled = generateEnabled,
+                    enabled = generateEnabled && !isGeneratingAtestado,
                     isSigned = false,
-                    onClick = { onGenerateAtestadoClick(wantsToSign, hasSecondDriver) }
+                    onClick = { showGenerateReasonDialog = true }
+                )
+
+                AtestadoSignatureButton(
+                    text = stringResource(R.string.atestado_signature_print_investigated_copy),
+                    enabled = investigatedCopyEnabled && !isGeneratingAtestado,
+                    isSigned = false,
+                    onClick = onPrintInvestigatedCopyClick
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -188,6 +231,383 @@ fun FirmasAtestadoScreen(
             }
             BackIconButton(onClick = onBackClick)
         }
+    }
+
+    if (isGeneratingAtestado) {
+        AlertDialog(
+            onDismissRequest = {},
+            title = { Text(text = stringResource(R.string.atestado_signature_generate)) },
+            text = {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                    Text(text = stringResource(R.string.generating_pdf_message))
+                }
+            },
+            confirmButton = {}
+        )
+    }
+
+    if (showGenerateReasonDialog && !isGeneratingAtestado) {
+        AlertDialog(
+            onDismissRequest = { showGenerateReasonDialog = false },
+            title = {
+                Text(text = stringResource(R.string.atestado_generate_reason_title))
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(text = stringResource(R.string.atestado_generate_reason_message))
+                    OptionRadioRow(
+                        text = stringResource(R.string.atestado_generate_reason_siniestro_vial),
+                        selected = selectedReasonOption == GenerateReasonOption.SiniestroVial,
+                        onSelect = {
+                            onSelectedGenerateReasonChange(GenerateReasonOption.SiniestroVial.value)
+                        }
+                    )
+                    OptionRadioRow(
+                        text = stringResource(R.string.atestado_generate_reason_control_preventivo),
+                        selected = selectedReasonOption == GenerateReasonOption.ControlPreventivo,
+                        onSelect = {
+                            onSelectedGenerateReasonChange(GenerateReasonOption.ControlPreventivo.value)
+                        }
+                    )
+                    OptionRadioRow(
+                        text = stringResource(R.string.atestado_generate_reason_infraccion),
+                        selected = selectedReasonOption == GenerateReasonOption.CometerInfraccion,
+                        onSelect = {
+                            onSelectedGenerateReasonChange(GenerateReasonOption.CometerInfraccion.value)
+                        }
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showGenerateReasonDialog = false
+                        if (selectedReasonOption == GenerateReasonOption.CometerInfraccion) {
+                            showArticleNormDialog = true
+                        } else {
+                            showBaseDatosDialog = true
+                        }
+                    }
+                ) {
+                    Text(text = stringResource(R.string.continue_action))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showGenerateReasonDialog = false }) {
+                    Text(text = stringResource(R.string.cancel_action))
+                }
+            }
+        )
+    }
+
+    if (showArticleNormDialog && !isGeneratingAtestado) {
+        AlertDialog(
+            onDismissRequest = { showArticleNormDialog = false },
+            title = {
+                Text(text = stringResource(R.string.atestado_generate_article_norm_title))
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(text = stringResource(R.string.atestado_generate_article_norm_message))
+                    OutlinedTextField(
+                        value = selectedArticleText,
+                        onValueChange = onSelectedArticleTextChange,
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        label = { Text(text = stringResource(R.string.atestado_generate_article_label)) },
+                        placeholder = { Text(text = stringResource(R.string.atestado_generate_article_hint)) }
+                    )
+                    OptionRadioRow(
+                        text = stringResource(R.string.atestado_generate_norm_lsv),
+                        selected = selectedNormOption == ArticleNormOption.LSV,
+                        onSelect = { onSelectedArticleNormChange(ArticleNormOption.LSV.value) }
+                    )
+                    OptionRadioRow(
+                        text = stringResource(R.string.atestado_generate_norm_rgcir),
+                        selected = selectedNormOption == ArticleNormOption.RGCir,
+                        onSelect = { onSelectedArticleNormChange(ArticleNormOption.RGCir.value) }
+                    )
+                    OptionRadioRow(
+                        text = stringResource(R.string.atestado_generate_norm_rgcond),
+                        selected = selectedNormOption == ArticleNormOption.RGCond,
+                        onSelect = { onSelectedArticleNormChange(ArticleNormOption.RGCond.value) }
+                    )
+                    OptionRadioRow(
+                        text = stringResource(R.string.atestado_generate_norm_rgveh),
+                        selected = selectedNormOption == ArticleNormOption.RGVeh,
+                        onSelect = { onSelectedArticleNormChange(ArticleNormOption.RGVeh.value) }
+                    )
+                    OptionRadioRow(
+                        text = stringResource(R.string.atestado_generate_norm_soa),
+                        selected = selectedNormOption == ArticleNormOption.SOA,
+                        onSelect = { onSelectedArticleNormChange(ArticleNormOption.SOA.value) }
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showArticleNormDialog = false
+                        showBaseDatosDialog = true
+                    }
+                ) {
+                    Text(text = stringResource(R.string.continue_action))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showArticleNormDialog = false }) {
+                    Text(text = stringResource(R.string.cancel_action))
+                }
+            }
+        )
+    }
+
+    // --- Modal 3: Bases de datos consultadas ---
+    if (showBaseDatosDialog && !isGeneratingAtestado) {
+        AlertDialog(
+            onDismissRequest = { showBaseDatosDialog = false },
+            title = { Text(text = stringResource(R.string.atestado_bases_datos_title)) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .toggleable(value = dgtNoRecord, onValueChange = { onDgtNoRecordChange(it) }),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Checkbox(checked = dgtNoRecord, onCheckedChange = null)
+                        Text(text = stringResource(R.string.atestado_bases_datos_no_dgt))
+                    }
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .toggleable(value = internationalNoRecord, onValueChange = { onInternationalNoRecordChange(it) }),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Checkbox(checked = internationalNoRecord, onCheckedChange = null)
+                        Text(text = stringResource(R.string.atestado_bases_datos_no_international))
+                    }
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .toggleable(value = existsRecord, onValueChange = { onExistsRecordChange(it) }),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Checkbox(checked = existsRecord, onCheckedChange = null)
+                        Text(text = stringResource(R.string.atestado_bases_datos_exists))
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showBaseDatosDialog = false
+                        if (existsRecord) {
+                            showVicisitudesDialog = true
+                        } else {
+                            onGenerateAtestadoClick(
+                                wantsToSign,
+                                hasSecondDriver,
+                                selectedReasonOption.value,
+                                if (selectedReasonOption == GenerateReasonOption.CometerInfraccion) selectedNormOption.value else null,
+                                selectedArticleText
+                            )
+                        }
+                    }
+                ) {
+                    Text(text = stringResource(R.string.continue_action))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showBaseDatosDialog = false }) {
+                    Text(text = stringResource(R.string.cancel_action))
+                }
+            }
+        )
+    }
+
+    // --- Modal 4: Vicisitudes Registro de Conductores ---
+    if (showVicisitudesDialog && !isGeneratingAtestado) {
+        val selectedVicisitudesOpt = VicisitudesOption.fromValue(vicisitudesOption)
+        AlertDialog(
+            onDismissRequest = { showVicisitudesDialog = false },
+            title = { Text(text = stringResource(R.string.atestado_vicisitudes_title)) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OptionRadioRow(
+                        text = stringResource(R.string.atestado_vicisitudes_no_obtenido),
+                        selected = selectedVicisitudesOpt == VicisitudesOption.NoObtenidoNunca,
+                        onSelect = { onVicisitudesOptionChange(VicisitudesOption.NoObtenidoNunca.value) }
+                    )
+                    OptionRadioRow(
+                        text = stringResource(R.string.atestado_vicisitudes_perdida_puntos),
+                        selected = selectedVicisitudesOpt == VicisitudesOption.PerdidaVigenciaPuntos,
+                        onSelect = { onVicisitudesOptionChange(VicisitudesOption.PerdidaVigenciaPuntos.value) }
+                    )
+                    OptionRadioRow(
+                        text = stringResource(R.string.atestado_vicisitudes_condena_firme),
+                        selected = selectedVicisitudesOpt == VicisitudesOption.CondenaFirme,
+                        onSelect = { onVicisitudesOptionChange(VicisitudesOption.CondenaFirme.value) }
+                    )
+                    OptionRadioRow(
+                        text = stringResource(R.string.atestado_vicisitudes_no_consta_cursos),
+                        selected = selectedVicisitudesOpt == VicisitudesOption.NoConstaCursos,
+                        onSelect = { onVicisitudesOptionChange(VicisitudesOption.NoConstaCursos.value) }
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showVicisitudesDialog = false
+                        when (VicisitudesOption.fromValue(vicisitudesOption)) {
+                            VicisitudesOption.PerdidaVigenciaPuntos -> showJefaturaDialog = true
+                            VicisitudesOption.CondenaFirme -> showCondenaDetailsDialog = true
+                            else -> onGenerateAtestadoClick(
+                                wantsToSign,
+                                hasSecondDriver,
+                                selectedReasonOption.value,
+                                if (selectedReasonOption == GenerateReasonOption.CometerInfraccion) selectedNormOption.value else null,
+                                selectedArticleText
+                            )
+                        }
+                    }
+                ) {
+                    Text(text = stringResource(R.string.continue_action))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showVicisitudesDialog = false }) {
+                    Text(text = stringResource(R.string.cancel_action))
+                }
+            }
+        )
+    }
+
+    // --- Modal 5: Jefatura Provincial (Pérdida de vigencia por pérdida de puntos) ---
+    if (showJefaturaDialog && !isGeneratingAtestado) {
+        AlertDialog(
+            onDismissRequest = { showJefaturaDialog = false },
+            title = { Text(text = stringResource(R.string.atestado_jefatura_title)) },
+            text = {
+                OutlinedTextField(
+                    value = jefaturaProvincial,
+                    onValueChange = onJefaturaProvincialChange,
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    label = { Text(text = stringResource(R.string.atestado_jefatura_label)) }
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showJefaturaDialog = false
+                        onGenerateAtestadoClick(
+                            wantsToSign,
+                            hasSecondDriver,
+                            selectedReasonOption.value,
+                            if (selectedReasonOption == GenerateReasonOption.CometerInfraccion) selectedNormOption.value else null,
+                            selectedArticleText
+                        )
+                    }
+                ) {
+                    Text(text = stringResource(R.string.continue_action))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showJefaturaDialog = false }) {
+                    Text(text = stringResource(R.string.cancel_action))
+                }
+            }
+        )
+    }
+
+    // --- Modal 6: Condena firme en vigor ---
+    if (showCondenaDetailsDialog && !isGeneratingAtestado) {
+        AlertDialog(
+            onDismissRequest = { showCondenaDetailsDialog = false },
+            title = { Text(text = stringResource(R.string.atestado_condena_title)) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedTextField(
+                        value = tiempoPrivacion,
+                        onValueChange = onTiempoPrivacionChange,
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        label = { Text(text = stringResource(R.string.atestado_condena_tiempo_privacion)) }
+                    )
+                    OutlinedTextField(
+                        value = juzgadoDecreta,
+                        onValueChange = onJuzgadoDecretaChange,
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        label = { Text(text = stringResource(R.string.atestado_condena_juzgado_decreta)) }
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showCondenaDetailsDialog = false
+                        onGenerateAtestadoClick(
+                            wantsToSign,
+                            hasSecondDriver,
+                            selectedReasonOption.value,
+                            if (selectedReasonOption == GenerateReasonOption.CometerInfraccion) selectedNormOption.value else null,
+                            selectedArticleText
+                        )
+                    }
+                ) {
+                    Text(text = stringResource(R.string.continue_action))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showCondenaDetailsDialog = false }) {
+                    Text(text = stringResource(R.string.cancel_action))
+                }
+            }
+        )
+    }
+}
+
+private enum class VicisitudesOption(val value: String) {
+    NoObtenidoNunca("No ha obtenido nunca"),
+    PerdidaVigenciaPuntos("Pérdida de vigencia por pérdida de puntos"),
+    CondenaFirme("Condena firme en vigor"),
+    NoConstaCursos("No consta realización y superación de cursos");
+
+    companion object {
+        fun fromValue(value: String): VicisitudesOption? =
+            entries.firstOrNull { it.value == value }
+    }
+}
+
+private enum class GenerateReasonOption(val value: String) {
+    SiniestroVial("Siniestro Vial"),
+    ControlPreventivo("Control preventivo"),
+    CometerInfraccion("Cometer infracción");
+
+    companion object {
+        fun fromValue(value: String): GenerateReasonOption =
+            entries.firstOrNull { it.value == value } ?: SiniestroVial
+    }
+}
+
+private enum class ArticleNormOption(val value: String) {
+    LSV("LSV"),
+    RGCir("RGCir"),
+    RGCond("RGCond"),
+    RGVeh("RGVeh"),
+    SOA("SOA");
+
+    companion object {
+        fun fromValue(value: String): ArticleNormOption =
+            entries.firstOrNull { it.value == value } ?: LSV
     }
 }
 

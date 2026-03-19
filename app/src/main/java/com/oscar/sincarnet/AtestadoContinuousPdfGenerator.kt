@@ -34,7 +34,8 @@ internal fun generateAtestadoContinuousPdf(
     investigatedNoSignText: String = NO_DESEA_FIRMAR_TEXT,
     instructorTip: String,
     secretaryTip: String,
-    instructorUnit: String
+    instructorUnit: String,
+    inicioModalData: AtestadoInicioModalData = AtestadoInicioModalData()
 ): AtestadoPdfResult {
     val now = System.currentTimeMillis()
     val pdfDocument = PdfDocument()
@@ -48,7 +49,11 @@ internal fun generateAtestadoContinuousPdf(
         "05inmovilizacion.json"
     )
     staticFiles.forEach { fileName ->
-        orderedDocuments += loadAtestadoTemplateAsCitacion(context, fileName)
+        orderedDocuments += loadAtestadoTemplateAsCitacion(
+            context = context,
+            fileName = fileName,
+            inicioModalData = inicioModalData
+        )
     }
     orderedDocuments += loadCitacionDocument(context, courtData.tipoJuicio)
 
@@ -128,7 +133,8 @@ internal fun generateAtestadoContinuousPdf(
             secretaryTip = secretaryTip,
             instructorUnit = instructorUnit,
             vehicleData = vehicleData,
-            manifestacionData = manifestacionData
+            manifestacionData = manifestacionData,
+            inicioModalData = inicioModalData
         )
         drawBlock(title, titlePaint, 14f, 10f)
 
@@ -141,7 +147,8 @@ internal fun generateAtestadoContinuousPdf(
             secretaryTip = secretaryTip,
             instructorUnit = instructorUnit,
             vehicleData = vehicleData,
-            manifestacionData = manifestacionData
+            manifestacionData = manifestacionData,
+            inicioModalData = inicioModalData
         )
         drawBlock(body, textPaint, 13f, 10f)
 
@@ -155,7 +162,8 @@ internal fun generateAtestadoContinuousPdf(
                 secretaryTip = secretaryTip,
                 instructorUnit = instructorUnit,
                 vehicleData = vehicleData,
-                manifestacionData = manifestacionData
+                manifestacionData = manifestacionData,
+                inicioModalData = inicioModalData
             )
             drawBlock(sectionTitle, headingPaint, 13f, 4f)
 
@@ -168,7 +176,8 @@ internal fun generateAtestadoContinuousPdf(
                 secretaryTip = secretaryTip,
                 instructorUnit = instructorUnit,
                 vehicleData = vehicleData,
-                manifestacionData = manifestacionData
+                manifestacionData = manifestacionData,
+                inicioModalData = inicioModalData
             )
             drawBlock(sectionContent, textPaint, 13f, 6f)
 
@@ -182,7 +191,8 @@ internal fun generateAtestadoContinuousPdf(
                     secretaryTip = secretaryTip,
                     instructorUnit = instructorUnit,
                     vehicleData = vehicleData,
-                    manifestacionData = manifestacionData
+                    manifestacionData = manifestacionData,
+                    inicioModalData = inicioModalData
                 )
                 if (itemText.isNotBlank()) {
                     val itemLines = wrapTextLines("- $itemText", (pageState.right - pageState.left) - 12f, textPaint)
@@ -218,7 +228,8 @@ internal fun generateAtestadoContinuousPdf(
                     secretaryTip = secretaryTip,
                     instructorUnit = instructorUnit,
                     vehicleData = vehicleData,
-                    manifestacionData = manifestacionData
+                    manifestacionData = manifestacionData,
+                    inicioModalData = inicioModalData
                 )
                 if (optionText.isNotBlank()) {
                     val optionLines = wrapTextLines("- $optionText", (pageState.right - pageState.left) - 12f, textPaint)
@@ -253,7 +264,8 @@ internal fun generateAtestadoContinuousPdf(
                 secretaryTip = secretaryTip,
                 instructorUnit = instructorUnit,
                 vehicleData = vehicleData,
-                manifestacionData = manifestacionData
+                manifestacionData = manifestacionData,
+                inicioModalData = inicioModalData
             )
             drawBlock(extraInfo, textPaint, 13f, 8f)
         }
@@ -267,7 +279,8 @@ internal fun generateAtestadoContinuousPdf(
             secretaryTip = secretaryTip,
             instructorUnit = instructorUnit,
             vehicleData = vehicleData,
-            manifestacionData = manifestacionData
+            manifestacionData = manifestacionData,
+            inicioModalData = inicioModalData
         )
         drawBlock(closeText, textPaint, 13f, 8f)
 
@@ -280,7 +293,8 @@ internal fun generateAtestadoContinuousPdf(
             secretaryTip = secretaryTip,
             instructorUnit = instructorUnit,
             vehicleData = vehicleData,
-            manifestacionData = manifestacionData
+            manifestacionData = manifestacionData,
+            inicioModalData = inicioModalData
         )
         drawBlock(enteradoTitle, headingPaint, 13f, 4f)
 
@@ -293,7 +307,8 @@ internal fun generateAtestadoContinuousPdf(
             secretaryTip = secretaryTip,
             instructorUnit = instructorUnit,
             vehicleData = vehicleData,
-            manifestacionData = manifestacionData
+            manifestacionData = manifestacionData,
+            inicioModalData = inicioModalData
         )
         drawBlock(enteradoText, textPaint, 13f, 0f)
 
@@ -645,7 +660,8 @@ private fun drawBitmapAlignedTopRight(
 
 private fun loadAtestadoTemplateAsCitacion(
     context: Context,
-    fileName: String
+    fileName: String,
+    inicioModalData: AtestadoInicioModalData
 ): CitacionDocument {
     return runCatching {
         val inputStream = context.assets.open("docs/$fileName")
@@ -671,10 +687,20 @@ private fun loadAtestadoTemplateAsCitacion(
             else -> emptyList()
         }
 
-        val sections = sectionKeys.mapNotNull { key ->
+        val sections = if (fileName == "01inicio.json") {
+            buildInicioSections(root, inicioModalData)
+        } else sectionKeys.mapNotNull { key ->
             if (!root.has(key)) return@mapNotNull null
             val value = root.get(key)
-            val contentText = collectOrderedText(value)
+            val contentText = when {
+                fileName == "02derechos.json" && key == "hechos_investigacion" ->
+                    buildDerechosHechosInvestigacionText(value)
+                fileName == "02derechos.json" && key == "derechos_articulo_520" ->
+                    buildDerechosArticulo520Text(value)
+                fileName == "02derechos.json" && key == "manifestacion_investigado" ->
+                    buildDerechosManifestacionInvestigadoText(value)
+                else -> collectOrderedText(value)
+            }
             CitacionSeccion(
                 titulo = key.replace('_', ' ').replaceFirstChar { it.uppercaseChar() },
                 contenido = contentText
@@ -695,16 +721,236 @@ private fun loadAtestadoTemplateAsCitacion(
     }
 }
 
+private fun buildInicioSections(root: JSONObject, inicioModalData: AtestadoInicioModalData): List<CitacionSeccion> {
+    val sections = mutableListOf<CitacionSeccion>()
+
+    root.optJSONObject("vehiculo")?.let { vehiculoObj ->
+        sections += CitacionSeccion(
+            titulo = "Vehiculo",
+            contenido = vehiculoObj.optString("descripcion", "")
+        )
+    }
+
+    root.optJSONObject("motivo_identificacion")?.let { motivoObj ->
+        val motivoDescripcion = motivoObj.optString("descripcion", "")
+        val motivoOpciones = motivoObj.optJSONArray("opciones") ?: JSONArray()
+        val motivoId = when (inicioModalData.motivo) {
+            "Siniestro Vial" -> 1
+            "Control preventivo" -> 2
+            "Cometer infracción" -> 3
+            else -> null
+        }
+        val selectedMotivoText = motivoId?.let { id ->
+            findOptionTextById(motivoOpciones, id)
+        }.orEmpty()
+
+        sections += CitacionSeccion(
+            titulo = "Motivo identificacion",
+            contenido = motivoDescripcion,
+            opciones = selectedMotivoText.takeIf { it.isNotBlank() }?.let {
+                listOf(CitacionOpcion(descripcion = it))
+            } ?: emptyList()
+        )
+    }
+
+    root.optJSONObject("constatacion_carencia_autorizacion")?.let { constObj ->
+        val constDescripcion = constObj.optString("descripcion", "")
+        val situaciones = constObj.optJSONArray("situaciones") ?: JSONArray()
+        val opciones = mutableListOf<CitacionOpcion>()
+
+        if (inicioModalData.dgtNoRecord) {
+            findOptionTextById(situaciones, 1)?.let { opciones += CitacionOpcion(descripcion = it) }
+        }
+        if (inicioModalData.internationalNoRecord) {
+            findOptionTextById(situaciones, 2)?.let { opciones += CitacionOpcion(descripcion = it) }
+        }
+        if (inicioModalData.existsRecord) {
+            val situacion3 = findOptionObjectById(situaciones, 3)
+            situacion3?.optString("texto", "")?.takeIf { it.isNotBlank() }?.let {
+                opciones += CitacionOpcion(descripcion = it)
+            }
+
+            val subOptionId = when (inicioModalData.vicisitudesOption) {
+                "No ha obtenido nunca" -> "3a"
+                "Pérdida de vigencia por pérdida de puntos" -> "3b"
+                "Condena firme en vigor" -> "3c"
+                "No consta realización y superación de cursos" -> "3d"
+                else -> null
+            }
+            val subOpciones = situacion3?.optJSONArray("subopciones") ?: JSONArray()
+            subOptionId?.let { id ->
+                findOptionTextById(subOpciones, id)?.let { opciones += CitacionOpcion(descripcion = it) }
+            }
+        }
+
+        sections += CitacionSeccion(
+            titulo = "Constatacion carencia autorizacion",
+            contenido = constDescripcion,
+            opciones = opciones
+        )
+    }
+
+    return sections
+}
+
+private fun buildDerechosHechosInvestigacionText(value: Any?): String {
+    val obj = value as? JSONObject ?: return collectOrderedText(value)
+    val lines = mutableListOf<String>()
+
+    obj.optString("descripcion", "").takeIf { it.isNotBlank() }?.let { lines += it }
+
+    val puntos = obj.optJSONArray("puntos") ?: return lines.joinToString("\n\n")
+    for (i in 0 until puntos.length()) {
+        val punto = puntos.optJSONObject(i) ?: continue
+        val id = punto.optString("id", (i + 1).toString())
+        val titulo = punto.optString("titulo", "")
+        val campo = punto.optString("campo_variable", "")
+        val texto = punto.optString("texto", "")
+        val detalle = campo.ifBlank { texto }
+        val line = buildString {
+            append(id)
+            append(". ")
+            append(titulo)
+            if (detalle.isNotBlank()) {
+                append(": ")
+                append(detalle)
+            }
+        }
+        if (line.isNotBlank()) lines += line
+    }
+
+    return lines.joinToString("\n\n")
+}
+
+private fun buildDerechosManifestacionInvestigadoText(value: Any?): String {
+    val obj = value as? JSONObject ?: return collectOrderedText(value)
+    val lines = mutableListOf<String>()
+
+    obj.optString("descripcion", "").takeIf { it.isNotBlank() }?.let { lines += it }
+
+    val opciones = obj.optJSONArray("opciones") ?: return lines.joinToString("\n\n")
+    for (i in 0 until opciones.length()) {
+        val option = opciones.optJSONObject(i) ?: continue
+        val id = option.optInt("id", i + 1)
+        val texto = option.optString("texto", "")
+        val nota = option.optString("nota", "")
+        val campoVariable = option.optString("campo_variable", "")
+        val answerPlaceholder = when (id) {
+            1 -> "[[right_declaracion]]"
+            2 -> "[[right_renuncia_letrada]]"
+            3 -> "[[right_letrado_particular]]"
+            4 -> "[[right_letrado_oficio]]"
+            5 -> "[[right_acceso_elementos]]"
+            6 -> "[[right_interprete]]"
+            else -> ""
+        }
+
+        val optionLine = buildString {
+            append("- ")
+            append(texto)
+            if (campoVariable.isNotBlank()) {
+                append(" ")
+                append(campoVariable)
+            }
+            if (answerPlaceholder.isNotBlank()) {
+                append(": ")
+                append(answerPlaceholder)
+            }
+        }
+        if (optionLine.isNotBlank()) lines += optionLine
+        if (nota.isNotBlank()) lines += "  Nota: $nota"
+    }
+
+    return lines.joinToString("\n\n")
+}
+
+private fun buildDerechosArticulo520Text(value: Any?): String {
+    val obj = value as? JSONObject ?: return collectOrderedText(value)
+    val lines = mutableListOf<String>()
+
+    obj.optString("descripcion", "").takeIf { it.isNotBlank() }?.let { lines += it }
+
+    val derechos = obj.optJSONArray("derechos") ?: return lines.joinToString("\n\n")
+    for (i in 0 until derechos.length()) {
+        val derecho = derechos.optJSONObject(i) ?: continue
+        val id = derecho.optString("id", "").trim().uppercase()
+        val texto = derecho.optString("texto", "").trim()
+        if (id.isNotBlank() && texto.isNotBlank()) {
+            lines += "$id) $texto"
+        } else if (texto.isNotBlank()) {
+            lines += texto
+        }
+    }
+
+    return lines.joinToString("\n\n")
+}
+
+private fun findOptionObjectById(array: JSONArray, id: Any): JSONObject? {
+    for (i in 0 until array.length()) {
+        val obj = array.optJSONObject(i) ?: continue
+        val currentId = obj.opt("id")
+        if (currentId == id) return obj
+    }
+    return null
+}
+
+private fun findOptionTextById(array: JSONArray, id: Any): String? =
+    findOptionObjectById(array, id)
+        ?.optString("texto", "")
+        ?.takeIf { it.isNotBlank() }
+
 private fun collectOrderedText(value: Any?): String {
     val lines = mutableListOf<String>()
 
     fun collect(current: Any?) {
         when (current) {
             is JSONObject -> {
+                val id = current.opt("id")?.toString()?.trim().orEmpty()
+                val texto = current.optString("texto", "").trim()
+                val pregunta = current.optString("pregunta", "").trim()
+                val referencia = current.optString("referencia", "").trim()
+                val principalText = when {
+                    texto.isNotBlank() -> texto
+                    pregunta.isNotBlank() -> pregunta
+                    referencia.isNotBlank() -> referencia
+                    else -> ""
+                }
+
+                if (id.isNotBlank() && principalText.isNotBlank()) {
+                    lines += formatIdTextLine(id, principalText)
+
+                    val nota = current.optString("nota", "").trim()
+                    if (nota.isNotBlank()) {
+                        lines += "Nota: $nota"
+                    }
+
+                    val keys = current.keys()
+                    while (keys.hasNext()) {
+                        val key = keys.next()
+                        if (
+                            key == "id" ||
+                            key == "texto" ||
+                            key == "pregunta" ||
+                            key == "referencia" ||
+                            key == "nota" ||
+                            key == "campos_variables" ||
+                            key == "campo_variable" ||
+                            key == "respuesta"
+                        ) continue
+                        collect(current.opt(key))
+                    }
+                    return
+                }
+
                 val keys = current.keys()
                 while (keys.hasNext()) {
                     val key = keys.next()
-                    if (key == "campos_variables" || key == "campo_variable" || key == "respuesta") continue
+                    if (
+                        key == "id" ||
+                        key == "campos_variables" ||
+                        key == "campo_variable" ||
+                        key == "respuesta"
+                    ) continue
                     val child = current.opt(key)
                     when (key) {
                         "descripcion", "texto", "titulo", "introduccion", "referencia", "nota", "condiciones", "informacion_levantamiento" -> {
@@ -729,6 +975,15 @@ private fun collectOrderedText(value: Any?): String {
 
     collect(value)
     return lines.joinToString("\n\n")
+}
+
+private fun formatIdTextLine(idRaw: String, text: String): String {
+    val id = idRaw.trim()
+    return if (id.startsWith("artículo", ignoreCase = true)) {
+        "$id. $text"
+    } else {
+        "${id.uppercase()}) $text"
+    }
 }
 
 private fun wrapTextLines(

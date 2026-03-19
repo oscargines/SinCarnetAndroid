@@ -36,6 +36,19 @@ internal data class CitacionItem(
     val descripcion: String = ""
 )
 
+internal data class AtestadoInicioModalData(
+    val motivo: String = "",
+    val norma: String = "",
+    val articulo: String = "",
+    val dgtNoRecord: Boolean = false,
+    val internationalNoRecord: Boolean = false,
+    val existsRecord: Boolean = false,
+    val vicisitudesOption: String = "",
+    val jefaturaProvincial: String = "",
+    val tiempoPrivacion: String = "",
+    val juzgadoDecreta: String = ""
+)
+
 internal fun loadCitacionDocument(
     context: Context,
     tipoJuicio: String
@@ -128,7 +141,8 @@ internal fun replaceCitacionPlaceholders(
     secretaryTip: String,
     instructorUnit: String,
     vehicleData: VehiculoData = VehiculoData(),
-    manifestacionData: ManifestacionData? = null
+    manifestacionData: ManifestacionData? = null,
+    inicioModalData: AtestadoInicioModalData = AtestadoInicioModalData()
 ): String {
     var result = text
 
@@ -193,26 +207,29 @@ internal fun replaceCitacionPlaceholders(
     result = result.replace("[[tipopermisoconducir]]", vehicleData.clasePermiso)
 
     // Placeholders de otras diligencias
-    val fechaHoraBase = listOf(shiftedHour, shiftedDateRaw)
+    val fechaHoraLecturaDerechos = listOf(shiftedHour, shiftedDateRaw)
+        .filter { it.isNotBlank() }
+        .joinToString(" del día ")
+    val fechaHoraComisionDelito = listOf(ocurrenciaData.hora, ocurrenciaData.fecha)
         .filter { it.isNotBlank() }
         .joinToString(" del día ")
     result = result.replace("[[lugarhechos]]", ocurrenciaData.localidad)
-    result = result.replace("[[horafecha]]", fechaHoraBase)
+    result = result.replace("[[horafecha]]", fechaHoraLecturaDerechos)
     result = result.replace("[[datosconductorydocumento]]", nombreCompleto)
     result = result.replace("[[marca]]", vehicleData.brand)
     result = result.replace("[[modelo]]", vehicleData.model)
-    result = result.replace("[[lugarfechahoralecturaderechos]]", "$fechaHoraBase en ${ocurrenciaData.localidad}")
-    result = result.replace("[[lugarfechahoracomisióndelito]]", "$fechaHoraBase en ${ocurrenciaData.terminoMunicipal}")
+    result = result.replace("[[lugarfechahoralecturaderechos]]", "$fechaHoraLecturaDerechos en ${ocurrenciaData.localidad}")
+    result = result.replace("[[lugarfechahoracomisióndelito]]", "$fechaHoraComisionDelito en ${ocurrenciaData.terminoMunicipal}")
     result = result.replace("[[nombreletrado]]", "")
-    result = result.replace("[[articulo]]", "")
-    result = result.replace("[[norma]]", "")
-    result = result.replace("[[jefaturatrafico]]", "")
-    result = result.replace("[[tiempoperdidavigenciajudicial]]", "")
-    result = result.replace("[[juzgadoquecondena]]", courtData.sedeNombre)
+    result = result.replace("[[articulo]]", inicioModalData.articulo)
+    result = result.replace("[[norma]]", inicioModalData.norma)
+    result = result.replace("[[jefaturatrafico]]", inicioModalData.jefaturaProvincial)
+    result = result.replace("[[tiempoperdidavigenciajudicial]]", inicioModalData.tiempoPrivacion)
+    result = result.replace("[[juzgadoquecondena]]", inicioModalData.juzgadoDecreta.ifBlank { courtData.sedeNombre })
 
     // Manifestación
-    result = result.replace("[[horafechamanifestacion]]", fechaHoraBase)
-    result = result.replace("[[segundafechahora]]", fechaHoraBase)
+    result = result.replace("[[horafechamanifestacion]]", fechaHoraLecturaDerechos)
+    result = result.replace("[[segundafechahora]]", fechaHoraLecturaDerechos)
     val respuestasManifestacion = manifestacionData?.respuestasPreguntas.orEmpty()
     result = result.replace("[[primerapregunta]]", respuestasManifestacion[1].orEmpty())
     result = result.replace("[[segundapregunta]]", respuestasManifestacion[2].orEmpty())
@@ -244,6 +261,19 @@ internal fun replaceCitacionPlaceholders(
     // Juicio rápido
     result = result.replace("[[horajuicio]]", courtData.horaJuicioRapido)
     result = result.replace("[[fechajuicio]]", courtData.fechaJuicioRapido)
+
+    // Respuestas SI/NO de lectura de derechos (02derechos -> manifestacion_investigado)
+    fun toSiNo(value: Boolean?): String = when (value) {
+        true -> "SI"
+        false -> "NO"
+        null -> ""
+    }
+    result = result.replace("[[right_declaracion]]", toSiNo(personData.rightToRemainSilentInformed))
+    result = result.replace("[[right_renuncia_letrada]]", toSiNo(personData.waivesLegalAssistance))
+    result = result.replace("[[right_letrado_particular]]", toSiNo(personData.requestsPrivateLawyer))
+    result = result.replace("[[right_letrado_oficio]]", toSiNo(personData.requestsDutyLawyer))
+    result = result.replace("[[right_acceso_elementos]]", toSiNo(personData.accessesEssentialProceedings))
+    result = result.replace("[[right_interprete]]", toSiNo(personData.needsInterpreter))
 
     return result
 }

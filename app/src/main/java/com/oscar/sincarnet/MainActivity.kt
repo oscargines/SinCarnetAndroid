@@ -14,6 +14,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -22,7 +23,10 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.res.stringResource
 import androidx.core.content.FileProvider
 import com.oscar.sincarnet.ui.theme.SinCarnetTheme
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
 
 private const val CASES_ROUTE = "cases"
@@ -54,6 +58,18 @@ class MainActivity : ComponentActivity() {
                 var atestadoReturnRoute by rememberSaveable { mutableStateOf(CASES_ROUTE) }
                 var printerReturnRoute by rememberSaveable { mutableStateOf(ATESTADO_DATA_ROUTE) }
                 var lastGeneratedPdfPath by rememberSaveable { mutableStateOf("") }
+                var isGeneratingAtestado by rememberSaveable { mutableStateOf(false) }
+                var atestadoGenerateReason by rememberSaveable { mutableStateOf("Siniestro Vial") }
+                var atestadoGenerateArticleNorm by rememberSaveable { mutableStateOf("LSV") }
+                var atestadoGenerateArticleText by rememberSaveable { mutableStateOf("") }
+                var atestadoDgtNoRecord by rememberSaveable { mutableStateOf(false) }
+                var atestadoInternationalNoRecord by rememberSaveable { mutableStateOf(false) }
+                var atestadoExistsRecord by rememberSaveable { mutableStateOf(false) }
+                var atestadoVicisitudesOption by rememberSaveable { mutableStateOf("") }
+                var atestadoJefaturaProvincial by rememberSaveable { mutableStateOf("") }
+                var atestadoTiempoPrivacion by rememberSaveable { mutableStateOf("") }
+                var atestadoJuzgadoDecreta by rememberSaveable { mutableStateOf("") }
+                val mainScope = rememberCoroutineScope()
                 val actuantesStorage = remember { ActuantesStorage(applicationContext) }
                 val personaStorage = remember { PersonaInvestigadaStorage(applicationContext) }
                 val vehiculoStorage = remember { VehiculoStorage(applicationContext) }
@@ -180,6 +196,16 @@ class MainActivity : ComponentActivity() {
                     vehicleOwnerDni = ""
                     vehicleOwnerAddress = ""
                     vehicleOwnerPhone = ""
+                    atestadoGenerateReason = "Siniestro Vial"
+                    atestadoGenerateArticleNorm = "LSV"
+                    atestadoGenerateArticleText = ""
+                    atestadoDgtNoRecord = false
+                    atestadoInternationalNoRecord = false
+                    atestadoExistsRecord = false
+                    atestadoVicisitudesOption = ""
+                    atestadoJefaturaProvincial = ""
+                    atestadoTiempoPrivacion = ""
+                    atestadoJuzgadoDecreta = ""
                 }
 
                 // Quién está firmando actualmente
@@ -308,7 +334,19 @@ class MainActivity : ComponentActivity() {
                                                 investigatedNoSignText = getString(R.string.atestado_signature_no_desire),
                                                 instructorTip = instructorTip,
                                                 secretaryTip = secretaryTip,
-                                                instructorUnit = instructorUnit
+                                                instructorUnit = instructorUnit,
+                                                inicioModalData = AtestadoInicioModalData(
+                                                    motivo = atestadoGenerateReason,
+                                                    norma = atestadoGenerateArticleNorm,
+                                                    articulo = atestadoGenerateArticleText,
+                                                    dgtNoRecord = atestadoDgtNoRecord,
+                                                    internationalNoRecord = atestadoInternationalNoRecord,
+                                                    existsRecord = atestadoExistsRecord,
+                                                    vicisitudesOption = atestadoVicisitudesOption,
+                                                    jefaturaProvincial = atestadoJefaturaProvincial,
+                                                    tiempoPrivacion = atestadoTiempoPrivacion,
+                                                    juzgadoDecreta = atestadoJuzgadoDecreta
+                                                )
                                             )
                                         }.onSuccess { result ->
                                             lastGeneratedPdfPath = result.file.absolutePath
@@ -499,57 +537,105 @@ class MainActivity : ComponentActivity() {
                                     currentSignerKey = SIGNER_SECOND_DRIVER
                                     currentRoute = FIRMA_SCREEN_ROUTE
                                 },
-                                onGenerateAtestadoClick = { wantsToSign, hasSecondDriver ->
-                                    runCatching {
-                                        // Incluir siempre datos del juzgado y persona investigada en el PDF
-                                        val courtData = JuzgadoAtestadoStorage(applicationContext).loadCurrent()
-                                        val pdfPersonData = PersonaInvestigadaStorage(applicationContext).loadCurrent()
-                                        val ocurrenciaData = OcurrenciaDelitStorage(applicationContext).loadCurrent()
-                                        val vehicleData = VehiculoStorage(applicationContext).loadCurrent()
-                                        val manifestacionData = ManifestacionStorage(applicationContext).loadCurrent()
-                                        val signaturesToUse = signaturesBySigner.toMutableMap().apply {
-                                            if (!hasSecondDriver) remove(SIGNER_SECOND_DRIVER)
-                                        }
-                                        val mappedSignatures = mapSignaturesForPdf(
-                                            signaturesBySigner = signaturesToUse,
-                                            investigatedWantsToSign = wantsToSign,
-                                            investigatedNoSignText = getString(R.string.atestado_signature_no_desire)
-                                        )
-                                        generateAtestadoContinuousPdf(
-                                            context = applicationContext,
-                                            courtData = courtData,
-                                            personData = pdfPersonData,
-                                            ocurrenciaData = ocurrenciaData,
-                                            vehicleData = vehicleData,
-                                            manifestacionData = manifestacionData,
-                                            signatures = mappedSignatures,
-                                            investigatedNoSignText = getString(R.string.atestado_signature_no_desire),
-                                            instructorTip = instructorTip,
-                                            secretaryTip = secretaryTip,
-                                            instructorUnit = instructorUnit
-                                        )
-                                    }.onSuccess { result ->
-                                        lastGeneratedPdfPath = result.file.absolutePath
-                                        val opened = openGeneratedPdf(result.file)
-                                        if (!opened) {
+                                selectedGenerateReason = atestadoGenerateReason,
+                                onSelectedGenerateReasonChange = { atestadoGenerateReason = it },
+                                selectedArticleNorm = atestadoGenerateArticleNorm,
+                                onSelectedArticleNormChange = { atestadoGenerateArticleNorm = it },
+                                selectedArticleText = atestadoGenerateArticleText,
+                                onSelectedArticleTextChange = { atestadoGenerateArticleText = it },
+                                dgtNoRecord = atestadoDgtNoRecord,
+                                onDgtNoRecordChange = { atestadoDgtNoRecord = it },
+                                internationalNoRecord = atestadoInternationalNoRecord,
+                                onInternationalNoRecordChange = { atestadoInternationalNoRecord = it },
+                                existsRecord = atestadoExistsRecord,
+                                onExistsRecordChange = { atestadoExistsRecord = it },
+                                vicisitudesOption = atestadoVicisitudesOption,
+                                onVicisitudesOptionChange = { atestadoVicisitudesOption = it },
+                                jefaturaProvincial = atestadoJefaturaProvincial,
+                                onJefaturaProvincialChange = { atestadoJefaturaProvincial = it },
+                                tiempoPrivacion = atestadoTiempoPrivacion,
+                                onTiempoPrivacionChange = { atestadoTiempoPrivacion = it },
+                                juzgadoDecreta = atestadoJuzgadoDecreta,
+                                onJuzgadoDecretaChange = { atestadoJuzgadoDecreta = it },
+                                onGenerateAtestadoClick = { wantsToSign, hasSecondDriver, reason, articleNorm, articleText ->
+                                    if (isGeneratingAtestado) return@FirmasAtestadoScreen
+                                    atestadoGenerateReason = reason
+                                    if (articleNorm != null) {
+                                        atestadoGenerateArticleNorm = articleNorm
+                                    }
+                                    atestadoGenerateArticleText = articleText
+                                    isGeneratingAtestado = true
+                                    mainScope.launch {
+                                        runCatching {
+                                            withContext(Dispatchers.IO) {
+                                                // Incluir siempre datos del juzgado y persona investigada en el PDF
+                                                val courtData = JuzgadoAtestadoStorage(applicationContext).loadCurrent()
+                                                val pdfPersonData = PersonaInvestigadaStorage(applicationContext).loadCurrent()
+                                                val ocurrenciaData = OcurrenciaDelitStorage(applicationContext).loadCurrent()
+                                                val vehicleData = VehiculoStorage(applicationContext).loadCurrent()
+                                                val manifestacionData = ManifestacionStorage(applicationContext).loadCurrent()
+                                                val signaturesToUse = signaturesBySigner.toMutableMap().apply {
+                                                    if (!hasSecondDriver) remove(SIGNER_SECOND_DRIVER)
+                                                }
+                                                val mappedSignatures = mapSignaturesForPdf(
+                                                    signaturesBySigner = signaturesToUse,
+                                                    investigatedWantsToSign = wantsToSign,
+                                                    investigatedNoSignText = getString(R.string.atestado_signature_no_desire)
+                                                )
+                                                generateAtestadoContinuousPdf(
+                                                    context = applicationContext,
+                                                    courtData = courtData,
+                                                    personData = pdfPersonData,
+                                                    ocurrenciaData = ocurrenciaData,
+                                                    vehicleData = vehicleData,
+                                                    manifestacionData = manifestacionData,
+                                                    signatures = mappedSignatures,
+                                                    investigatedNoSignText = getString(R.string.atestado_signature_no_desire),
+                                                    instructorTip = instructorTip,
+                                                    secretaryTip = secretaryTip,
+                                                    instructorUnit = instructorUnit,
+                                                    inicioModalData = AtestadoInicioModalData(
+                                                        motivo = atestadoGenerateReason,
+                                                        norma = atestadoGenerateArticleNorm,
+                                                        articulo = atestadoGenerateArticleText,
+                                                        dgtNoRecord = atestadoDgtNoRecord,
+                                                        internationalNoRecord = atestadoInternationalNoRecord,
+                                                        existsRecord = atestadoExistsRecord,
+                                                        vicisitudesOption = atestadoVicisitudesOption,
+                                                        jefaturaProvincial = atestadoJefaturaProvincial,
+                                                        tiempoPrivacion = atestadoTiempoPrivacion,
+                                                        juzgadoDecreta = atestadoJuzgadoDecreta
+                                                    )
+                                                )
+                                            }
+                                        }.onSuccess { result ->
+                                            lastGeneratedPdfPath = result.file.absolutePath
+                                            val opened = openGeneratedPdf(result.file)
+                                            if (!opened) {
+                                                Toast.makeText(
+                                                    applicationContext,
+                                                    getString(R.string.atestado_pdf_open_error),
+                                                    Toast.LENGTH_LONG
+                                                ).show()
+                                            }
+                                            // Si veníamos de la pantalla de juzgado, volver a ella
+                                            if (signaturesOpenedFromCourt) {
+                                                signaturesOpenedFromCourt = false
+                                                currentRoute = ATESTADO_COURT_DATA_ROUTE
+                                            }
+                                        }.onFailure {
                                             Toast.makeText(
                                                 applicationContext,
-                                                getString(R.string.atestado_pdf_open_error),
+                                                getString(R.string.atestado_pdf_generated_error),
                                                 Toast.LENGTH_LONG
                                             ).show()
                                         }
-                                        // Si veníamos de la pantalla de juzgado, volver a ella
-                                        if (signaturesOpenedFromCourt) {
-                                            signaturesOpenedFromCourt = false
-                                            currentRoute = ATESTADO_COURT_DATA_ROUTE
-                                        }
-                                    }.onFailure {
-                                        Toast.makeText(
-                                            applicationContext,
-                                            getString(R.string.atestado_pdf_generated_error),
-                                            Toast.LENGTH_LONG
-                                        ).show()
+                                        isGeneratingAtestado = false
                                     }
+                                },
+                                investigatedCopyEnabled = lastGeneratedPdfPath.isNotBlank(),
+                                onPrintInvestigatedCopyClick = {
+                                    // Se implementará en una iteración posterior.
                                 },
                                 shareEnabled = lastGeneratedPdfPath.isNotBlank(),
                                 onSharePdfClick = {
@@ -562,7 +648,8 @@ class MainActivity : ComponentActivity() {
                                             Toast.LENGTH_LONG
                                         ).show()
                                     }
-                                }
+                                },
+                                isGeneratingAtestado = isGeneratingAtestado
                             )
 
                             FIRMA_SCREEN_ROUTE -> FirmaManuscritaScreen(

@@ -342,6 +342,7 @@ fun BluetoothPrinterScreen(
     }
 
     val selectedSavedPrinterName = savedPrinters.firstOrNull { it.mac == selectedSavedPrinterMac }?.nombre.orEmpty()
+    val canPairSelectedDiscovered = selectedDiscoveredPrinterMac.isNotBlank()
 
     Column(
         modifier = modifier
@@ -411,14 +412,51 @@ fun BluetoothPrinterScreen(
                     }
                 }
 
-                Text(
-                    text = defaultPrinterName.ifBlank {
-                        stringResource(R.string.bluetooth_printer_not_linked)
-                    },
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = if (defaultPrinterName.isBlank()) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.Bottom
+                ) {
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Text(
+                            text = stringResource(R.string.bluetooth_printer_paired_label),
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Text(
+                            text = defaultPrinterName.ifBlank {
+                                stringResource(R.string.bluetooth_printer_not_linked)
+                            },
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = if (defaultPrinterName.isBlank()) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+
+                    Button(
+                        onClick = {
+                            if (savedPrinters.any { it.mac == selectedSavedPrinterMac }) {
+                                storage.setDefaultPrinterMac(selectedSavedPrinterMac)
+                                refreshSavedPrinters()
+                                defaultPrinterName = savedPrinters.firstOrNull { it.mac == selectedSavedPrinterMac }?.nombre.orEmpty()
+                                statusMessage = context.getString(
+                                    R.string.bluetooth_printer_saved_status,
+                                    defaultPrinterName.ifBlank { context.getString(R.string.bluetooth_printer_not_linked) }
+                                )
+                                showSaveConfirmation = true
+                            } else {
+                                statusMessage = context.getString(R.string.bluetooth_printer_select_saved_one)
+                            }
+                        },
+                        enabled = savedPrinters.any { it.mac == selectedSavedPrinterMac },
+                        shape = MaterialTheme.shapes.medium
+                    ) {
+                        Text(text = stringResource(R.string.bluetooth_printer_save_default_action))
+                    }
+                }
 
                 Text(
                     text = statusMessage.ifBlank { stringResource(R.string.bluetooth_printer_ready) },
@@ -437,17 +475,11 @@ fun BluetoothPrinterScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .background(MaterialTheme.colorScheme.primaryContainer)
-                                .padding(horizontal = 12.dp, vertical = 10.dp),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                .padding(horizontal = 12.dp, vertical = 10.dp)
                         ) {
                             Text(
                                 text = stringResource(R.string.bluetooth_printer_table_name),
-                                modifier = Modifier.weight(1f),
-                                fontWeight = FontWeight.SemiBold
-                            )
-                            Text(
-                                text = stringResource(R.string.bluetooth_printer_table_mac),
-                                modifier = Modifier.weight(1f),
+                                modifier = Modifier.fillMaxWidth(),
                                 fontWeight = FontWeight.SemiBold
                             )
                         }
@@ -474,16 +506,11 @@ fun BluetoothPrinterScreen(
                                                 else Color.Transparent
                                             )
                                             .clickable { selectedDiscoveredPrinterMac = printer.mac }
-                                            .padding(horizontal = 12.dp, vertical = 10.dp),
-                                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                            .padding(horizontal = 12.dp, vertical = 10.dp)
                                     ) {
                                         Text(
                                             text = printer.nombre,
-                                            modifier = Modifier.weight(1f)
-                                        )
-                                        Text(
-                                            text = printer.mac,
-                                            modifier = Modifier.weight(1f)
+                                            modifier = Modifier.fillMaxWidth()
                                         )
                                     }
                                 }
@@ -560,42 +587,13 @@ fun BluetoothPrinterScreen(
                             }
                         }
 
-                        savedPrinters.any { it.mac == selectedSavedPrinterMac } -> {
-                            coroutineScope.launch {
-                                isValidatingPrinter = true
-                                statusMessage = context.getString(R.string.bluetooth_printer_validating)
-                                val detectedModel = withContext(Dispatchers.IO) {
-                                    probeZebraPrinterModelByMacSdk(selectedSavedPrinterMac)
-                                }
-                                isValidatingPrinter = false
-
-                                if (!isAllowedZebraPrinterModel(detectedModel)) {
-                                    val modelText = detectedModel ?: context.getString(R.string.bluetooth_printer_unknown_model)
-                                    statusMessage = context.getString(
-                                        R.string.bluetooth_printer_not_supported_model,
-                                        modelText,
-                                        supportedBluetoothPrinterModelsText()
-                                    )
-                                    return@launch
-                                }
-
-                                storage.setDefaultPrinterMac(selectedSavedPrinterMac)
-                                defaultPrinterName = savedPrinters.firstOrNull { it.mac == selectedSavedPrinterMac }?.nombre.orEmpty()
-                                statusMessage = context.getString(
-                                    R.string.bluetooth_printer_saved_status,
-                                    defaultPrinterName.ifBlank { context.getString(R.string.bluetooth_printer_not_linked) }
-                                )
-                                showSaveConfirmation = true
-                            }
-                        }
-
                         else -> {
                             statusMessage = context.getString(R.string.bluetooth_printer_select_one)
                         }
                     }
                 },
                 modifier = Modifier.weight(1f),
-                enabled = !isValidatingPrinter,
+                enabled = canPairSelectedDiscovered && !isValidatingPrinter,
                 shape = MaterialTheme.shapes.medium,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.secondary,
