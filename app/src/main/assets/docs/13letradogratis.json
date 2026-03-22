@@ -1,0 +1,74 @@
+{
+  "documento": {
+    "titulo": "INFORMACIÓN SOBRE EL DERECHO DE ASISTENCIA JURÍDICA GRATUITA",
+    "introduccion": "Este derecho se encuentra regulado en la Ley 1/1996, de 10 de enero, de Asistencia Jurídica Gratuita y en el Real Decreto 141/2021, de 9 de marzo, por el que se aprueba el Reglamento de Asistencia Jurídica Gratuita, que tiene por objeto determinar el contenido y alcance del derecho a la asistencia jurídica gratuita al que se refiere el artículo 119 de la Constitución y regular el procedimiento para su reconocimiento y efectividad.",
+    "articulos": [
+      {
+        "id": "Artículo 2",
+        "titulo": "Ámbito personal de aplicación (Ley 1/1996, de 10 de enero)",
+        "descripcion": "En los términos y con el alcance previsto en esta ley y en los tratados y convenios internacionales sobre la materia en los que España sea parte, tendrán derecho a la asistencia jurídica gratuita:",
+        "apartados": [
+          {
+            "id": "a",
+            "texto": "Los ciudadanos españoles, los nacionales de los demás Estados miembros de la Unión Europea y los extranjeros que se encuentren en España, cuando acrediten insuficiencia de recursos para litigar."
+          },
+          {
+            "id": "b",
+            "texto": "Las Entidades Gestoras y Servicios Comunes de la Seguridad Social, en todo caso."
+          },
+          {
+            "id": "c",
+            "texto": "Las siguientes personas jurídicas cuando acrediten insuficiencia de recursos para litigar: 1º Asociaciones de utilidad pública, previstas en el artículo 32 de la Ley Orgánica 1/2002, de 22 de marzo, reguladora del Derecho de Asociación. 2º Fundaciones inscritas en el Registro Público correspondiente."
+          },
+          {
+            "id": "d",
+            "texto": "En el orden jurisdiccional social, además, los trabajadores y beneficiarios del sistema de Seguridad Social, tanto para la defensa en juicio como para el ejercicio de acciones para la efectividad de los derechos laborales en los procedimientos concursales. Asimismo, el derecho a la asistencia jurídica gratuita se reconoce a los trabajadores y beneficiarios de la Seguridad Social para los litigios que sobre esta materia se sustancien ante el orden contencioso-administrativo."
+          },
+          {
+            "id": "e",
+            "texto": "En el orden contencioso-administrativo, así como en la vía administrativa previa, los ciudadanos extranjeros que acrediten insuficiencia de recursos para litigar tendrán derecho a la asistencia letrada y a la defensa y representación gratuita en los procedimientos que puedan llevar a la denegación de su entrada en España, a su devolución o expulsión del territorio español, y en todos los procedimientos en materia de asilo."
+          },
+          {
+            "id": "f",
+            "texto": "En los litigios transfronterizos en materia civil y mercantil, las personas físicas contempladas en el Capítulo VIII de esta ley, en los términos que en él se establecen."
+          },
+          {
+            "id": "g",
+            "texto": "Se omite este apartado por referirse a víctimas de violencia de género, encontrándose fuera del ámbito de la Seguridad Vial. En caso necesario consultar la Ley 1/1996, de 10 de enero."
+          },
+          {
+            "id": "h",
+            "texto": "Con independencia de la existencia de recursos para litigar, se reconoce el derecho de asistencia jurídica gratuita a quienes a causa de un accidente acrediten secuelas permanentes que les impidan totalmente la realización de las tareas de su ocupación laboral o profesional habitual y requieran la ayuda de otras personas para realizar las actividades más esenciales de la vida diaria, cuando el objeto del litigio sea la reclamación de indemnización por los daños personales y morales sufridos."
+          },
+          {
+            "id": "i",
+            "texto": "Se omite este apartado por referirse a asociaciones en defensa de los derechos de las víctimas del terrorismo, encontrándose fuera del ámbito de la Seguridad Vial. En caso necesario consultar la Ley 1/1996, de 10 de enero."
+          }
+        ]
+      },
+      {
+        "id": "Artículo 12",
+        "titulo": "Solicitud del derecho (Ley 1/1996, de 10 de enero)",
+        "puntos": [
+          "1. El solicitante deberá indicar las prestaciones incluidas en el artículo 6 cuyo reconocimiento pide. El reconocimiento comportará la exención del pago de tasas y depósitos.",
+          "2. Se instará ante el Colegio de Abogados del lugar del juzgado del proceso principal o ante el juzgado del domicilio.",
+          "3. En concurrencia de litigantes, el reconocimiento debe ser instado individualmente.",
+          "4. Si deben litigar bajo una sola defensa, se computará la totalidad de ingresos y haberes patrimoniales para el reconocimiento del derecho.",
+          "5. Si algún solicitante supera los umbrales del artículo 3.1 pero no el quíntuplo del IPREM, la Comisión determinará qué prestaciones se otorgan.",
+          "6. Si el coste debe sufragarse por varios litigantes, la aportación del sistema se limitará a la parte proporcional de quienes tengan reconocido el derecho."
+        ]
+      },
+      {
+        "id": "Artículo 9",
+        "titulo": "Presentación de la solicitud (Real Decreto 141/2021, de 9 de marzo)",
+        "puntos": [
+          "1. Se presentarán ante los servicios de orientación jurídica del Colegio de Abogados competente o el juzgado del domicilio si el proceso no ha iniciado.",
+          "2. Para circunstancias excepcionales del art. 5 de la Ley 1/1996, se presentará ante la Comisión de Asistencia Jurídica Gratuita.",
+          "3. En el orden penal con medidas privativas de libertad, el letrado remitirá la solicitud firmada directamente a la Comisión.",
+          "4. Las solicitudes serán remitidas de forma electrónica por los Colegios o letrados a través del sistema establecido por el Ministerio de Justicia."
+        ]
+      }
+    ],
+    "qr_url": "https://www.mjusticia.gob.es/es/ciudadania/tramites/asistencia-juridica-gratuita"
+  }
+}

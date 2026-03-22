@@ -108,6 +108,12 @@
           }
         ]
       }
+    ],
+    "firmas": [
+      {
+        "rol": "investigado",
+        "texto": "Firma del investigado"
+      }
     ]
   }
 }

@@ -69,6 +69,10 @@ class MainActivity : ComponentActivity() {
                 var atestadoJefaturaProvincial by rememberSaveable { mutableStateOf("") }
                 var atestadoTiempoPrivacion by rememberSaveable { mutableStateOf("") }
                 var atestadoJuzgadoDecreta by rememberSaveable { mutableStateOf("") }
+                var hasSecondDriver by rememberSaveable { mutableStateOf(false) }
+                var secondDriverName by rememberSaveable { mutableStateOf("") }
+                var secondDriverId by rememberSaveable { mutableStateOf("") }
+                var wantsToSign by rememberSaveable { mutableStateOf(true) }
                 val mainScope = rememberCoroutineScope()
                 val actuantesStorage = remember { ActuantesStorage(applicationContext) }
                 val personaStorage = remember { PersonaInvestigadaStorage(applicationContext) }
@@ -206,6 +210,8 @@ class MainActivity : ComponentActivity() {
                     atestadoJefaturaProvincial = ""
                     atestadoTiempoPrivacion = ""
                     atestadoJuzgadoDecreta = ""
+                    secondDriverName = ""
+                    secondDriverId = ""
                 }
 
                 // Quién está firmando actualmente
@@ -219,6 +225,12 @@ class MainActivity : ComponentActivity() {
                     canRecoverActingData = actuantesStorage.hasRecoverableBackup()
                     delay(3000)
                     showSplash = false
+                }
+
+                LaunchedEffect(currentRoute) {
+                    if (currentRoute == ATESTADO_VEHICLE_DATA_ROUTE) {
+                        applyVehiculoData(vehiculoStorage.loadCurrent())
+                    }
                 }
 
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
@@ -346,7 +358,8 @@ class MainActivity : ComponentActivity() {
                                                     jefaturaProvincial = atestadoJefaturaProvincial,
                                                     tiempoPrivacion = atestadoTiempoPrivacion,
                                                     juzgadoDecreta = atestadoJuzgadoDecreta
-                                                )
+                                                ),
+                                                hasSecondDriver = hasSecondDriver
                                             )
                                         }.onSuccess { result ->
                                             lastGeneratedPdfPath = result.file.absolutePath
@@ -557,6 +570,10 @@ class MainActivity : ComponentActivity() {
                                 onTiempoPrivacionChange = { atestadoTiempoPrivacion = it },
                                 juzgadoDecreta = atestadoJuzgadoDecreta,
                                 onJuzgadoDecretaChange = { atestadoJuzgadoDecreta = it },
+                                wantsToSign = wantsToSign,
+                                onWantsToSignChange = { wantsToSign = it },
+                                hasSecondDriver = hasSecondDriver,
+                                onHasSecondDriverChange = { hasSecondDriver = it },
                                 onGenerateAtestadoClick = { wantsToSign, hasSecondDriver, reason, articleNorm, articleText ->
                                     if (isGeneratingAtestado) return@FirmasAtestadoScreen
                                     atestadoGenerateReason = reason
@@ -605,7 +622,8 @@ class MainActivity : ComponentActivity() {
                                                         jefaturaProvincial = atestadoJefaturaProvincial,
                                                         tiempoPrivacion = atestadoTiempoPrivacion,
                                                         juzgadoDecreta = atestadoJuzgadoDecreta
-                                                    )
+                                                    ),
+                                                    hasSecondDriver = hasSecondDriver
                                                 )
                                             }
                                         }.onSuccess { result ->

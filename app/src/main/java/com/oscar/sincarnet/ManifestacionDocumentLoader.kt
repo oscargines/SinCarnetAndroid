@@ -115,6 +115,8 @@ internal fun replaceManifestacionPlaceholders(
         .filter { it.isNotBlank() }
         .joinToString(" del día ")
 
+    // Si otrosdocumentos está vacío, sustituir por línea
+    val otrosDocumentos = if (personData.otrosDocumentos.isNullOrBlank()) "_______________" else personData.otrosDocumentos
     return text
         .replace("[[horafechamanifestacion]]", horaFechaManifestacion)
         .replace("[[terminomunicipal]]", ocurrenciaData.terminoMunicipal)
@@ -122,7 +124,7 @@ internal fun replaceManifestacionPlaceholders(
         .replace("[[nombrecompletoinvestigado]]", nombreCompleto)
         .replace("[[documentoidentificacion]]", "")
         .replace("[[matricula]]", vehicleData.plate)
-        .replace("[[otrosdocumentos]]", "")
+        .replace("[[otrosdocumentos]]", otrosDocumentos)
         .replace("[[segundafechahora]]", horaFechaManifestacion)
 }
 

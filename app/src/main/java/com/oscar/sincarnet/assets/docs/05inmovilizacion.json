@@ -9,7 +9,8 @@
         "marca": "[[marca]]",
         "modelo": "[[modelo]]",
         "matricula": "[[matricula]]",
-        "datos_conductor_y_documento": "[[datosconductorydocumento]]"
+        "datos_conductor_y_documento": "[[datosconductorydocumento]]",
+        "datos_conductor_habilitado": "[[datosconductorhabilitado]]"
       }
     },
     "normativa_aplicable": {
@@ -52,10 +53,11 @@
         }
       ]
     },
+    "introduccion_manifestaciones": "\nY al respecto, MANIFIESTA QUE:",
     "manifestaciones": [
       {
         "id": 1,
-        "texto": "Conductor habilitado se hace cargo",
+        "texto": "Que se hace cargo del vehículo un conductor habilitado.",
         "respuesta": "SI/NO",
         "datos_conductor_habilitado": {
           "descripcion": "Datos de la persona que se hace cargo del vehículo:",
@@ -67,7 +69,7 @@
         "id": 2,
         "texto": "Esperar a que desaparezcan las causas de la inmovilización",
         "respuesta": "SI/NO",
-        "informacion_levantamiento": "El levantamiento de la Inmovilización o Depósito deberá hacerse justificando ante los miembros de la Agrupación de Tráfico de la Guardia Civil, la desaparición de las causas que motivaron tal medida; mediante llamada a Central de Comunicaciones de la Guardia Civil (062) puede ponerse en contacto, una vez desaparezcan las causas que motivaron la inmovilización, para solicitar esa presencia en el lugar de la inmovilización y, después, de realizar las pruebas de alcoholemia proceder a levantarla."
+        "informacion_levantamiento": "El levantamiento de la Inmovilización o Depósito deberá hacerse justificando ante los miembros de la Agrupación de Tráfico de la Guardia Civil, la desaparición de las causas que motivaron tal medida; mediante llamada a Central de Comunicaciones de la Guardia Civil (062) puede ponerse en contacto, una vez desaparezcan las causas que motivaron la inmovilización, para solicitar esa presencia en el lugar de la inmovilización y una vez comprobada la documentación que acredite que el conductor está habilitado para su conducción, y realizadas las pruebas de alcoholemia y/o drogas, proceder a levantarla."
       },
       {
         "id": 3,
@@ -92,6 +94,12 @@
         }
       ]
     },
+    "firmas": [
+      { "rol": "instructor", "texto": "Firma del Instructor" },
+      { "rol": "secretario", "texto": "Firma del Secretario" },
+      { "rol": "conductor_principal", "texto": "Firma del conductor sometido a las pruebas" },
+      { "rol": "conductor_habilitado", "texto": "Firma del conductor habilitado (si procede)" }
+    ],
     "cierre": "Y para que conste, en el lugar, fecha y hora arriba consignados, se extiende la presente acta para constancia, que firman el Instructor y el Secretario, junto a la persona que conducía el vehículo y fue sometida a las pruebas de alcoholemia y, en su caso, el conductor expresamente autorizado para hacerse cargo del vehículo, tras haberla leído por sí."
   }
 }

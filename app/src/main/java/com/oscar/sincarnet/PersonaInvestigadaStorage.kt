@@ -21,7 +21,8 @@ internal data class PersonaInvestigadaData(
     val requestsPrivateLawyer: Boolean? = null,
     val requestsDutyLawyer: Boolean? = null,
     val accessesEssentialProceedings: Boolean? = null,
-    val needsInterpreter: Boolean? = null
+    val needsInterpreter: Boolean? = null,
+    val otrosDocumentos: String? = null
 )
 
 internal class PersonaInvestigadaStorage(context: Context) {
@@ -46,7 +47,8 @@ internal class PersonaInvestigadaStorage(context: Context) {
         requestsPrivateLawyer = prefs.getNullableBoolean(KEY_REQUESTS_PRIVATE_LAWYER),
         requestsDutyLawyer = prefs.getNullableBoolean(KEY_REQUESTS_DUTY_LAWYER),
         accessesEssentialProceedings = prefs.getNullableBoolean(KEY_ACCESSES_ESSENTIAL_PROCEEDINGS),
-        needsInterpreter = prefs.getNullableBoolean(KEY_NEEDS_INTERPRETER)
+        needsInterpreter = prefs.getNullableBoolean(KEY_NEEDS_INTERPRETER),
+        otrosDocumentos = prefs.getString(KEY_OTROS_DOCUMENTOS, null)
     )
 
     fun saveCurrent(data: PersonaInvestigadaData) {
@@ -70,6 +72,7 @@ internal class PersonaInvestigadaStorage(context: Context) {
             .putBooleanOrRemove(KEY_REQUESTS_DUTY_LAWYER, data.requestsDutyLawyer)
             .putBooleanOrRemove(KEY_ACCESSES_ESSENTIAL_PROCEEDINGS, data.accessesEssentialProceedings)
             .putBooleanOrRemove(KEY_NEEDS_INTERPRETER, data.needsInterpreter)
+            .putString(KEY_OTROS_DOCUMENTOS, data.otrosDocumentos)
             .apply()
     }
 
@@ -112,6 +115,7 @@ internal class PersonaInvestigadaStorage(context: Context) {
             .remove(KEY_REQUESTS_DUTY_LAWYER)
             .remove(KEY_ACCESSES_ESSENTIAL_PROCEEDINGS)
             .remove(KEY_NEEDS_INTERPRETER)
+            .remove(KEY_OTROS_DOCUMENTOS)
             .apply()
     }
 
@@ -147,6 +151,6 @@ internal class PersonaInvestigadaStorage(context: Context) {
         const val KEY_REQUESTS_DUTY_LAWYER = "requests_duty_lawyer"
         const val KEY_ACCESSES_ESSENTIAL_PROCEEDINGS = "accesses_essential_proceedings"
         const val KEY_NEEDS_INTERPRETER = "needs_interpreter"
+        const val KEY_OTROS_DOCUMENTOS = "otros_documentos"
     }
 }
-

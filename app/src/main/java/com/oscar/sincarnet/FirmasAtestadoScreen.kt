@@ -1,5 +1,6 @@
 package com.oscar.sincarnet
 
+import android.content.Context
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -25,12 +26,14 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -50,6 +53,10 @@ fun FirmasAtestadoScreen(
     onSecretaryClick: () -> Unit = {},
     onInvestigatedClick: () -> Unit = {},
     onSecondDriverClick: () -> Unit = {},
+    secondDriverName: String = "",
+    onSecondDriverNameChange: (String) -> Unit = {},
+    secondDriverId: String = "",
+    onSecondDriverIdChange: (String) -> Unit = {},
     selectedGenerateReason: String = GenerateReasonOption.SiniestroVial.value,
     onSelectedGenerateReasonChange: (String) -> Unit = {},
     selectedArticleNorm: String = ArticleNormOption.LSV.value,
@@ -70,6 +77,10 @@ fun FirmasAtestadoScreen(
     onTiempoPrivacionChange: (String) -> Unit = {},
     juzgadoDecreta: String = "",
     onJuzgadoDecretaChange: (String) -> Unit = {},
+    wantsToSign: Boolean = true,
+    onWantsToSignChange: (Boolean) -> Unit = {},
+    hasSecondDriver: Boolean = false,
+    onHasSecondDriverChange: (Boolean) -> Unit = {},
     onGenerateAtestadoClick: (wantsToSign: Boolean, hasSecondDriver: Boolean, reason: String, articleNorm: String?, articleText: String) -> Unit = { _, _, _, _, _ -> },
     investigatedCopyEnabled: Boolean = false,
     onPrintInvestigatedCopyClick: () -> Unit = {},
@@ -77,14 +88,13 @@ fun FirmasAtestadoScreen(
     onSharePdfClick: () -> Unit = {},
     isGeneratingAtestado: Boolean = false
 ) {
-    var wantsToSign by rememberSaveable { mutableStateOf(true) }
-    var hasSecondDriver by rememberSaveable { mutableStateOf(false) }
     var showGenerateReasonDialog by rememberSaveable { mutableStateOf(false) }
     var showArticleNormDialog by rememberSaveable { mutableStateOf(false) }
     var showBaseDatosDialog by rememberSaveable { mutableStateOf(false) }
     var showVicisitudesDialog by rememberSaveable { mutableStateOf(false) }
     var showJefaturaDialog by rememberSaveable { mutableStateOf(false) }
     var showCondenaDetailsDialog by rememberSaveable { mutableStateOf(false) }
+    var showSecondDriverDialog by rememberSaveable { mutableStateOf(false) }
 
     val selectedReasonOption = GenerateReasonOption.fromValue(selectedGenerateReason)
     val selectedNormOption = ArticleNormOption.fromValue(selectedArticleNorm)
@@ -96,9 +106,11 @@ fun FirmasAtestadoScreen(
     val secondDriverSigned = secondDriverSignature != null
 
     val generateEnabled = instructorSigned &&
-        secretarySigned &&
-        (!wantsToSign || investigatedSigned) &&
-        (!hasSecondDriver || secondDriverSigned)
+            secretarySigned &&
+            (!wantsToSign || investigatedSigned) &&
+            (!hasSecondDriver || secondDriverSigned)
+
+    val context = LocalContext.current
 
     Column(
         modifier = modifier
@@ -142,31 +154,34 @@ fun FirmasAtestadoScreen(
                     onClick = onSecretaryClick
                 )
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(10.dp))
 
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .toggleable(value = wantsToSign, onValueChange = {
-                            wantsToSign = it
-                        }),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Checkbox(checked = wantsToSign, onCheckedChange = null)
-                    Text(text = stringResource(R.string.atestado_signature_wants_to_sign))
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Start,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Checkbox(
+                            checked = wantsToSign,
+                            onCheckedChange = { onWantsToSignChange(it) }
+                        )
+                        Text(text = stringResource(R.string.atestado_signature_wants_to_sign))
+                    }
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Start,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Checkbox(
+                            checked = hasSecondDriver,
+                            onCheckedChange = { onHasSecondDriverChange(it) }
+                        )
+                        Text(text = stringResource(R.string.atestado_signature_has_second_driver))
+                    }
                 }
 
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .toggleable(value = hasSecondDriver, onValueChange = {
-                            hasSecondDriver = it
-                        }),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Checkbox(checked = hasSecondDriver, onCheckedChange = null)
-                    Text(text = stringResource(R.string.atestado_signature_has_second_driver))
-                }
+                Spacer(modifier = Modifier.height(10.dp))
 
                 AtestadoSignatureButton(
                     text = stringResource(
@@ -184,7 +199,7 @@ fun FirmasAtestadoScreen(
                     ),
                     enabled = hasSecondDriver,
                     isSigned = secondDriverSigned,
-                    onClick = onSecondDriverClick
+                    onClick = { showSecondDriverDialog = true }
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -200,7 +215,10 @@ fun FirmasAtestadoScreen(
                     text = stringResource(R.string.atestado_signature_print_investigated_copy),
                     enabled = investigatedCopyEnabled && !isGeneratingAtestado,
                     isSigned = false,
-                    onClick = onPrintInvestigatedCopyClick
+                    onClick = {
+                        val mac = BluetoothPrinterStorage(context).getDefaultPrinter()?.mac
+                        printDocumentFromJson(context, mac, "docs/13letradogratis.json")
+                    }
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -377,7 +395,9 @@ fun FirmasAtestadoScreen(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .toggleable(value = dgtNoRecord, onValueChange = { onDgtNoRecordChange(it) }),
+                            .toggleable(
+                                value = dgtNoRecord,
+                                onValueChange = { onDgtNoRecordChange(it) }),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Checkbox(checked = dgtNoRecord, onCheckedChange = null)
@@ -386,7 +406,9 @@ fun FirmasAtestadoScreen(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .toggleable(value = internationalNoRecord, onValueChange = { onInternationalNoRecordChange(it) }),
+                            .toggleable(
+                                value = internationalNoRecord,
+                                onValueChange = { onInternationalNoRecordChange(it) }),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Checkbox(checked = internationalNoRecord, onCheckedChange = null)
@@ -395,7 +417,9 @@ fun FirmasAtestadoScreen(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .toggleable(value = existsRecord, onValueChange = { onExistsRecordChange(it) }),
+                            .toggleable(
+                                value = existsRecord,
+                                onValueChange = { onExistsRecordChange(it) }),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Checkbox(checked = existsRecord, onCheckedChange = null)
@@ -568,6 +592,50 @@ fun FirmasAtestadoScreen(
             },
             dismissButton = {
                 TextButton(onClick = { showCondenaDetailsDialog = false }) {
+                    Text(text = stringResource(R.string.cancel_action))
+                }
+            }
+        )
+    }
+    if (showSecondDriverDialog) {
+        var localName by remember { mutableStateOf(secondDriverName) }
+        var localId by remember { mutableStateOf(secondDriverId) }
+
+        AlertDialog(
+            onDismissRequest = { showSecondDriverDialog = false },
+            title = { Text(text = stringResource(R.string.atestado_second_driver_title)) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedTextField(
+                        value = localName,
+                        onValueChange = { localName = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        label = { Text(text = stringResource(R.string.atestado_second_driver_name)) }
+                    )
+                    OutlinedTextField(
+                        value = localId,
+                        onValueChange = { localId = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        label = { Text(text = stringResource(R.string.atestado_second_driver_id)) }
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        onSecondDriverNameChange(localName)
+                        onSecondDriverIdChange(localId)
+                        showSecondDriverDialog = false
+                        onSecondDriverClick()
+                    }
+                ) {
+                    Text(text = stringResource(R.string.continue_action))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showSecondDriverDialog = false }) {
                     Text(text = stringResource(R.string.cancel_action))
                 }
             }

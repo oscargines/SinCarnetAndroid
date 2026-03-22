@@ -19,9 +19,25 @@ import java.io.InputStreamReader
 
 private const val A4_WIDTH_PT = 595f
 private const val A4_HEIGHT_PT = 842f
-private const val CONTENT_TOP_MM = 17f
+private const val CONTENT_TOP_MM = 19f
 private const val BOTTOM_MARGIN_MM = 15f
 private const val MIN_SIGNATURE_SECTION_HEIGHT_PT = 170f
+
+data class AtestadoInicioModalData(
+    val motivo: String = "",
+    val norma: String = "",
+    val articulo: String = "",
+    val dgtNoRecord: Boolean = false,
+    val internationalNoRecord: Boolean = false,
+    val existsRecord: Boolean = false,
+    val vicisitudesOption: String = "",
+    val jefaturaProvincial: String = "",
+    val tiempoPrivacion: String = "",
+    val juzgadoDecreta: String = ""
+)
+
+private enum class TextAlignment { LEFT, CENTER }
+private data class AlignedLine(val text: String, val alignment: TextAlignment)
 
 internal fun generateAtestadoContinuousPdf(
     context: Context,
@@ -30,6 +46,7 @@ internal fun generateAtestadoContinuousPdf(
     ocurrenciaData: OcurrenciaDelitData,
     vehicleData: VehiculoData,
     manifestacionData: ManifestacionData,
+    hasSecondDriver: Boolean,
     signatures: Map<PdfSignatureSlot, PdfSignatureContent<ImageBitmap>> = emptyMap(),
     investigatedNoSignText: String = NO_DESEA_FIRMAR_TEXT,
     instructorTip: String,
@@ -52,7 +69,12 @@ internal fun generateAtestadoContinuousPdf(
         orderedDocuments += loadAtestadoTemplateAsCitacion(
             context = context,
             fileName = fileName,
-            inicioModalData = inicioModalData
+            inicioModalData = inicioModalData,
+            personData = personData,
+            courtData = courtData,
+            ocurrenciaData = ocurrenciaData,
+            vehicleData = vehicleData,
+            hasSecondDriver = hasSecondDriver
         )
     }
     orderedDocuments += loadCitacionDocument(context, courtData.tipoJuicio)
@@ -101,9 +123,17 @@ internal fun generateAtestadoContinuousPdf(
         val maxContentY = A4_HEIGHT_PT - mmToPt(BOTTOM_MARGIN_MM)
 
         fun drawBlock(text: String, paint: Paint, lineHeight: Float, bottomSpacing: Float = 0f) {
-            if (text.isBlank()) return
-            val lines = wrapTextLines(text, pageState.right - pageState.left, paint)
-            lines.forEach { line ->
+            // Ignorar si el texto es nulo, vacío o solo saltos de línea/espacios
+            if (text.isBlank() || text.trim().isEmpty() || text.trim() == "\n") return
+            // Ignorar si el texto es un bloque JSON vacío o irrelevante
+            val trimmed = text.trim()
+            if (trimmed.startsWith("{") && trimmed.endsWith("}") && trimmed.length < 10) return
+
+            val alignedLines = wrapTextLines(text, pageState.right - pageState.left, paint)
+            // Si todas las líneas están vacías, no pintar nada
+            if (alignedLines.all { it.text.isBlank() }) return
+
+            alignedLines.forEach { alignedLine ->
                 if (pageState.cursorY + lineHeight > maxContentY) {
                     pdfDocument.finishPage(pageState.page)
                     pageState = startContinuousPage(
@@ -116,8 +146,15 @@ internal fun generateAtestadoContinuousPdf(
                     )
                     pageNumber += 1
                 }
-                if (line.isNotEmpty()) {
-                    drawTextEmbedded(pageState.canvas, line, pageState.left, pageState.cursorY, paint)
+                if (alignedLine.text.isNotEmpty()) {
+                    val x = when (alignedLine.alignment) {
+                        TextAlignment.LEFT -> pageState.left
+                        TextAlignment.CENTER -> {
+                            val textWidth = paint.measureText(alignedLine.text)
+                            pageState.left + (pageState.right - pageState.left - textWidth) / 2f
+                        }
+                    }
+                    drawTextEmbedded(pageState.canvas, alignedLine.text, x, pageState.cursorY, paint)
                 }
                 pageState.cursorY += lineHeight
             }
@@ -196,7 +233,7 @@ internal fun generateAtestadoContinuousPdf(
                 )
                 if (itemText.isNotBlank()) {
                     val itemLines = wrapTextLines("- $itemText", (pageState.right - pageState.left) - 12f, textPaint)
-                    itemLines.forEach { line ->
+                    itemLines.forEach { alignedLine ->
                         if (pageState.cursorY + 13f > maxContentY) {
                             pdfDocument.finishPage(pageState.page)
                             pageState = startContinuousPage(
@@ -209,8 +246,15 @@ internal fun generateAtestadoContinuousPdf(
                             )
                             pageNumber += 1
                         }
-                        if (line.isNotEmpty()) {
-                            drawTextEmbedded(pageState.canvas, line, pageState.left + 12f, pageState.cursorY, textPaint)
+                        if (alignedLine.text.isNotEmpty()) {
+                            val x = when (alignedLine.alignment) {
+                                TextAlignment.LEFT -> pageState.left + 12f
+                                TextAlignment.CENTER -> {
+                                    val textWidth = textPaint.measureText(alignedLine.text)
+                                    pageState.left + (pageState.right - pageState.left - textWidth) / 2f
+                                }
+                            }
+                            drawTextEmbedded(pageState.canvas, alignedLine.text, x, pageState.cursorY, textPaint)
                         }
                         pageState.cursorY += 13f
                     }
@@ -233,7 +277,7 @@ internal fun generateAtestadoContinuousPdf(
                 )
                 if (optionText.isNotBlank()) {
                     val optionLines = wrapTextLines("- $optionText", (pageState.right - pageState.left) - 12f, textPaint)
-                    optionLines.forEach { line ->
+                    optionLines.forEach { alignedLine ->
                         if (pageState.cursorY + 13f > maxContentY) {
                             pdfDocument.finishPage(pageState.page)
                             pageState = startContinuousPage(
@@ -246,8 +290,15 @@ internal fun generateAtestadoContinuousPdf(
                             )
                             pageNumber += 1
                         }
-                        if (line.isNotEmpty()) {
-                            drawTextEmbedded(pageState.canvas, line, pageState.left + 12f, pageState.cursorY, textPaint)
+                        if (alignedLine.text.isNotEmpty()) {
+                            val x = when (alignedLine.alignment) {
+                                TextAlignment.LEFT -> pageState.left + 12f
+                                TextAlignment.CENTER -> {
+                                    val textWidth = textPaint.measureText(alignedLine.text)
+                                    pageState.left + (pageState.right - pageState.left - textWidth) / 2f
+                                }
+                            }
+                            drawTextEmbedded(pageState.canvas, alignedLine.text, x, pageState.cursorY, textPaint)
                         }
                         pageState.cursorY += 13f
                     }
@@ -325,20 +376,35 @@ internal fun generateAtestadoContinuousPdf(
             pageNumber += 1
         }
 
-        drawCitacionSignatures(
-            canvas = pageState.canvas,
-            signatures = signatures,
-            startY = pageState.cursorY + 6f,
-            leftX = pageState.left,
-            rightX = pageState.right,
-            pageHeight = A4_HEIGHT_PT,
-            bottomMargin = mmToPt(BOTTOM_MARGIN_MM),
-            instructorTip = instructorTip,
-            secretaryTip = secretaryTip,
-            investigatedNoSignText = investigatedNoSignText,
-            textPaint = textPaint,
-            tipPaint = textPaintSmall
-        )
+        // Si el documento es 03letradogratis.json, solo dibujar la firma del investigado con el texto 'Enterado'
+        if (document.titulo.trim().equals("INFORMACIÓN SOBRE EL DERECHO DE ASISTENCIA JURÍDICA GRATUITA", ignoreCase = true)) {
+            drawSoloInvestigadoSignature(
+                canvas = pageState.canvas,
+                signatures = signatures,
+                startY = pageState.cursorY + 6f,
+                leftX = pageState.left,
+                rightX = pageState.right,
+                pageHeight = A4_HEIGHT_PT,
+                bottomMargin = mmToPt(BOTTOM_MARGIN_MM),
+                textPaint = textPaint,
+                tipPaint = textPaintSmall
+            )
+        } else {
+            drawCitacionSignatures(
+                canvas = pageState.canvas,
+                signatures = signatures,
+                startY = pageState.cursorY + 6f,
+                leftX = pageState.left,
+                rightX = pageState.right,
+                pageHeight = A4_HEIGHT_PT,
+                bottomMargin = mmToPt(BOTTOM_MARGIN_MM),
+                instructorTip = instructorTip,
+                secretaryTip = secretaryTip,
+                investigatedNoSignText = investigatedNoSignText,
+                textPaint = textPaint,
+                tipPaint = textPaintSmall
+            )
+        }
 
         pdfDocument.finishPage(pageState.page)
     }
@@ -628,6 +694,42 @@ private fun drawSignatureBlock(
     }
 }
 
+/**
+ * Dibuja solo la firma del investigado con el texto 'Enterado' centrado
+ */
+private fun drawSoloInvestigadoSignature(
+    canvas: android.graphics.Canvas,
+    signatures: Map<PdfSignatureSlot, PdfSignatureContent<ImageBitmap>>,
+    startY: Float,
+    leftX: Float,
+    rightX: Float,
+    pageHeight: Float,
+    bottomMargin: Float,
+    textPaint: Paint,
+    tipPaint: Paint
+) {
+    val availableHeight = (pageHeight - bottomMargin) - startY
+    val signatureBoxWidth = ((rightX - leftX) / 2f).coerceAtLeast(40f)
+    val signatureBoxHeight = (availableHeight * 0.42f).coerceAtLeast(80f).coerceAtMost(mmToPt(40f))
+    val leftPadding = ((rightX - leftX) - signatureBoxWidth) / 2f
+    val rect = RectF(
+        leftX + leftPadding,
+        startY,
+        leftX + leftPadding + signatureBoxWidth,
+        (startY + signatureBoxHeight).coerceAtMost(pageHeight - bottomMargin)
+    )
+    drawSignatureBlock(
+        canvas = canvas,
+        rect = rect,
+        title = "Enterado",
+        tip = null,
+        content = signatures[PdfSignatureSlot.INVESTIGATED],
+        fallbackText = NO_DESEA_FIRMAR_TEXT,
+        textPaint = textPaint,
+        tipPaint = tipPaint
+    )
+}
+
 private fun loadTypefaceFromAssets(context: Context, path: String): Typeface? =
     runCatching { Typeface.createFromAsset(context.assets, path) }.getOrNull()
 
@@ -661,7 +763,12 @@ private fun drawBitmapAlignedTopRight(
 private fun loadAtestadoTemplateAsCitacion(
     context: Context,
     fileName: String,
-    inicioModalData: AtestadoInicioModalData
+    inicioModalData: AtestadoInicioModalData,
+    personData: PersonaInvestigadaData,
+    courtData: JuzgadoAtestadoData,
+    ocurrenciaData: OcurrenciaDelitData,
+    vehicleData: VehiculoData,
+    hasSecondDriver: Boolean
 ): CitacionDocument {
     return runCatching {
         val inputStream = context.assets.open("docs/$fileName")
@@ -698,7 +805,11 @@ private fun loadAtestadoTemplateAsCitacion(
                 fileName == "02derechos.json" && key == "derechos_articulo_520" ->
                     buildDerechosArticulo520Text(value)
                 fileName == "02derechos.json" && key == "manifestacion_investigado" ->
-                    buildDerechosManifestacionInvestigadoText(value)
+                    buildDerechosManifestacionInvestigadoText(value, personData, courtData, ocurrenciaData, vehicleData)
+                fileName == "04manifestacion.json" && key == "documentacion" ->
+                    collectOrderedTextManifestacionAnexos(value, personData, courtData, ocurrenciaData, vehicleData)
+                fileName == "05inmovilizacion.json" && key == "manifestaciones" ->
+                    collectOrderedTextInmovilizacionManifestaciones(value, hasSecondDriver)
                 else -> collectOrderedText(value)
             }
             CitacionSeccion(
@@ -711,7 +822,8 @@ private fun loadAtestadoTemplateAsCitacion(
             titulo = title,
             cuerpoDescripcion = body,
             secciones = sections,
-            cierre = root.optString("cierre", "")
+            cierre = root.optJSONObject("cierre")?.optString("texto", "")
+                ?: root.optString("cierre", "")
         )
     }.getOrElse {
         CitacionDocument(
@@ -806,23 +918,28 @@ private fun buildDerechosHechosInvestigacionText(value: Any?): String {
         val titulo = punto.optString("titulo", "")
         val campo = punto.optString("campo_variable", "")
         val texto = punto.optString("texto", "")
-        val detalle = campo.ifBlank { texto }
-        val line = buildString {
-            append(id)
-            append(". ")
-            append(titulo)
-            if (detalle.isNotBlank()) {
-                append(": ")
-                append(detalle)
-            }
-        }
+
+        val line = "$id. $titulo"
         if (line.isNotBlank()) lines += line
+
+        if (campo.isNotBlank()) {
+            lines += "[[CENTER]]$campo"
+        }
+        if (texto.isNotBlank()) {
+            lines += "[[CENTER]]${texto.uppercase()}"
+        }
     }
 
     return lines.joinToString("\n\n")
 }
 
-private fun buildDerechosManifestacionInvestigadoText(value: Any?): String {
+private fun buildDerechosManifestacionInvestigadoText(
+    value: Any?,
+    personData: PersonaInvestigadaData,
+    courtData: JuzgadoAtestadoData,
+    ocurrenciaData: OcurrenciaDelitData,
+    vehicleData: VehiculoData
+): String {
     val obj = value as? JSONObject ?: return collectOrderedText(value)
     val lines = mutableListOf<String>()
 
@@ -832,7 +949,7 @@ private fun buildDerechosManifestacionInvestigadoText(value: Any?): String {
     for (i in 0 until opciones.length()) {
         val option = opciones.optJSONObject(i) ?: continue
         val id = option.optInt("id", i + 1)
-        val texto = option.optString("texto", "")
+        var texto = option.optString("texto", "")
         val nota = option.optString("nota", "")
         val campoVariable = option.optString("campo_variable", "")
         val answerPlaceholder = when (id) {
@@ -844,6 +961,15 @@ private fun buildDerechosManifestacionInvestigadoText(value: Any?): String {
             6 -> "[[right_interprete]]"
             else -> ""
         }
+
+        // Interpolar placeholders en el texto
+        texto = replaceManifestacionPlaceholders(
+            texto,
+            personData,
+            courtData,
+            ocurrenciaData,
+            vehicleData
+        )
 
         val optionLine = buildString {
             append("- ")
@@ -914,6 +1040,13 @@ private fun collectOrderedText(value: Any?): String {
                     pregunta.isNotBlank() -> pregunta
                     referencia.isNotBlank() -> referencia
                     else -> ""
+                }
+
+                // Si el objeto solo tiene campos irrelevantes y texto vacío, no añadir nada
+                val keysSet = current.keys().asSequence().toSet()
+                val soloCamposIrrelevantes = keysSet.all { it == "id" || it == "campos_variables" || it == "campo_variable" || it == "respuesta" || it == "texto" }
+                if (soloCamposIrrelevantes && texto.isBlank()) {
+                    return
                 }
 
                 if (id.isNotBlank() && principalText.isNotBlank()) {
@@ -990,33 +1123,52 @@ private fun wrapTextLines(
     text: String,
     maxWidth: Float,
     paint: Paint
-): List<String> {
-    val lines = mutableListOf<String>()
+): List<AlignedLine> {
+    val result = mutableListOf<AlignedLine>()
     text.split("\n").forEach { paragraph ->
-        val trimmed = paragraph.trim()
-        if (trimmed.isEmpty()) {
-            lines += ""
+        var p = paragraph.trim()
+        var alignment = TextAlignment.LEFT
+        if (p.startsWith("[[CENTER]]")) {
+            p = p.substring(10).trim()
+            alignment = TextAlignment.CENTER
+        }
+
+        if (p.isEmpty()) {
+            result.add(AlignedLine("", alignment))
             return@forEach
         }
 
-        val words = trimmed.split(" ")
-        val current = StringBuilder()
+        val words = p.split(" ")
+        var currentLineText = StringBuilder()
         for (word in words) {
-            val test = if (current.isEmpty()) word else "$current $word"
+            val test = if (currentLineText.isEmpty()) word else "$currentLineText $word"
             if (paint.measureText(test) <= maxWidth) {
-                if (current.isEmpty()) current.append(word) else {
-                    current.append(' ')
-                    current.append(word)
+                if (currentLineText.isEmpty()) currentLineText.append(word) else {
+                    currentLineText.append(' ')
+                    currentLineText.append(word)
                 }
             } else {
-                if (current.isNotEmpty()) lines += current.toString()
-                current.clear()
-                current.append(word)
+                if (currentLineText.isNotEmpty()) result.add(AlignedLine(currentLineText.toString(), alignment))
+                currentLineText = StringBuilder()
+                if (paint.measureText(word) > maxWidth) {
+                    var start = 0
+                    while (start < word.length) {
+                        var end = word.length
+                        while (end > start && paint.measureText(word.substring(start, end)) > maxWidth) {
+                            end--
+                        }
+                        if (end == start) end = (start + 1).coerceAtMost(word.length)
+                        result.add(AlignedLine(word.substring(start, end) + if (end < word.length) "-" else "", alignment))
+                        start = end
+                    }
+                } else {
+                    currentLineText.append(word)
+                }
             }
         }
-        if (current.isNotEmpty()) lines += current.toString()
+        if (currentLineText.isNotEmpty()) result.add(AlignedLine(currentLineText.toString(), alignment))
     }
-    return lines
+    return result
 }
 
 private fun drawTextEmbedded(
@@ -1032,3 +1184,64 @@ private fun drawTextEmbedded(
     canvas.drawPath(path, paint)
 }
 
+private fun collectOrderedTextManifestacionAnexos(
+    value: Any?,
+    personData: PersonaInvestigadaData,
+    courtData: JuzgadoAtestadoData,
+    ocurrenciaData: OcurrenciaDelitData,
+    vehicleData: VehiculoData
+): String {
+    val lines = mutableListOf<String>()
+    if (value is JSONObject && value.has("anexos")) {
+        val anexosArray = value.getJSONArray("anexos")
+        for (i in 0 until anexosArray.length()) {
+            val anexo = anexosArray.getJSONObject(i)
+            val id = anexo.optString("id", "Anexo ${i + 1}")
+            val texto = anexo.optString("texto", "")
+            if (texto.isNotBlank()) {
+                val interpolated = replaceManifestacionPlaceholders(
+                    texto,
+                    personData,
+                    courtData,
+                    ocurrenciaData,
+                    vehicleData
+                )
+                lines += "$id) $interpolated"
+            }
+        }
+    }
+    return lines.joinToString("\n\n")
+}
+
+private fun collectOrderedTextInmovilizacionManifestaciones(value: Any?, hasSecondDriver: Boolean): String {
+    val lines = mutableListOf<String>()
+    val array = when (value) {
+        is JSONArray -> value
+        is JSONObject -> JSONArray().apply { put(value) }
+        else -> return ""
+    }
+    for (i in 0 until array.length()) {
+        val obj = array.optJSONObject(i) ?: continue
+        val id = obj.optInt("id", i + 1)
+        // Solo mostrar la manifestación del conductor habilitado si hasSecondDriver es true
+        if (id == 1 && !hasSecondDriver) continue
+        val texto = obj.optString("texto", "").trim()
+        if (texto.isNotBlank()) {
+            lines += "- $texto"
+        }
+        // Si tiene datos_conductor_habilitado y es el id=1 y hasSecondDriver, mostrar los datos
+        if (id == 1 && hasSecondDriver) {
+            obj.optJSONObject("datos_conductor_habilitado")?.let { datos ->
+                val desc = datos.optString("descripcion", "").trim()
+                val condiciones = datos.optString("condiciones", "").trim()
+                if (desc.isNotBlank()) lines += "  $desc"
+                if (condiciones.isNotBlank()) lines += "  $condiciones"
+            }
+        }
+        // Si tiene informacion_levantamiento, mostrarlo
+        obj.optString("informacion_levantamiento", "").takeIf { it.isNotBlank() }?.let {
+            lines += "  $it"
+        }
+    }
+    return lines.joinToString("\n\n")
+}
