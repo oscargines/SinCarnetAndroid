@@ -1,6 +1,5 @@
 package com.oscar.sincarnet
 
-import android.content.Context
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -37,6 +36,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.oscar.sincarnet.PrintProgress
+import com.oscar.sincarnet.imprimirAtestadoCompleto
+import androidx.compose.material3.LinearProgressIndicator
 import com.oscar.sincarnet.ui.theme.SinCarnetTheme
 
 @Composable
@@ -95,6 +97,8 @@ fun FirmasAtestadoScreen(
     var showJefaturaDialog by rememberSaveable { mutableStateOf(false) }
     var showCondenaDetailsDialog by rememberSaveable { mutableStateOf(false) }
     var showSecondDriverDialog by rememberSaveable { mutableStateOf(false) }
+
+    var printProgress by remember { mutableStateOf<PrintProgress>(PrintProgress()) }
 
     val selectedReasonOption = GenerateReasonOption.fromValue(selectedGenerateReason)
     val selectedNormOption = ArticleNormOption.fromValue(selectedArticleNorm)
@@ -213,11 +217,47 @@ fun FirmasAtestadoScreen(
 
                 AtestadoSignatureButton(
                     text = stringResource(R.string.atestado_signature_print_investigated_copy),
-                    enabled = investigatedCopyEnabled && !isGeneratingAtestado,
+                    enabled = investigatedCopyEnabled && !isGeneratingAtestado && !printProgress.isVisible,
                     isSigned = false,
                     onClick = {
                         val mac = BluetoothPrinterStorage(context).getDefaultPrinter()?.mac
-                        printDocumentFromJson(context, mac, "docs/13letradogratis.json")
+                        if (mac.isNullOrBlank()) {
+                            printProgress = PrintProgress(
+                                isVisible    = true,
+                                isError      = true,
+                                errorMessage = "No hay impresora configurada"
+                            )
+                            return@AtestadoSignatureButton
+                        }
+                        // PASAR LAS FIRMAS ACTUALES
+                        val sigs = PrintSignatures(
+                            instructor  = instructorSignature,
+                            secretary   = secretarySignature,
+                            investigated = investigatedSignature
+                        )
+                        imprimirAtestadoCompleto(
+                            context  = context,
+                            mac      = mac,
+                            sigs     = sigs,
+                            onProgress = { index, total, docName ->
+                                printProgress = PrintProgress(
+                                    isVisible    = true,
+                                    currentDoc   = docName,
+                                    currentIndex = index,
+                                    totalDocs    = total
+                                )
+                            },
+                            onFinished = {
+                                printProgress = PrintProgress()  // cierra el modal
+                            },
+                            onError = { msg ->
+                                printProgress = PrintProgress(
+                                    isVisible    = true,
+                                    isError      = true,
+                                    errorMessage = msg
+                                )
+                            }
+                        )
                     }
                 )
 
@@ -637,6 +677,43 @@ fun FirmasAtestadoScreen(
             dismissButton = {
                 TextButton(onClick = { showSecondDriverDialog = false }) {
                     Text(text = stringResource(R.string.cancel_action))
+                }
+            }
+        )
+    }
+
+    if (printProgress.isVisible) {
+        AlertDialog(
+            onDismissRequest = {
+                if (!printProgress.isError) printProgress = PrintProgress()
+            },
+            title = {
+                Text(
+                    text = if (printProgress.isError)
+                        stringResource(R.string.print_error_title)
+                    else
+                        stringResource(R.string.printing_title),
+                    style = MaterialTheme.typography.titleMedium
+                )
+            },
+            text = {
+                if (printProgress.isError) {
+                    Text(text = printProgress.errorMessage ?: "Error desconocido")
+                } else {
+                    Column {
+                        Text(text = printProgress.currentDoc ?: "Imprimiendo...")
+                        Spacer(modifier = Modifier.height(8.dp))
+                        LinearProgressIndicator(progress = if (printProgress.totalDocs > 0) printProgress.currentIndex.toFloat() / printProgress.totalDocs else 0f)
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(text = "${printProgress.currentIndex} / ${printProgress.totalDocs}")
+                    }
+                }
+            },
+            confirmButton = {
+                if (printProgress.isError) {
+                    TextButton(onClick = { printProgress = PrintProgress() }) {
+                        Text(text = stringResource(R.string.close_action))
+                    }
                 }
             }
         )

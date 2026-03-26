@@ -296,7 +296,14 @@ class MainActivity : ComponentActivity() {
                                 onActingDataClick = { currentRoute = ATESTADO_ACTING_DATA_ROUTE },
                                 onSignaturesClick = {
                                     currentRoute = ATESTADO_SIGNATURES_ROUTE
-                                }
+                                },
+                                printSignatures = PrintSignatures(
+                                    instructor    = signaturesBySigner[SIGNER_INSTRUCTOR],
+                                    secretary     = signaturesBySigner[SIGNER_SECRETARY],
+                                    investigated  = signaturesBySigner[SIGNER_INVESTIGATED],
+                                    instructorTip = instructorTip,
+                                    secretaryTip  = secretaryTip
+                                )
                             )
 
                             ATESTADO_OCURRENCIA_DELIT_ROUTE -> DatosOcurrenciaDelitScreen(
@@ -318,7 +325,7 @@ class MainActivity : ComponentActivity() {
                                 onPrintSummons = {
                                     val hasMinimumSignatures =
                                         signaturesBySigner.containsKey(SIGNER_INSTRUCTOR) &&
-                                        signaturesBySigner.containsKey(SIGNER_SECRETARY)
+                                                signaturesBySigner.containsKey(SIGNER_SECRETARY)
                                     if (!hasMinimumSignatures) {
                                         signaturesOpenedFromCourt = true
                                         currentRoute = ATESTADO_SIGNATURES_ROUTE
@@ -476,28 +483,28 @@ class MainActivity : ComponentActivity() {
                                     sameUnit = it
                                     if (it) secretaryUnit = instructorUnit
                                 },
-                                 tipHistory = tipHistory,
-                                 unitHistory = unitHistory,
-                                 onSaveClick = {
-                                     actuantesStorage.saveCurrent(
-                                         ActuantesData(
-                                             instructorEmployment = instructorEmployment,
-                                             instructorTip = instructorTip,
-                                             instructorUnit = instructorUnit,
-                                             secretaryEmployment = secretaryEmployment,
-                                             secretaryTip = secretaryTip,
-                                             secretaryUnit = secretaryUnit,
-                                             sameUnit = sameUnit
-                                         )
-                                     )
-                                     actuantesStorage.addTipToHistory(instructorTip, true)
-                                     actuantesStorage.addTipToHistory(secretaryTip, false)
-                                     actuantesStorage.addUnitToHistory(instructorUnit, true)
-                                     actuantesStorage.addUnitToHistory(secretaryUnit, false)
-                                     canRecoverActingData = actuantesStorage.hasRecoverableBackup()
-                                     actingStatusMessage = getString(R.string.atestado_acting_saved_message)
-                                     currentRoute = ATESTADO_DATA_ROUTE
-                                 },
+                                tipHistory = tipHistory,
+                                unitHistory = unitHistory,
+                                onSaveClick = {
+                                    actuantesStorage.saveCurrent(
+                                        ActuantesData(
+                                            instructorEmployment = instructorEmployment,
+                                            instructorTip = instructorTip,
+                                            instructorUnit = instructorUnit,
+                                            secretaryEmployment = secretaryEmployment,
+                                            secretaryTip = secretaryTip,
+                                            secretaryUnit = secretaryUnit,
+                                            sameUnit = sameUnit
+                                        )
+                                    )
+                                    actuantesStorage.addTipToHistory(instructorTip, true)
+                                    actuantesStorage.addTipToHistory(secretaryTip, false)
+                                    actuantesStorage.addUnitToHistory(instructorUnit, true)
+                                    actuantesStorage.addUnitToHistory(secretaryUnit, false)
+                                    canRecoverActingData = actuantesStorage.hasRecoverableBackup()
+                                    actingStatusMessage = getString(R.string.atestado_acting_saved_message)
+                                    currentRoute = ATESTADO_DATA_ROUTE
+                                },
                                 onDeleteClick = {
                                     actuantesStorage.deleteCurrentWithBackup()
                                     applyActuantesData(ActuantesData())

@@ -344,4 +344,8 @@
     <!-- direcciones webs para códigos qr -->
     <string name="info_asistencia_juridica_gratuita">https://sede.mjusticia.gob.es/tramites/asistencia-juridica-gratuita</string>
 
+    <!-- En strings.xml, dentro de <resources> -->
+    <string name="print_error_title">Error de impresión</string>
+    <string name="printing_title">Imprimiendo documentos</string>
+
 </resources>

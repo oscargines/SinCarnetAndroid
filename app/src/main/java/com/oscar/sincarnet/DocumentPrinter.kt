@@ -5,6 +5,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlin.reflect.full.callSuspend
 import org.json.JSONObject
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -27,6 +28,7 @@ import java.time.format.DateTimeFormatter
 //   DocumentPrinter.imprimirManifestacion(context, mac)
 // ============================================================
 object DocumentPrinter {
+    private const val DELAY_BETWEEN_DOCS_MS: Long = 3000L
 
     // ----------------------------------------------------------
     // 02derechos.json
@@ -198,14 +200,15 @@ object DocumentPrinter {
         context: Context,
         mac: String,
         jsonAssetPath: String,
-        placeholders: Map<String, String>
+        placeholders: Map<String, String>,
+        sigs: PrintSignatures? = null
     ) {
         val raw   = context.assets.open(jsonAssetPath).bufferedReader().readText()
         val json  = JSONObject(raw)
         val doc   = json.getJSONObject("documento")
         val title = resolve(doc.optString("titulo", ""), placeholders)
         val body  = buildDiligenciaBody(doc, placeholders)
-        printDocumentResolvedSuspend(context, mac, title, body)
+        printDocumentResolvedSuspend(context, mac, title, body, sigs)
     }
 
     // Versión no-suspend para llamadas individuales desde botones
@@ -252,6 +255,49 @@ object DocumentPrinter {
         doc.optJSONObject("cuerpo")?.let { cuerpo ->
             line(cuerpo.optString("descripcion", ""))
             blank()
+        }
+
+        // --- Añadir soporte para 'articulos' (usado en 03letradogratis) ---
+        doc.optJSONArray("articulos")?.let { articulos ->
+            for (i in 0 until articulos.length()) {
+                val art = articulos.getJSONObject(i)
+                val artId = art.optString("id", "")
+                val artTitulo = art.optString("titulo", "")
+                val artDesc = art.optString("descripcion", "")
+                if (artId.isNotBlank() || artTitulo.isNotBlank()) {
+                    line("${artId}${if (artTitulo.isNotBlank()) ". $artTitulo" else ""}")
+                }
+                if (artDesc.isNotBlank()) {
+                    line(artDesc)
+                }
+                // Apartados
+                art.optJSONArray("apartados")?.let { apartados ->
+                    for (j in 0 until apartados.length()) {
+                        val ap = apartados.getJSONObject(j)
+                        val apId = ap.optString("id", "")
+                        val apTexto = ap.optString("texto", "")
+                        val apNota = ap.optString("nota", "")
+                        if (apId.isNotBlank() || apTexto.isNotBlank()) {
+                            line("  ${apId}${if (apTexto.isNotBlank()) ". $apTexto" else ""}")
+                        }
+                        if (apNota.isNotBlank()) {
+                            line("    Nota: $apNota")
+                        }
+                        // Subapartados
+                        ap.optJSONArray("subapartados")?.let { subs ->
+                            for (k in 0 until subs.length()) {
+                                val sub = subs.getJSONObject(k)
+                                val subId = sub.optString("id", "")
+                                val subTexto = sub.optString("texto", "")
+                                if (subId.isNotBlank() || subTexto.isNotBlank()) {
+                                    line("    ${subId}${if (subTexto.isNotBlank()) ". $subTexto" else ""}")
+                                }
+                            }
+                        }
+                    }
+                }
+                blank()
+            }
         }
 
         // momento_informacion_derechos
@@ -401,7 +447,7 @@ object DocumentPrinter {
     // se envía a la impresora. Usadas por imprimirAtestadoCompleto
     // para garantizar impresión secuencial sin conexiones solapadas.
     // ============================================================
-    suspend fun imprimirDerechosSuspend(context: android.content.Context, mac: String) {
+    suspend fun imprimirDerechosSuspend(context: android.content.Context, mac: String, sigs: PrintSignatures? = null) {
         val ocurrencia  = OcurrenciaDelitStorage(context).loadCurrent()
         val juzgado     = JuzgadoAtestadoStorage(context).loadCurrent()
         val actuantes   = ActuantesStorage(context).loadCurrent()
@@ -428,10 +474,10 @@ object DocumentPrinter {
             "lugarfechahoracomisióndelito"  to "${ocurrencia.localidad}, ${ocurrencia.fecha} a las ${ocurrencia.hora} horas",
             "nombreletrado"                to ""
         )
-        printDiligenciaSuspend(context, mac, "docs/02derechos.json", placeholders)
+        printDiligenciaSuspend(context, mac, "docs/02derechos.json", placeholders, sigs)
     }
 
-    suspend fun imprimirCitacionJuicioRapidoSuspend(context: android.content.Context, mac: String) {
+    suspend fun imprimirCitacionJuicioRapidoSuspend(context: android.content.Context, mac: String, sigs: PrintSignatures? = null) {
         val ocurrencia  = OcurrenciaDelitStorage(context).loadCurrent()
         val juzgado     = JuzgadoAtestadoStorage(context).loadCurrent()
         val actuantes   = ActuantesStorage(context).loadCurrent()
@@ -451,10 +497,10 @@ object DocumentPrinter {
             "fechajuicio"               to juzgado.fechaJuicioRapido,
             "datosjuzgado"              to buildDatosJuzgado(juzgado)
         )
-        printDiligenciaSuspend(context, mac, "docs/citacionjuiciorapido.json", placeholders)
+        printDiligenciaSuspend(context, mac, "docs/citacionjuiciorapido.json", placeholders, sigs)
     }
 
-    suspend fun imprimirCitacionJuicioSuspend(context: android.content.Context, mac: String) {
+    suspend fun imprimirCitacionJuicioSuspend(context: android.content.Context, mac: String, sigs: PrintSignatures? = null) {
         val ocurrencia  = OcurrenciaDelitStorage(context).loadCurrent()
         val juzgado     = JuzgadoAtestadoStorage(context).loadCurrent()
         val actuantes   = ActuantesStorage(context).loadCurrent()
@@ -472,10 +518,10 @@ object DocumentPrinter {
             "unidadinferior"            to actuantes.instructorUnit,
             "datosjuzgado"              to buildDatosJuzgado(juzgado)
         )
-        printDiligenciaSuspend(context, mac, "docs/citacionjuicio.json", placeholders)
+        printDiligenciaSuspend(context, mac, "docs/citacionjuicio.json", placeholders, sigs)
     }
 
-    suspend fun imprimirManifestacionSuspend(context: android.content.Context, mac: String) {
+    suspend fun imprimirManifestacionSuspend(context: android.content.Context, mac: String, sigs: PrintSignatures? = null) {
         val ocurrencia    = OcurrenciaDelitStorage(context).loadCurrent()
         val juzgado       = JuzgadoAtestadoStorage(context).loadCurrent()
         val investigado   = PersonaInvestigadaStorage(context).loadCurrent()
@@ -502,6 +548,88 @@ object DocumentPrinter {
             "octavapregunta"            to (respuestas[8] ?: ""),
             "segundafechahora"          to horaFecha
         )
-        printDiligenciaSuspend(context, mac, "docs/04manifestacion.json", placeholders)
+        printDiligenciaSuspend(context, mac, "docs/04manifestacion.json", placeholders, sigs)
+    }
+
+    // ----------------------------------------------------------
+    // 03letradogratis.json
+    // Información sobre el derecho de asistencia jurídica gratuita
+    // ----------------------------------------------------------
+    suspend fun imprimirLetradoGratisSuspend(context: Context, mac: String, sigs: PrintSignatures? = null) {
+        val placeholders = emptyMap<String, String>()
+        // No imprimir firmas en 03letradogratis
+        printDiligenciaSuspend(context, mac, "docs/03letradogratis.json", placeholders, null)
+    }
+}
+
+// ============================================================
+// Estado del progreso de impresión (compartido)
+// ============================================================
+data class PrintProgress(
+    val isVisible: Boolean = false,
+    val currentDoc: String = "",
+    val currentIndex: Int = 0,
+    val totalDocs: Int = 0,
+    val isError: Boolean = false,
+    val errorMessage: String = ""
+)
+
+// ============================================================
+// imprimirAtestadoCompleto (compartido)
+// ============================================================
+fun imprimirAtestadoCompleto(
+    context: Context,
+    mac: String,
+    sigs: PrintSignatures? = null,
+    onProgress: (index: Int, total: Int, docName: String) -> Unit,
+    onFinished: () -> Unit,
+    onError: (String) -> Unit
+) {
+    val juzgado     = JuzgadoAtestadoStorage(context).loadCurrent()
+    val esJuicioRapido = juzgado.tipoJuicio.contains("rápido", ignoreCase = true) ||
+            juzgado.tipoJuicio.contains("rapido", ignoreCase = true)
+
+    data class DocJob(val name: String, val print: suspend () -> Unit)
+
+    val docs = buildList<DocJob> {
+        add(DocJob("Diligencia de derechos del investigado") {
+            DocumentPrinter.imprimirDerechosSuspend(context, mac, sigs)
+        })
+        add(DocJob("Información asistencia jurídica gratuita") {
+            // 03letradogratis.json: se asume que existe función imprimirLetradoGratisSuspend
+            if (DocumentPrinter::class.members.any { it.name == "imprimirLetradoGratisSuspend" }) {
+                val method = DocumentPrinter::class.members.first { it.name == "imprimirLetradoGratisSuspend" }
+                method.callSuspend(DocumentPrinter, context, mac, sigs)
+            }
+        })
+        add(DocJob("Manifestación del investigado") {
+            DocumentPrinter.imprimirManifestacionSuspend(context, mac, sigs)
+        })
+        add(DocJob(if (esJuicioRapido) "Citacion a juicio rápido" else "Citacion a juicio") {
+            if (esJuicioRapido) DocumentPrinter.imprimirCitacionJuicioRapidoSuspend(context, mac, sigs)
+            else DocumentPrinter.imprimirCitacionJuicioSuspend(context, mac, sigs)
+        })
+        // Añadir 05inmovilizacion si existe la función
+        if (DocumentPrinter::class.members.any { it.name == "imprimirInmovilizacionSuspend" }) {
+            add(DocJob("Acta de inmovilización") {
+                val method = DocumentPrinter::class.members.first { it.name == "imprimirInmovilizacionSuspend" }
+                method.callSuspend(DocumentPrinter, context, mac, sigs)
+            })
+        }
+    }
+
+    CoroutineScope(Dispatchers.IO).launch {
+        try {
+            for ((i, doc) in docs.withIndex()) {
+                withContext(Dispatchers.Main) {
+                    onProgress(i + 1, docs.size, doc.name)
+                }
+                doc.print()
+                kotlinx.coroutines.delay(3000L)
+            }
+            withContext(Dispatchers.Main) { onFinished() }
+        } catch (e: Exception) {
+            withContext(Dispatchers.Main) { onError(e.message ?: "Error desconocido") }
+        }
     }
 }
