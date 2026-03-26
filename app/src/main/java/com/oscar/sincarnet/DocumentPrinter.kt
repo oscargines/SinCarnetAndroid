@@ -67,7 +67,7 @@ object DocumentPrinter {
             "nombreletrado"               to ""   // se rellena si hay letrado privado
         )
 
-        printDiligencia(context, mac, "docs/02derechos.json", placeholders)
+        printDiligencia(context, mac, "docs/02derechos.json", placeholders, investigado)
     }
 
     // ----------------------------------------------------------
@@ -96,7 +96,7 @@ object DocumentPrinter {
             "datosjuzgado"              to buildDatosJuzgado(juzgado)
         )
 
-        printDiligencia(context, mac, "docs/citacionjuiciorapido.json", placeholders)
+        printDiligencia(context, mac, "docs/citacionjuiciorapido.json", placeholders, investigado)
     }
 
     // ----------------------------------------------------------
@@ -123,7 +123,7 @@ object DocumentPrinter {
             "datosjuzgado"              to buildDatosJuzgado(juzgado)
         )
 
-        printDiligencia(context, mac, "docs/citacionjuicio.json", placeholders)
+        printDiligencia(context, mac, "docs/citacionjuicio.json", placeholders, investigado)
     }
 
     // ----------------------------------------------------------
@@ -161,7 +161,7 @@ object DocumentPrinter {
             "segundafechahora"          to horaFechaAhora
         )
 
-        printDiligencia(context, mac, "docs/04manifestacion.json", placeholders)
+        printDiligencia(context, mac, "docs/04manifestacion.json", placeholders, investigado)
     }
 
     // ----------------------------------------------------------
@@ -201,13 +201,14 @@ object DocumentPrinter {
         mac: String,
         jsonAssetPath: String,
         placeholders: Map<String, String>,
+        investigado: PersonaInvestigadaData,
         sigs: PrintSignatures? = null
     ) {
         val raw   = context.assets.open(jsonAssetPath).bufferedReader().readText()
         val json  = JSONObject(raw)
         val doc   = json.getJSONObject("documento")
         val title = resolve(doc.optString("titulo", ""), placeholders)
-        val body  = buildDiligenciaBody(doc, placeholders)
+        val body  = buildDiligenciaBody(doc, placeholders, investigado)
         printDocumentResolvedSuspend(context, mac, title, body, sigs)
     }
 
@@ -216,15 +217,16 @@ object DocumentPrinter {
         context: Context,
         mac: String?,
         jsonAssetPath: String,
-        placeholders: Map<String, String>
+        placeholders: Map<String, String>,
+        investigado: PersonaInvestigadaData
     ) {
         if (mac.isNullOrBlank()) return
-        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
+        CoroutineScope(Dispatchers.IO).launch {
             try {
-                printDiligenciaSuspend(context, mac, jsonAssetPath, placeholders)
+                printDiligenciaSuspend(context, mac, jsonAssetPath, placeholders, investigado)
             } catch (e: Exception) {
                 android.util.Log.e("DocumentPrinter", "Error: ${e.message}", e)
-                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+                withContext(Dispatchers.Main) {
                     android.widget.Toast.makeText(
                         context, "Error al imprimir: ${e.message}",
                         android.widget.Toast.LENGTH_LONG
@@ -244,7 +246,7 @@ object DocumentPrinter {
     }
 
     // Construye el body completo de la diligencia recorriendo todas las secciones
-    private fun buildDiligenciaBody(doc: JSONObject, ph: Map<String, String>): String {
+    private fun buildDiligenciaBody(doc: JSONObject, ph: Map<String, String>, investigado: PersonaInvestigadaData): String {
         val sb = StringBuilder()
 
         fun r(text: String) = resolve(text, ph)
@@ -255,6 +257,33 @@ object DocumentPrinter {
         doc.optJSONObject("cuerpo")?.let { cuerpo ->
             line(cuerpo.optString("descripcion", ""))
             blank()
+            // --- Añadir cajas solo para citacionjuiciorapido.json ---
+            // Detectar por presencia de campos típicos (fechajuicio, horajuicio, datosjuzgado)
+            val tieneJuicio = ph.containsKey("fechajuicio") && ph.containsKey("horajuicio") && ph.containsKey("datosjuzgado")
+            if (tieneJuicio) {
+                // Caja: Fecha de celebración
+                sb.appendLine("**************************************")
+                sb.appendLine("*      Fecha de celebración         *")
+                sb.appendLine("*  Fecha: ${r("[[fechajuicio]]")}  *")
+                sb.appendLine("*  Hora:  ${r("[[horajuicio]]")}   *")
+                sb.appendLine("**************************************")
+                blank()
+                // Caja: Datos del juzgado
+                sb.appendLine("**************************************")
+                sb.appendLine("*         Datos del Juzgado         *")
+                val datosJuzgado = r("[[datosjuzgado]]")
+                // Dividir en líneas si es muy largo
+                val maxLen = 36
+                var start = 0
+                while (start < datosJuzgado.length) {
+                    val end = minOf(start + maxLen, datosJuzgado.length)
+                    val linea = datosJuzgado.substring(start, end)
+                    sb.appendLine("* ${linea.padEnd(maxLen, ' ')}*")
+                    start = end
+                }
+                sb.appendLine("**************************************")
+                blank()
+            }
         }
 
         // --- Añadir soporte para 'articulos' (usado en 03letradogratis) ---
@@ -347,11 +376,27 @@ object DocumentPrinter {
         doc.optJSONObject("manifestacion_investigado")?.let { sec ->
             line(sec.optString("descripcion", ""))
             sec.optJSONArray("opciones")?.let { opts ->
+                // Obtener respuestas reales del investigado
+                val respuestas = mapOf(
+                    1 to investigado.rightToRemainSilentInformed,
+                    2 to investigado.waivesLegalAssistance,
+                    3 to investigado.requestsPrivateLawyer,
+                    4 to investigado.requestsDutyLawyer,
+                    5 to investigado.accessesEssentialProceedings,
+                    6 to investigado.needsInterpreter
+                )
+                fun toSiNo(value: Boolean?): String = when (value) {
+                    true -> "SI"
+                    false -> "NO"
+                    null -> ""
+                }
                 for (i in 0 until opts.length()) {
                     val opt = opts.getJSONObject(i)
                     val extra = if (opt.has("campo_variable")) " ${r(opt.getString("campo_variable"))}" else ""
                     val nota  = if (opt.has("nota")) " (${opt.getString("nota")})" else ""
-                    line("  ${opt.optInt("id")}. ${opt.optString("texto", "")}$extra$nota  [${opt.optString("respuesta", "SI/NO")}]")
+                    val id = opt.optInt("id")
+                    val respuesta = toSiNo(respuestas[id])
+                    line("  $id. ${opt.optString("texto", "")}$extra$nota  [$respuesta]")
                 }
             }
             blank()
@@ -474,7 +519,7 @@ object DocumentPrinter {
             "lugarfechahoracomisióndelito"  to "${ocurrencia.localidad}, ${ocurrencia.fecha} a las ${ocurrencia.hora} horas",
             "nombreletrado"                to ""
         )
-        printDiligenciaSuspend(context, mac, "docs/02derechos.json", placeholders, sigs)
+        printDiligenciaSuspend(context, mac, "docs/02derechos.json", placeholders, investigado, sigs)
     }
 
     suspend fun imprimirCitacionJuicioRapidoSuspend(context: android.content.Context, mac: String, sigs: PrintSignatures? = null) {
@@ -497,7 +542,7 @@ object DocumentPrinter {
             "fechajuicio"               to juzgado.fechaJuicioRapido,
             "datosjuzgado"              to buildDatosJuzgado(juzgado)
         )
-        printDiligenciaSuspend(context, mac, "docs/citacionjuiciorapido.json", placeholders, sigs)
+        printDiligenciaSuspend(context, mac, "docs/citacionjuiciorapido.json", placeholders, investigado, sigs)
     }
 
     suspend fun imprimirCitacionJuicioSuspend(context: android.content.Context, mac: String, sigs: PrintSignatures? = null) {
@@ -518,7 +563,7 @@ object DocumentPrinter {
             "unidadinferior"            to actuantes.instructorUnit,
             "datosjuzgado"              to buildDatosJuzgado(juzgado)
         )
-        printDiligenciaSuspend(context, mac, "docs/citacionjuicio.json", placeholders, sigs)
+        printDiligenciaSuspend(context, mac, "docs/citacionjuicio.json", placeholders, investigado, sigs)
     }
 
     suspend fun imprimirManifestacionSuspend(context: android.content.Context, mac: String, sigs: PrintSignatures? = null) {
@@ -548,7 +593,7 @@ object DocumentPrinter {
             "octavapregunta"            to (respuestas[8] ?: ""),
             "segundafechahora"          to horaFecha
         )
-        printDiligenciaSuspend(context, mac, "docs/04manifestacion.json", placeholders, sigs)
+        printDiligenciaSuspend(context, mac, "docs/04manifestacion.json", placeholders, investigado, sigs)
     }
 
     // ----------------------------------------------------------
@@ -558,7 +603,7 @@ object DocumentPrinter {
     suspend fun imprimirLetradoGratisSuspend(context: Context, mac: String, sigs: PrintSignatures? = null) {
         val placeholders = emptyMap<String, String>()
         // No imprimir firmas en 03letradogratis
-        printDiligenciaSuspend(context, mac, "docs/03letradogratis.json", placeholders, null)
+        printDiligenciaSuspend(context, mac, "docs/03letradogratis.json", placeholders, PersonaInvestigadaData(), null)
     }
 }
 
