@@ -1,0 +1,41 @@
+CREATE DATABASE juzgados IF NOT EXISTS;
+CREATE TABLE CCAA (
+    idCCAA INTEGER NOT NULL PRIMARY KEY,
+    Nombre TEXT NOT NULL
+);
+
+
+CREATE TABLE TIPOS_JUZGADOS (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    tipo TEXT NOT NULL
+    );
+
+CREATE TABLE MUNICIPIOS (
+    idMunicipio   INTEGER PRIMARY KEY AUTOINCREMENT,
+    idProvincia   INTEGER NOT NULL,
+    codMunicipio  INTEGER NOT NULL,
+    DC            INTEGER NOT NULL,
+    Municipio     TEXT NOT NULL
+);
+
+CREATE TABLE PROVINCIAS (
+    idProvincia INTEGER NOT NULL PRIMARY KEY,
+    idCCAA INTEGER NOT NULL,
+    Provincia TEXT DEFAULT NULL
+);
+
+CREATE TABLE SEDES (
+    id_juzgado INTEGER PRIMARY KEY AUTOINCREMENT,
+    municipio TEXT,
+    nombre TEXT,
+    direccion TEXT,
+    telefono TEXT,
+    codigo_postal TEXT
+);
+
+CREATE TABLE IF NOT EXISTS partidos_judiciales (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    provincia TEXT,
+    partido_judicial TEXT,
+    municipio TEXT
+);
