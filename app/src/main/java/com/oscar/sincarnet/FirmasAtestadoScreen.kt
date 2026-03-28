@@ -17,6 +17,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.AlertDialog
@@ -36,10 +37,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.oscar.sincarnet.DocumentPrinter
 import com.oscar.sincarnet.PrintProgress
-import com.oscar.sincarnet.imprimirAtestadoCompleto
-import androidx.compose.material3.LinearProgressIndicator
 import com.oscar.sincarnet.ui.theme.SinCarnetTheme
+import kotlinx.coroutines.launch
+import androidx.compose.runtime.rememberCoroutineScope
 
 @Composable
 fun FirmasAtestadoScreen(
@@ -98,7 +100,7 @@ fun FirmasAtestadoScreen(
     var showCondenaDetailsDialog by rememberSaveable { mutableStateOf(false) }
     var showSecondDriverDialog by rememberSaveable { mutableStateOf(false) }
 
-    var printProgress by remember { mutableStateOf<PrintProgress>(PrintProgress()) }
+    var printProgress by remember { mutableStateOf(PrintProgress()) }
 
     val selectedReasonOption = GenerateReasonOption.fromValue(selectedGenerateReason)
     val selectedNormOption = ArticleNormOption.fromValue(selectedArticleNorm)
@@ -115,6 +117,7 @@ fun FirmasAtestadoScreen(
             (!hasSecondDriver || secondDriverSigned)
 
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
 
     Column(
         modifier = modifier
@@ -235,11 +238,11 @@ fun FirmasAtestadoScreen(
                             secretary   = secretarySignature,
                             investigated = investigatedSignature
                         )
-                        imprimirAtestadoCompleto(
+                        DocumentPrinter.imprimirAtestadoCompleto(
                             context  = context,
                             mac      = mac,
                             sigs     = sigs,
-                            onProgress = { index, total, docName ->
+                            onProgress = { index: Int, total: Int, docName: String ->
                                 printProgress = PrintProgress(
                                     isVisible    = true,
                                     currentDoc   = docName,
@@ -250,7 +253,7 @@ fun FirmasAtestadoScreen(
                             onFinished = {
                                 printProgress = PrintProgress()  // cierra el modal
                             },
-                            onError = { msg ->
+                            onError = { msg: String ->
                                 printProgress = PrintProgress(
                                     isVisible    = true,
                                     isError      = true,
@@ -258,6 +261,50 @@ fun FirmasAtestadoScreen(
                                 )
                             }
                         )
+                    }
+                )
+
+                // Botón para imprimir el acta de inmovilización
+                AtestadoSignatureButton(
+                    text = "Imprimir acta de inmovilización",
+                    enabled = generateEnabled && !isGeneratingAtestado && !printProgress.isVisible,
+                    isSigned = false,
+                    onClick = {
+                        val mac = BluetoothPrinterStorage(context).getDefaultPrinter()?.mac
+                        if (mac.isNullOrBlank()) {
+                            printProgress = PrintProgress(
+                                isVisible    = true,
+                                isError      = true,
+                                errorMessage = "No hay impresora configurada"
+                            )
+                            return@AtestadoSignatureButton
+                        }
+                        // Construir PrintSignatures con los campos especiales
+                        val sigs = PrintSignatures(
+                            instructor       = instructorSignature,
+                            secretary        = secretarySignature,
+                            investigated     = investigatedSignature,
+                            secondDriver     = secondDriverSignature,
+                            instructorTip    = "",
+                            secretaryTip     = "",
+                            isInmovilizacion = true,
+                            hasSecondDriver  = hasSecondDriver
+                        )
+                        coroutineScope.launch {
+                            try {
+                                DocumentPrinter.imprimirInmovilizacionSuspend(
+                                    context = context,
+                                    mac = mac,
+                                    sigs = sigs
+                                )
+                            } catch (e: Exception) {
+                                printProgress = PrintProgress(
+                                    isVisible    = true,
+                                    isError      = true,
+                                    errorMessage = e.message ?: "Error al conectar con la impresora"
+                                )
+                            }
+                        }
                     }
                 )
 
@@ -667,6 +714,16 @@ fun FirmasAtestadoScreen(
                     onClick = {
                         onSecondDriverNameChange(localName)
                         onSecondDriverIdChange(localId)
+                        // Guardar en SharedPreferences
+                        val prefs = context.getSharedPreferences("segundo_conductor", android.content.Context.MODE_PRIVATE)
+                        val apellidos = "" // Si tienes campo de apellidos, cámbialo aquí
+                        prefs.edit()
+                            .putBoolean("existe", true)
+                            .putString("nombre", localName)
+                            .putString("apellidos", apellidos)
+                            .putString("documento", localId)
+                            .apply()
+                        android.util.Log.d("FirmasAtestadoScreen", "Segundo conductor guardado: existe=true, nombre=$localName, apellidos=$apellidos, documento=$localId")
                         showSecondDriverDialog = false
                         onSecondDriverClick()
                     }
@@ -684,27 +741,15 @@ fun FirmasAtestadoScreen(
 
     if (printProgress.isVisible) {
         AlertDialog(
-            onDismissRequest = {
-                if (!printProgress.isError) printProgress = PrintProgress()
-            },
-            title = {
-                Text(
-                    text = if (printProgress.isError)
-                        stringResource(R.string.print_error_title)
-                    else
-                        stringResource(R.string.printing_title),
-                    style = MaterialTheme.typography.titleMedium
-                )
-            },
+            onDismissRequest = {},
+            title = { Text(text = if (printProgress.isError) stringResource(R.string.print_error_title) else stringResource(R.string.printing_title)) },
             text = {
                 if (printProgress.isError) {
-                    Text(text = printProgress.errorMessage ?: "Error desconocido")
+                    Text(text = printProgress.errorMessage.ifEmpty { "Error desconocido" })
                 } else {
-                    Column {
-                        Text(text = printProgress.currentDoc ?: "Imprimiendo...")
-                        Spacer(modifier = Modifier.height(8.dp))
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(text = if (printProgress.currentDoc.isNotEmpty()) printProgress.currentDoc else "Imprimiendo...")
                         LinearProgressIndicator(progress = if (printProgress.totalDocs > 0) printProgress.currentIndex.toFloat() / printProgress.totalDocs else 0f)
-                        Spacer(modifier = Modifier.height(8.dp))
                         Text(text = "${printProgress.currentIndex} / ${printProgress.totalDocs}")
                     }
                 }
@@ -712,7 +757,7 @@ fun FirmasAtestadoScreen(
             confirmButton = {
                 if (printProgress.isError) {
                     TextButton(onClick = { printProgress = PrintProgress() }) {
-                        Text(text = stringResource(R.string.close_action))
+                        Text(text = stringResource(R.string.accept_action))
                     }
                 }
             }

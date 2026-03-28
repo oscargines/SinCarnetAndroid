@@ -25,5 +25,9 @@ data class PrintSignatures(
     val secretary:    ImageBitmap? = null,
     val investigated: ImageBitmap? = null,
     val instructorTip:  String = "",
-    val secretaryTip:   String = ""
+    val secretaryTip:   String = "",
+    // Nuevo: firma y flag para segundo conductor y layout especial
+    val secondDriver: ImageBitmap? = null,
+    val isInmovilizacion: Boolean = false,
+    val hasSecondDriver: Boolean = false
 )

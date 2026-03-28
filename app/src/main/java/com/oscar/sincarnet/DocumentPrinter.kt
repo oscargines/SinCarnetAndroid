@@ -1,6 +1,7 @@
 package com.oscar.sincarnet
 
 import android.content.Context
+import com.oscar.sincarnet.BluetoothPrinterUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -30,41 +31,46 @@ import java.time.format.DateTimeFormatter
 object DocumentPrinter {
     private const val DELAY_BETWEEN_DOCS_MS: Long = 3000L
 
+    // Marcador especial que BluetoothPrinterUtils detecta en el body para
+    // pintar las cajas CPCL de citación a juicio en ese punto exacto.
+    const val JUICIO_BOXES_MARKER = "\u0000JUICIO_BOXES\u0000"
+
     // ----------------------------------------------------------
     // 02derechos.json
     // Diligencia de investigación e información de derechos
     // ----------------------------------------------------------
     fun imprimirDerechos(context: Context, mac: String?) {
-        val ocurrencia  = OcurrenciaDelitStorage(context).loadCurrent()
-        val juzgado     = JuzgadoAtestadoStorage(context).loadCurrent()
-        val actuantes   = ActuantesStorage(context).loadCurrent()
+        val ocurrencia = OcurrenciaDelitStorage(context).loadCurrent()
+        val juzgado = JuzgadoAtestadoStorage(context).loadCurrent()
+        val actuantes = ActuantesStorage(context).loadCurrent()
         val investigado = PersonaInvestigadaStorage(context).loadCurrent()
-        val now         = LocalDateTime.now()
+        val now = LocalDateTime.now()
 
         val lugar = buildLugar(ocurrencia)
         val lugarFechaHoraLectura = "$lugar, ${ocurrencia.fecha} a las ${ocurrencia.hora} horas"
-        val lugarFechaHoraDelito  = "${ocurrencia.localidad}, ${ocurrencia.fecha} a las ${ocurrencia.hora} horas"
+        val lugarFechaHoraDelito =
+            "${ocurrencia.localidad}, ${ocurrencia.fecha} a las ${ocurrencia.hora} horas"
 
         val placeholders = mapOf(
-            "lugar"                       to lugar,
-            "terminomunicipal"            to ocurrencia.terminoMunicipal,
-            "partidojudicial"             to juzgado.municipioNombre,
-            "hora"                        to ocurrencia.hora,
-            "fechacompleta"               to ocurrencia.fecha,
-            "instructor"                  to actuantes.instructorTip,
-            "secretario"                  to actuantes.secretaryTip,
-            "nombrecompletoinvestigado"   to buildNombreCompleto(investigado),
-            "documentoidentificacion"     to investigado.documentIdentification,
-            "fechanacimiento"             to investigado.birthDate,
-            "lugarnacimiento"             to investigado.birthPlace,
-            "nombrepadre"                 to investigado.fatherName,
-            "nombremadre"                 to investigado.motherName,
-            "domicilio"                   to investigado.address,
-            "telefono"                    to investigado.phone,
-            "correoelectronico"           to investigado.email,
+            "lugar" to lugar,
+            "terminomunicipal" to ocurrencia.terminoMunicipal,
+            "partidojudicial" to juzgado.municipioNombre,
+            "hora" to ocurrencia.hora,
+            "fechacompleta" to ocurrencia.fecha,
+            "instructor" to actuantes.instructorTip,
+            "secretario" to actuantes.secretaryTip,
+            "nombrecompletoinvestigado" to buildNombreCompleto(investigado),
+            "documentoidentificacion" to investigado.documentIdentification,
+            "fechanacimiento" to investigado.birthDate,
+            "lugarnacimiento" to investigado.birthPlace,
+            "nombrepadre" to investigado.fatherName,
+            "nombremadre" to investigado.motherName,
+            "domicilio" to investigado.address,
+            "telefono" to investigado.phone,
+            "correoelectronico" to investigado.email,
             "lugarfechahoralecturaderechos" to lugarFechaHoraLectura,
-            "lugarfechahoracomisióndelito"  to lugarFechaHoraDelito,
-            "nombreletrado"               to ""   // se rellena si hay letrado privado
+            "lugarfechahoracomisióndelito" to lugarFechaHoraDelito,
+            "nombreletrado" to ""   // se rellena si hay letrado privado
         )
 
         printDiligencia(context, mac, "docs/02derechos.json", placeholders, investigado)
@@ -75,25 +81,25 @@ object DocumentPrinter {
     // Diligencia de citación para juicio rápido
     // ----------------------------------------------------------
     fun imprimirCitacionJuicioRapido(context: Context, mac: String?) {
-        val ocurrencia  = OcurrenciaDelitStorage(context).loadCurrent()
-        val juzgado     = JuzgadoAtestadoStorage(context).loadCurrent()
-        val actuantes   = ActuantesStorage(context).loadCurrent()
+        val ocurrencia = OcurrenciaDelitStorage(context).loadCurrent()
+        val juzgado = JuzgadoAtestadoStorage(context).loadCurrent()
+        val actuantes = ActuantesStorage(context).loadCurrent()
         val investigado = PersonaInvestigadaStorage(context).loadCurrent()
 
         val placeholders = mapOf(
-            "lugar"                     to buildLugar(ocurrencia),
-            "terminomunicipal"          to ocurrencia.terminoMunicipal,
-            "partidojudicial"           to juzgado.municipioNombre,
-            "hora"                      to ocurrencia.hora,
-            "fechacompleta"             to ocurrencia.fecha,
-            "instructor"                to actuantes.instructorTip,
-            "secretario"                to actuantes.secretaryTip,
+            "lugar" to buildLugar(ocurrencia),
+            "terminomunicipal" to ocurrencia.terminoMunicipal,
+            "partidojudicial" to juzgado.municipioNombre,
+            "hora" to ocurrencia.hora,
+            "fechacompleta" to ocurrencia.fecha,
+            "instructor" to actuantes.instructorTip,
+            "secretario" to actuantes.secretaryTip,
             "nombrecompletoinvestigado" to buildNombreCompleto(investigado),
-            "documentoidentificacion"   to investigado.documentIdentification,
-            "unidadinferior"            to actuantes.instructorUnit,
-            "horajuicio"                to juzgado.horaJuicioRapido,
-            "fechajuicio"               to juzgado.fechaJuicioRapido,
-            "datosjuzgado"              to buildDatosJuzgado(juzgado)
+            "documentoidentificacion" to investigado.documentIdentification,
+            "unidadinferior" to actuantes.instructorUnit,
+            "horajuicio" to juzgado.horaJuicioRapido,
+            "fechajuicio" to juzgado.fechaJuicioRapido,
+            "datosjuzgado" to buildDatosJuzgado(juzgado)
         )
 
         printDiligencia(context, mac, "docs/citacionjuiciorapido.json", placeholders, investigado)
@@ -104,61 +110,75 @@ object DocumentPrinter {
     // Diligencia de citación para juicio ordinario
     // ----------------------------------------------------------
     fun imprimirCitacionJuicio(context: Context, mac: String?) {
-        val ocurrencia  = OcurrenciaDelitStorage(context).loadCurrent()
-        val juzgado     = JuzgadoAtestadoStorage(context).loadCurrent()
-        val actuantes   = ActuantesStorage(context).loadCurrent()
+        val ocurrencia = OcurrenciaDelitStorage(context).loadCurrent()
+        val juzgado = JuzgadoAtestadoStorage(context).loadCurrent()
+        val actuantes = ActuantesStorage(context).loadCurrent()
         val investigado = PersonaInvestigadaStorage(context).loadCurrent()
 
         val placeholders = mapOf(
-            "lugar"                     to buildLugar(ocurrencia),
-            "terminomunicipal"          to ocurrencia.terminoMunicipal,
-            "partidojudicial"           to juzgado.municipioNombre,
-            "hora"                      to ocurrencia.hora,
-            "fechacompleta"             to ocurrencia.fecha,
-            "instructor"                to actuantes.instructorTip,
-            "secretario"                to actuantes.secretaryTip,
+            "lugar" to buildLugar(ocurrencia),
+            "terminomunicipal" to ocurrencia.terminoMunicipal,
+            "partidojudicial" to juzgado.municipioNombre,
+            "hora" to ocurrencia.hora,
+            "fechacompleta" to ocurrencia.fecha,
+            "instructor" to actuantes.instructorTip,
+            "secretario" to actuantes.secretaryTip,
             "nombrecompletoinvestigado" to buildNombreCompleto(investigado),
-            "documentoidentificacion"   to investigado.documentIdentification,
-            "unidadinferior"            to actuantes.instructorUnit,
-            "datosjuzgado"              to buildDatosJuzgado(juzgado)
+            "documentoidentificacion" to investigado.documentIdentification,
+            "unidadinferior" to actuantes.instructorUnit,
+            "datosjuzgado" to buildDatosJuzgado(juzgado)
         )
 
         printDiligencia(context, mac, "docs/citacionjuicio.json", placeholders, investigado)
     }
 
     // ----------------------------------------------------------
-    // 04manifestacion.json
-    // Diligencia de manifestación del investigado no detenido
-    // ----------------------------------------------------------
+// 04manifestacion.json
+// Diligencia de manifestación del investigado no detenido
+// ----------------------------------------------------------
     fun imprimirManifestacion(context: Context, mac: String?) {
-        val ocurrencia     = OcurrenciaDelitStorage(context).loadCurrent()
-        val juzgado        = JuzgadoAtestadoStorage(context).loadCurrent()
-        val investigado    = PersonaInvestigadaStorage(context).loadCurrent()
-        val vehiculo       = VehiculoStorage(context).loadCurrent()
-        val manifestacion  = ManifestacionStorage(context).loadCurrent()
-        val now            = LocalDateTime.now()
-        val formatter      = DateTimeFormatter.ofPattern("HH:mm 'horas del día' dd/MM/yyyy")
+        val ocurrencia = OcurrenciaDelitStorage(context).loadCurrent()
+        val juzgado = JuzgadoAtestadoStorage(context).loadCurrent()
+        val investigado = PersonaInvestigadaStorage(context).loadCurrent()
+        val vehiculo = VehiculoStorage(context).loadCurrent()
+        val manifestacion = ManifestacionStorage(context).loadCurrent()
+        val now = LocalDateTime.now()
+        val formatter = DateTimeFormatter.ofPattern("HH:mm 'horas del día' dd/MM/yyyy")
         val horaFechaAhora = now.format(formatter)
 
         val respuestas = manifestacion.respuestasPreguntas
 
+        // === CAMBIO: placeholders con el texto final "SI" / "NO" ===
+        val renunciaStr = when (manifestacion.renunciaAsistenciaLetrada) {
+            true -> "SI"
+            false -> "NO"
+            null -> "SI/NO"
+        }
+        val deseaStr = when (manifestacion.deseaDeclarar) {
+            true -> "SI"
+            false -> "NO"
+            null -> "SI/NO"
+        }
+
         val placeholders = mapOf(
-            "horafechamanifestacion"    to horaFechaAhora,
-            "terminomunicipal"          to ocurrencia.terminoMunicipal,
-            "partidojudicial"           to juzgado.municipioNombre,
+            "horafechamanifestacion" to horaFechaAhora,
+            "terminomunicipal" to ocurrencia.terminoMunicipal,
+            "partidojudicial" to juzgado.municipioNombre,
             "nombrecompletoinvestigado" to buildNombreCompleto(investigado),
-            "documentoidentificacion"   to investigado.documentIdentification,
-            "matricula"                 to vehiculo.plate,
-            "otrosdocumentos"           to (investigado.otrosDocumentos ?: ""),
-            "primerapregunta"           to (respuestas[1] ?: ""),
-            "segundapregunta"           to (respuestas[2] ?: ""),
-            "tercerapregunta"           to (respuestas[3] ?: ""),
-            "cuartapregunta"            to (respuestas[4] ?: ""),
-            "quintapregunta"            to (respuestas[5] ?: ""),
-            "sextapregunta"             to (respuestas[6] ?: ""),
-            "septimapregunta"           to (respuestas[7] ?: ""),
-            "octavapregunta"            to (respuestas[8] ?: ""),
-            "segundafechahora"          to horaFechaAhora
+            "documentoidentificacion" to investigado.documentIdentification,
+            "matricula" to vehiculo.plate,
+            "otrosdocumentos" to (investigado.otrosDocumentos ?: ""),
+            "primerapregunta" to (respuestas[1] ?: ""),
+            "segundapregunta" to (respuestas[2] ?: ""),
+            "tercerapregunta" to (respuestas[3] ?: ""),
+            "cuartapregunta" to (respuestas[4] ?: ""),
+            "quintapregunta" to (respuestas[5] ?: ""),
+            "sextapregunta" to (respuestas[6] ?: ""),
+            "septimapregunta" to (respuestas[7] ?: ""),
+            "octavapregunta" to (respuestas[8] ?: ""),
+            "segundafechahora" to horaFechaAhora,
+            "renunciaAsistenciaLetrada" to renunciaStr,
+            "deseaDeclarar" to deseaStr
         )
 
         printDiligencia(context, mac, "docs/04manifestacion.json", placeholders, investigado)
@@ -204,12 +224,67 @@ object DocumentPrinter {
         investigado: PersonaInvestigadaData,
         sigs: PrintSignatures? = null
     ) {
-        val raw   = context.assets.open(jsonAssetPath).bufferedReader().readText()
-        val json  = JSONObject(raw)
-        val doc   = json.getJSONObject("documento")
-        val title = resolve(doc.optString("titulo", ""), placeholders)
-        val body  = buildDiligenciaBody(doc, placeholders, investigado)
-        printDocumentResolvedSuspend(context, mac, title, body, sigs)
+        android.util.Log.d(
+            "Impresion",
+            "[printDiligenciaSuspend] INICIO jsonAssetPath=$jsonAssetPath"
+        )
+        val raw = context.assets.open(jsonAssetPath).bufferedReader().readText()
+        android.util.Log.d("Impresion", "[printDiligenciaSuspend] JSON leído (${raw.length} chars)")
+        val json = JSONObject(raw)
+        val doc = json.getJSONObject("documento")
+        // === AQUÍ SE FUERZA EL TÍTULO EXACTO ===
+        // Si es la diligencia de derechos (02derechos.json o cualquier JSON que contenga "derechos" o "inicio")
+        // se ignora lo que venga en el JSON y se usa exactamente el título que pediste.
+        val tituloJson = doc.optString("titulo", "")
+        val title = when {
+            jsonAssetPath.contains("derechos") || jsonAssetPath.contains("inicio") ->
+                "DILIGENCIA INVESTIGACIÓN E INFORMACIÓN DERECHOS A INVESTIGADO NO DETENIDO"
+
+            else -> resolve(tituloJson, placeholders)
+        }
+        android.util.Log.d("Impresion", "[printDiligenciaSuspend] Título: '$title'")
+        val body = buildDiligenciaBody(doc, placeholders, investigado)
+        android.util.Log.d(
+            "Impresion",
+            "[printDiligenciaSuspend] Body generado (${body.length} chars)"
+        )
+        // --- Extraer QR si existe ---
+        var qrDato: String? = null
+        if (doc.has("qr")) {
+            val qrObj = doc.getJSONObject("qr")
+            qrDato = qrObj.optString("dato", null)
+        }
+        android.util.Log.d("Impresion", "[printDiligenciaSuspend] qrDato=$qrDato")
+        try {
+            if (!qrDato.isNullOrBlank()) {
+                android.util.Log.d(
+                    "Impresion",
+                    "[printDiligenciaSuspend] Llamando a BluetoothPrinterUtils.printDocument..."
+                )
+                BluetoothPrinterUtils.printDocument(context, mac, doc, title, qrDato, sigs)
+            } else {
+                android.util.Log.d(
+                    "Impresion",
+                    "[printDiligenciaSuspend] Llamando a printDocumentResolvedSuspend..."
+                )
+                android.util.Log.d("Impresion", "[printDiligenciaSuspend] sigs antes de llamar: " +
+                        "isInmovilizacion=${sigs?.isInmovilizacion}, " +
+                        "hasSecondDriver=${sigs?.hasSecondDriver}, " +
+                        "secondDriver=${sigs?.secondDriver != null}")
+                printDocumentResolvedSuspend(
+                    context,
+                    mac,
+                    title,
+                    body,
+                    sigs,
+                    juicioData = placeholders
+                )
+            }
+            android.util.Log.d("Impresion", "[printDiligenciaSuspend] Impresión finalizada OK")
+        } catch (e: Exception) {
+            android.util.Log.e("Impresion", "[printDiligenciaSuspend] ERROR: ${e.message}", e)
+            throw e
+        }
     }
 
     // Versión no-suspend para llamadas individuales desde botones
@@ -246,44 +321,31 @@ object DocumentPrinter {
     }
 
     // Construye el body completo de la diligencia recorriendo todas las secciones
-    private fun buildDiligenciaBody(doc: JSONObject, ph: Map<String, String>, investigado: PersonaInvestigadaData): String {
+    private fun buildDiligenciaBody(
+        doc: JSONObject,
+        ph: Map<String, String>,
+        investigado: PersonaInvestigadaData
+    ): String {
         val sb = StringBuilder()
 
         fun r(text: String) = resolve(text, ph)
-        fun line(text: String) { sb.appendLine(r(text)) }
-        fun blank() { sb.appendLine() }
+        fun line(text: String) {
+            sb.appendLine(r(text))
+        }
+
+        fun blank() {
+            sb.appendLine()
+        }
 
         // cuerpo principal
+        val tieneJuicio =
+            ph.containsKey("fechajuicio") && ph.containsKey("horajuicio") && ph.containsKey("datosjuzgado")
         doc.optJSONObject("cuerpo")?.let { cuerpo ->
             line(cuerpo.optString("descripcion", ""))
             blank()
-            // --- Añadir cajas solo para citacionjuiciorapido.json ---
-            // Detectar por presencia de campos típicos (fechajuicio, horajuicio, datosjuzgado)
-            val tieneJuicio = ph.containsKey("fechajuicio") && ph.containsKey("horajuicio") && ph.containsKey("datosjuzgado")
-            if (tieneJuicio) {
-                // Caja: Fecha de celebración
-                sb.appendLine("**************************************")
-                sb.appendLine("*      Fecha de celebración         *")
-                sb.appendLine("*  Fecha: ${r("[[fechajuicio]]")}  *")
-                sb.appendLine("*  Hora:  ${r("[[horajuicio]]")}   *")
-                sb.appendLine("**************************************")
-                blank()
-                // Caja: Datos del juzgado
-                sb.appendLine("**************************************")
-                sb.appendLine("*         Datos del Juzgado         *")
-                val datosJuzgado = r("[[datosjuzgado]]")
-                // Dividir en líneas si es muy largo
-                val maxLen = 36
-                var start = 0
-                while (start < datosJuzgado.length) {
-                    val end = minOf(start + maxLen, datosJuzgado.length)
-                    val linea = datosJuzgado.substring(start, end)
-                    sb.appendLine("* ${linea.padEnd(maxLen, ' ')}*")
-                    start = end
-                }
-                sb.appendLine("**************************************")
-                blank()
-            }
+            // Si hay datos de juicio, insertar marcador para que BluetoothPrinterUtils
+            // pinte las cajas CPCL (BOX) en este punto exacto del documento.
+            if (tieneJuicio) sb.appendLine(JUICIO_BOXES_MARKER)
         }
 
         // --- Añadir soporte para 'articulos' (usado en 03letradogratis) ---
@@ -347,11 +409,11 @@ object DocumentPrinter {
             sec.optJSONArray("puntos")?.let { puntos ->
                 for (i in 0 until puntos.length()) {
                     val p = puntos.getJSONObject(i)
-                    val id    = p.optString("id", "")
-                    val tit   = p.optString("titulo", "")
+                    val id = p.optString("id", "")
+                    val tit = p.optString("titulo", "")
                     val texto = when {
                         p.has("campo_variable") -> r(p.getString("campo_variable"))
-                        p.has("texto")          -> r(p.getString("texto"))
+                        p.has("texto") -> r(p.getString("texto"))
                         else -> ""
                     }
                     line("  $id. $tit: $texto")
@@ -385,6 +447,7 @@ object DocumentPrinter {
                     5 to investigado.accessesEssentialProceedings,
                     6 to investigado.needsInterpreter
                 )
+
                 fun toSiNo(value: Boolean?): String = when (value) {
                     true -> "SI"
                     false -> "NO"
@@ -392,8 +455,9 @@ object DocumentPrinter {
                 }
                 for (i in 0 until opts.length()) {
                     val opt = opts.getJSONObject(i)
-                    val extra = if (opt.has("campo_variable")) " ${r(opt.getString("campo_variable"))}" else ""
-                    val nota  = if (opt.has("nota")) " (${opt.getString("nota")})" else ""
+                    val extra =
+                        if (opt.has("campo_variable")) " ${r(opt.getString("campo_variable"))}" else ""
+                    val nota = if (opt.has("nota")) " (${opt.getString("nota")})" else ""
                     val id = opt.optInt("id")
                     val respuesta = toSiNo(respuestas[id])
                     line("  $id. ${opt.optString("texto", "")}$extra$nota  [$respuesta]")
@@ -408,7 +472,16 @@ object DocumentPrinter {
             sec.optJSONArray("opciones")?.let { opts ->
                 for (i in 0 until opts.length()) {
                     val opt = opts.getJSONObject(i)
-                    line("  ${opt.optInt("id")}. ${opt.optString("texto", "")}  [${opt.optString("respuesta", "SI/NO")}]")
+                    val id = opt.optInt("id")
+
+                    // Usamos directamente el placeholder que ya contiene "SI" o "NO"
+                    val respuesta = when (id) {
+                        1 -> ph["renunciaAsistenciaLetrada"] ?: "SI/NO"
+                        2 -> ph["deseaDeclarar"] ?: "SI/NO"
+                        else -> opt.optString("respuesta", "SI/NO")
+                    }
+
+                    line("  $id. ${opt.optString("texto", "")}  [$respuesta]")
                 }
             }
             blank()
@@ -430,7 +503,7 @@ object DocumentPrinter {
         doc.optJSONArray("preguntas")?.let { preguntas ->
             for (i in 0 until preguntas.length()) {
                 val p = preguntas.getJSONObject(i)
-                val id  = p.optInt("id")
+                val id = p.optInt("id")
                 val preg = p.optString("pregunta", "")
                 val resp = r(p.optString("campo_variable", ""))
                 line("$id. $preg")
@@ -455,17 +528,119 @@ object DocumentPrinter {
                 sec.optJSONArray("opciones")?.let { opts ->
                     for (j in 0 until opts.length()) {
                         val opt = opts.getJSONObject(j)
-                        line("  ${opt.optString("afectado", "")}: ${r(opt.optString("descripcion", ""))}")
+                        line(
+                            "  ${opt.optString("afectado", "")}: ${
+                                r(
+                                    opt.optString(
+                                        "descripcion",
+                                        ""
+                                    )
+                                )
+                            }"
+                        )
                     }
                 }
                 if (sec.has("informacion_adicional")) line(r(sec.getString("informacion_adicional")))
                 sec.optJSONArray("items")?.let { items ->
                     for (j in 0 until items.length()) {
                         val item = items.getJSONObject(j)
-                        line("  ${item.optString("afectado", "")}: ${r(item.optString("descripcion", ""))}")
+                        line(
+                            "  ${item.optString("afectado", "")}: ${
+                                r(
+                                    item.optString(
+                                        "descripcion",
+                                        ""
+                                    )
+                                )
+                            }"
+                        )
                     }
                 }
                 blank()
+            }
+        }
+        // ==================== NUEVAS SECCIONES PARA 05inmovilizacion.json ====================
+
+        // 1. Normativa aplicable
+        doc.optJSONObject("normativa_aplicable")?.let { sec ->
+            line(sec.optString("descripcion", ""))
+            blank()
+            sec.optJSONArray("normas")?.let { normas ->
+                for (i in 0 until normas.length()) {
+                    val n = normas.getJSONObject(i)
+                    line("${n.optInt("id")}. ${n.optString("referencia", "")}")
+                    val texto = n.optString("texto", "")
+                    texto.split("\n").forEach { line(it.trim()) }
+                    blank()
+                }
+            }
+        }
+
+        // 2. Introducción + Manifestaciones (con lógica del segundo conductor)
+        doc.optString("introduccion_manifestaciones").let { intro ->
+            if (intro.isNotBlank()) {
+                line(intro)
+                blank()
+            }
+        }
+
+        doc.optJSONArray("manifestaciones")?.let { manifests ->
+            for (i in 0 until manifests.length()) {
+                val m = manifests.getJSONObject(i)
+                val id = m.optInt("id")
+                val texto = m.optString("texto", "")
+
+                val respuesta = when (id) {
+                    1 -> ph["respuesta_manifestacion_1"] ?: m.optString("respuesta", "SI/NO")
+                    2 -> ph["respuesta_manifestacion_2"] ?: m.optString("respuesta", "SI/NO")
+                    else -> m.optString("respuesta", "SI/NO")
+                }
+
+                line("$id. $texto  [$respuesta]")
+
+                // === DATOS DEL SEGUNDO CONDUCTOR (solo si respondió SI) ===
+                if (id == 1 && respuesta == "SI") {
+                    val sub = m.optJSONObject("datos_conductor_habilitado")
+                    if (sub != null) {
+                        val desc = sub.optString("descripcion", "")
+                        if (desc.isNotBlank()) line("   $desc")
+
+                        val campoVar = sub.optString("campo_variable", "")
+                        if (campoVar.isNotBlank()) {
+                            line("   ${r(campoVar)}")   // ← aquí se dibuja el nombre + DNI
+                        }
+
+                        val condiciones = sub.optString("condiciones", "")
+                        if (condiciones.isNotBlank()) {
+                            condiciones.split("\n").forEach { line("   $it") }
+                        }
+                    }
+                }
+
+                // Información adicional para la opción 2
+                if (id == 2) {
+                    val info = m.optString("informacion_levantamiento", "")
+                    if (info.isNotBlank()) {
+                        info.split("\n").forEach { line(it.trim()) }
+                    }
+                }
+
+                blank()
+            }
+        }
+
+        // 3. Responsabilidades penales
+        doc.optJSONObject("responsabilidades_penales")?.let { sec ->
+            line(sec.optString("descripcion", ""))
+            blank()
+            sec.optJSONArray("articulos")?.let { arts ->
+                for (i in 0 until arts.length()) {
+                    val a = arts.getJSONObject(i)
+                    line(a.optString("referencia", ""))
+                    val txt = a.optString("texto", "")
+                    txt.split("\n").forEach { line(it.trim()) }
+                    blank()
+                }
             }
         }
 
@@ -473,6 +648,7 @@ object DocumentPrinter {
         when {
             doc.has("cierre") && doc.get("cierre") is String ->
                 line(r(doc.getString("cierre")))
+
             doc.has("cierre") && doc.get("cierre") is JSONObject ->
                 line(r(doc.getJSONObject("cierre").optString("texto", "")))
         }
@@ -492,189 +668,371 @@ object DocumentPrinter {
     // se envía a la impresora. Usadas por imprimirAtestadoCompleto
     // para garantizar impresión secuencial sin conexiones solapadas.
     // ============================================================
-    suspend fun imprimirDerechosSuspend(context: android.content.Context, mac: String, sigs: PrintSignatures? = null) {
-        val ocurrencia  = OcurrenciaDelitStorage(context).loadCurrent()
-        val juzgado     = JuzgadoAtestadoStorage(context).loadCurrent()
-        val actuantes   = ActuantesStorage(context).loadCurrent()
+    suspend fun imprimirDerechosSuspend(
+        context: android.content.Context,
+        mac: String,
+        sigs: PrintSignatures? = null
+    ) {
+        val ocurrencia = OcurrenciaDelitStorage(context).loadCurrent()
+        val juzgado = JuzgadoAtestadoStorage(context).loadCurrent()
+        val actuantes = ActuantesStorage(context).loadCurrent()
         val investigado = PersonaInvestigadaStorage(context).loadCurrent()
         val lugar = buildLugar(ocurrencia)
         val placeholders = mapOf(
-            "lugar"                        to lugar,
-            "terminomunicipal"             to ocurrencia.terminoMunicipal,
-            "partidojudicial"              to juzgado.municipioNombre,
-            "hora"                         to ocurrencia.hora,
-            "fechacompleta"                to ocurrencia.fecha,
-            "instructor"                   to actuantes.instructorTip,
-            "secretario"                   to actuantes.secretaryTip,
-            "nombrecompletoinvestigado"    to buildNombreCompleto(investigado),
-            "documentoidentificacion"      to investigado.documentIdentification,
-            "fechanacimiento"              to investigado.birthDate,
-            "lugarnacimiento"              to investigado.birthPlace,
-            "nombrepadre"                  to investigado.fatherName,
-            "nombremadre"                  to investigado.motherName,
-            "domicilio"                    to investigado.address,
-            "telefono"                     to investigado.phone,
-            "correoelectronico"            to investigado.email,
+            "lugar" to lugar,
+            "terminomunicipal" to ocurrencia.terminoMunicipal,
+            "partidojudicial" to juzgado.municipioNombre,
+            "hora" to ocurrencia.hora,
+            "fechacompleta" to ocurrencia.fecha,
+            "instructor" to actuantes.instructorTip,
+            "secretario" to actuantes.secretaryTip,
+            "nombrecompletoinvestigado" to buildNombreCompleto(investigado),
+            "documentoidentificacion" to investigado.documentIdentification,
+            "fechanacimiento" to investigado.birthDate,
+            "lugarnacimiento" to investigado.birthPlace,
+            "nombrepadre" to investigado.fatherName,
+            "nombremadre" to investigado.motherName,
+            "domicilio" to investigado.address,
+            "telefono" to investigado.phone,
+            "correoelectronico" to investigado.email,
             "lugarfechahoralecturaderechos" to "$lugar, ${ocurrencia.fecha} a las ${ocurrencia.hora} horas",
-            "lugarfechahoracomisióndelito"  to "${ocurrencia.localidad}, ${ocurrencia.fecha} a las ${ocurrencia.hora} horas",
-            "nombreletrado"                to ""
+            "lugarfechahoracomisióndelito" to "${ocurrencia.localidad}, ${ocurrencia.fecha} a las ${ocurrencia.hora} horas",
+            "nombreletrado" to ""
         )
-        printDiligenciaSuspend(context, mac, "docs/02derechos.json", placeholders, investigado, sigs)
+        printDiligenciaSuspend(
+            context,
+            mac,
+            "docs/02derechos.json",
+            placeholders,
+            investigado,
+            sigs
+        )
     }
 
-    suspend fun imprimirCitacionJuicioRapidoSuspend(context: android.content.Context, mac: String, sigs: PrintSignatures? = null) {
-        val ocurrencia  = OcurrenciaDelitStorage(context).loadCurrent()
-        val juzgado     = JuzgadoAtestadoStorage(context).loadCurrent()
-        val actuantes   = ActuantesStorage(context).loadCurrent()
+    suspend fun imprimirCitacionJuicioRapidoSuspend(
+        context: android.content.Context,
+        mac: String,
+        sigs: PrintSignatures? = null
+    ) {
+        val ocurrencia = OcurrenciaDelitStorage(context).loadCurrent()
+        val juzgado = JuzgadoAtestadoStorage(context).loadCurrent()
+        val actuantes = ActuantesStorage(context).loadCurrent()
         val investigado = PersonaInvestigadaStorage(context).loadCurrent()
         val placeholders = mapOf(
-            "lugar"                     to buildLugar(ocurrencia),
-            "terminomunicipal"          to ocurrencia.terminoMunicipal,
-            "partidojudicial"           to juzgado.municipioNombre,
-            "hora"                      to ocurrencia.hora,
-            "fechacompleta"             to ocurrencia.fecha,
-            "instructor"                to actuantes.instructorTip,
-            "secretario"                to actuantes.secretaryTip,
+            "lugar" to buildLugar(ocurrencia),
+            "terminomunicipal" to ocurrencia.terminoMunicipal,
+            "partidojudicial" to juzgado.municipioNombre,
+            "hora" to ocurrencia.hora,
+            "fechacompleta" to ocurrencia.fecha,
+            "instructor" to actuantes.instructorTip,
+            "secretario" to actuantes.secretaryTip,
             "nombrecompletoinvestigado" to buildNombreCompleto(investigado),
-            "documentoidentificacion"   to investigado.documentIdentification,
-            "unidadinferior"            to actuantes.instructorUnit,
-            "horajuicio"                to juzgado.horaJuicioRapido,
-            "fechajuicio"               to juzgado.fechaJuicioRapido,
-            "datosjuzgado"              to buildDatosJuzgado(juzgado)
+            "documentoidentificacion" to investigado.documentIdentification,
+            "unidadinferior" to actuantes.instructorUnit,
+            "horajuicio" to juzgado.horaJuicioRapido,
+            "fechajuicio" to juzgado.fechaJuicioRapido,
+            "datosjuzgado" to buildDatosJuzgado(juzgado)
         )
-        printDiligenciaSuspend(context, mac, "docs/citacionjuiciorapido.json", placeholders, investigado, sigs)
+        printDiligenciaSuspend(
+            context,
+            mac,
+            "docs/citacionjuiciorapido.json",
+            placeholders,
+            investigado,
+            sigs
+        )
     }
 
-    suspend fun imprimirCitacionJuicioSuspend(context: android.content.Context, mac: String, sigs: PrintSignatures? = null) {
-        val ocurrencia  = OcurrenciaDelitStorage(context).loadCurrent()
-        val juzgado     = JuzgadoAtestadoStorage(context).loadCurrent()
-        val actuantes   = ActuantesStorage(context).loadCurrent()
+    suspend fun imprimirCitacionJuicioSuspend(
+        context: android.content.Context,
+        mac: String,
+        sigs: PrintSignatures? = null
+    ) {
+        val ocurrencia = OcurrenciaDelitStorage(context).loadCurrent()
+        val juzgado = JuzgadoAtestadoStorage(context).loadCurrent()
+        val actuantes = ActuantesStorage(context).loadCurrent()
         val investigado = PersonaInvestigadaStorage(context).loadCurrent()
         val placeholders = mapOf(
-            "lugar"                     to buildLugar(ocurrencia),
-            "terminomunicipal"          to ocurrencia.terminoMunicipal,
-            "partidojudicial"           to juzgado.municipioNombre,
-            "hora"                      to ocurrencia.hora,
-            "fechacompleta"             to ocurrencia.fecha,
-            "instructor"                to actuantes.instructorTip,
-            "secretario"                to actuantes.secretaryTip,
+            "lugar" to buildLugar(ocurrencia),
+            "terminomunicipal" to ocurrencia.terminoMunicipal,
+            "partidojudicial" to juzgado.municipioNombre,
+            "hora" to ocurrencia.hora,
+            "fechacompleta" to ocurrencia.fecha,
+            "instructor" to actuantes.instructorTip,
+            "secretario" to actuantes.secretaryTip,
             "nombrecompletoinvestigado" to buildNombreCompleto(investigado),
-            "documentoidentificacion"   to investigado.documentIdentification,
-            "unidadinferior"            to actuantes.instructorUnit,
-            "datosjuzgado"              to buildDatosJuzgado(juzgado)
+            "documentoidentificacion" to investigado.documentIdentification,
+            "unidadinferior" to actuantes.instructorUnit,
+            "datosjuzgado" to buildDatosJuzgado(juzgado)
         )
-        printDiligenciaSuspend(context, mac, "docs/citacionjuicio.json", placeholders, investigado, sigs)
+        printDiligenciaSuspend(
+            context,
+            mac,
+            "docs/citacionjuicio.json",
+            placeholders,
+            investigado,
+            sigs
+        )
     }
 
-    suspend fun imprimirManifestacionSuspend(context: android.content.Context, mac: String, sigs: PrintSignatures? = null) {
-        val ocurrencia    = OcurrenciaDelitStorage(context).loadCurrent()
-        val juzgado       = JuzgadoAtestadoStorage(context).loadCurrent()
-        val investigado   = PersonaInvestigadaStorage(context).loadCurrent()
-        val vehiculo      = VehiculoStorage(context).loadCurrent()
+    suspend fun imprimirManifestacionSuspend(
+        context: android.content.Context,
+        mac: String,
+        sigs: PrintSignatures? = null
+    ) {
+        val ocurrencia = OcurrenciaDelitStorage(context).loadCurrent()
+        val juzgado = JuzgadoAtestadoStorage(context).loadCurrent()
+        val investigado = PersonaInvestigadaStorage(context).loadCurrent()
+        val vehiculo = VehiculoStorage(context).loadCurrent()
         val manifestacion = ManifestacionStorage(context).loadCurrent()
-        val formatter     = java.time.format.DateTimeFormatter.ofPattern("HH:mm 'horas del día' dd/MM/yyyy")
-        val horaFecha     = java.time.LocalDateTime.now().format(formatter)
-        val respuestas    = manifestacion.respuestasPreguntas
-        val placeholders  = mapOf(
-            "horafechamanifestacion"    to horaFecha,
-            "terminomunicipal"          to ocurrencia.terminoMunicipal,
-            "partidojudicial"           to juzgado.municipioNombre,
+        val formatter =
+            java.time.format.DateTimeFormatter.ofPattern("HH:mm 'horas del día' dd/MM/yyyy")
+        val horaFecha = java.time.LocalDateTime.now().format(formatter)
+        val respuestas = manifestacion.respuestasPreguntas
+        val renunciaStr = when (manifestacion.renunciaAsistenciaLetrada) {
+            true -> "SI"
+            false -> "NO"
+            null -> "SI/NO"
+        }
+        val deseaStr = when (manifestacion.deseaDeclarar) {
+            true -> "SI"
+            false -> "NO"
+            null -> "SI/NO"
+        }
+        val placeholders = mapOf(
+            "horafechamanifestacion" to horaFecha,
+            "terminomunicipal" to ocurrencia.terminoMunicipal,
+            "partidojudicial" to juzgado.municipioNombre,
             "nombrecompletoinvestigado" to buildNombreCompleto(investigado),
-            "documentoidentificacion"   to investigado.documentIdentification,
-            "matricula"                 to vehiculo.plate,
-            "otrosdocumentos"           to (investigado.otrosDocumentos ?: ""),
-            "primerapregunta"           to (respuestas[1] ?: ""),
-            "segundapregunta"           to (respuestas[2] ?: ""),
-            "tercerapregunta"           to (respuestas[3] ?: ""),
-            "cuartapregunta"            to (respuestas[4] ?: ""),
-            "quintapregunta"            to (respuestas[5] ?: ""),
-            "sextapregunta"             to (respuestas[6] ?: ""),
-            "septimapregunta"           to (respuestas[7] ?: ""),
-            "octavapregunta"            to (respuestas[8] ?: ""),
-            "segundafechahora"          to horaFecha
+            "documentoidentificacion" to investigado.documentIdentification,
+            "matricula" to vehiculo.plate,
+            "otrosdocumentos" to (investigado.otrosDocumentos ?: ""),
+            "primerapregunta" to (respuestas[1] ?: ""),
+            "segundapregunta" to (respuestas[2] ?: ""),
+            "tercerapregunta" to (respuestas[3] ?: ""),
+            "cuartapregunta" to (respuestas[4] ?: ""),
+            "quintapregunta" to (respuestas[5] ?: ""),
+            "sextapregunta" to (respuestas[6] ?: ""),
+            "septimapregunta" to (respuestas[7] ?: ""),
+            "octavapregunta" to (respuestas[8] ?: ""),
+            "segundafechahora" to horaFecha,
+            "renunciaAsistenciaLetrada" to renunciaStr,
+            "deseaDeclarar" to deseaStr
         )
-        printDiligenciaSuspend(context, mac, "docs/04manifestacion.json", placeholders, investigado, sigs)
+        printDiligenciaSuspend(
+            context,
+            mac,
+            "docs/04manifestacion.json",
+            placeholders,
+            investigado,
+            sigs
+        )
     }
 
     // ----------------------------------------------------------
     // 03letradogratis.json
     // Información sobre el derecho de asistencia jurídica gratuita
     // ----------------------------------------------------------
-    suspend fun imprimirLetradoGratisSuspend(context: Context, mac: String, sigs: PrintSignatures? = null) {
+    suspend fun imprimirLetradoGratisSuspend(
+        context: Context,
+        mac: String,
+        sigs: PrintSignatures? = null
+    ) {
         val placeholders = emptyMap<String, String>()
         // No imprimir firmas en 03letradogratis
-        printDiligenciaSuspend(context, mac, "docs/03letradogratis.json", placeholders, PersonaInvestigadaData(), null)
+        printDiligenciaSuspend(
+            context,
+            mac,
+            "docs/03letradogratis.json",
+            placeholders,
+            PersonaInvestigadaData(),
+            null
+        )
     }
-}
 
+    // ============================================================
+// 05inmovilizacion.json
+// Acta de inmovilización
 // ============================================================
+    suspend fun imprimirInmovilizacionSuspend(
+        context: Context,
+        mac: String,
+        sigs: PrintSignatures? = null
+    ) {
+        android.util.Log.d("Impresion", "[imprimirInmovilizacionSuspend] INICIO")
+        val ocurrencia = OcurrenciaDelitStorage(context).loadCurrent()
+        val juzgado = JuzgadoAtestadoStorage(context).loadCurrent()
+        val actuantes = ActuantesStorage(context).loadCurrent()
+        val investigado = PersonaInvestigadaStorage(context).loadCurrent()
+        val vehiculo = VehiculoStorage(context).loadCurrent()
+        val prefs = context.getSharedPreferences("segundo_conductor", Context.MODE_PRIVATE)
+        val existeSegundoConductor = prefs.getBoolean("existe", false)
+        val nombreSegundo = prefs.getString("nombre", "") ?: ""
+        val docSegundo = prefs.getString("documento", "") ?: ""
+        val datosSegundoCompleto =
+            if (nombreSegundo.isNotBlank() && docSegundo.isNotBlank()) "$nombreSegundo ($docSegundo)" else nombreSegundo
+        android.util.Log.d(
+            "Impresion",
+            "[imprimirInmovilizacionSuspend] existeSegundoConductor=$existeSegundoConductor, datosSegundoCompleto='$datosSegundoCompleto'"
+        )
+        val conductorPrincipal = listOf(
+            investigado.firstName,
+            investigado.lastName1,
+            investigado.lastName2
+        ).filter { it.isNotBlank() }.joinToString("  ")
+        val datosConductorYDoc =
+            if (conductorPrincipal.isNotBlank() && investigado.documentIdentification.isNotBlank()) "$conductorPrincipal (${investigado.documentIdentification})" else conductorPrincipal
+        android.util.Log.d(
+            "Impresion",
+            "[imprimirInmovilizacionSuspend] datosConductorYDoc='$datosConductorYDoc'"
+        )
+        val now = java.time.LocalDateTime.now()
+        val formatter = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
+        val horafecha = now.format(formatter)
+        android.util.Log.d("Impresion", "[imprimirInmovilizacionSuspend] horafecha='$horafecha'")
+        val placeholders = mutableMapOf(
+            "lugarhechos" to (ocurrencia.localidad.ifBlank { ocurrencia.terminoMunicipal }),
+            "horafecha" to horafecha,
+            "marca" to vehiculo.brand,
+            "modelo" to vehiculo.model,
+            "matricula" to vehiculo.plate,
+            "datosconductorydocumento" to datosConductorYDoc,
+            "datosconductorhabilitado" to datosSegundoCompleto,
+            "personasehacecargo" to datosSegundoCompleto,
+            "lugar" to (ocurrencia.localidad.ifBlank { ocurrencia.terminoMunicipal }),
+            "terminomunicipal" to ocurrencia.terminoMunicipal,
+            "partidojudicial" to juzgado.municipioNombre,
+            "hora" to ocurrencia.hora,
+            "fechacompleta" to ocurrencia.fecha,
+            "instructor" to actuantes.instructorTip,
+            "secretario" to actuantes.secretaryTip,
+            "nombrecompletoinvestigado" to conductorPrincipal,
+            "documentoidentificacion" to investigado.documentIdentification
+        )
+        // --- Lógica de manifestaciones ---
+        var respuesta1 = "NO"
+        var respuesta2 = "SI"
+        if (existeSegundoConductor && datosSegundoCompleto.isNotBlank()) {
+            respuesta1 = "SI"
+            respuesta2 = "NO"
+        }
+        placeholders["respuesta_manifestacion_1"] = respuesta1
+        placeholders["respuesta_manifestacion_2"] = respuesta2
+        android.util.Log.d(
+            "Impresion",
+            "[imprimirInmovilizacionSuspend] placeholders=$placeholders"
+        )
+
+        // === CORRECCIÓN: Crear PrintSignatures con flags correctas ===
+        val hasSecond = existeSegundoConductor && datosSegundoCompleto.isNotBlank()
+        val firmasInmovilizacion = PrintSignatures(
+            instructor = sigs?.instructor,
+            instructorTip = sigs?.instructorTip ?: actuantes.instructorTip,
+            secretary = sigs?.secretary,
+            secretaryTip = sigs?.secretaryTip ?: actuantes.secretaryTip,
+            investigated = sigs?.investigated,
+            secondDriver = if (hasSecond) sigs?.secondDriver else null,
+            isInmovilizacion = true,
+            hasSecondDriver = hasSecond
+        )
+        android.util.Log.d(
+            "Impresion",
+            "[DEBUG] firmasInmovilizacion => isInmovilizacion=${firmasInmovilizacion.isInmovilizacion}, " +
+                    "hasSecondDriver=${firmasInmovilizacion.hasSecondDriver}, " +
+                    "secondDriver=${firmasInmovilizacion.secondDriver != null}"
+        )
+        // ===========================================================
+
+        printDiligenciaSuspend(
+            context,
+            mac,
+            "docs/05inmovilizacion.json",
+            placeholders,
+            investigado,
+            firmasInmovilizacion
+        )
+        android.util.Log.d("Impresion", "[imprimirInmovilizacionSuspend] finalizado")
+    }
+
+    // ============================================================
 // Estado del progreso de impresión (compartido)
 // ============================================================
-data class PrintProgress(
-    val isVisible: Boolean = false,
-    val currentDoc: String = "",
-    val currentIndex: Int = 0,
-    val totalDocs: Int = 0,
-    val isError: Boolean = false,
-    val errorMessage: String = ""
-)
 
-// ============================================================
+
+    // ============================================================
 // imprimirAtestadoCompleto (compartido)
 // ============================================================
-fun imprimirAtestadoCompleto(
-    context: Context,
-    mac: String,
-    sigs: PrintSignatures? = null,
-    onProgress: (index: Int, total: Int, docName: String) -> Unit,
-    onFinished: () -> Unit,
-    onError: (String) -> Unit
-) {
-    val juzgado     = JuzgadoAtestadoStorage(context).loadCurrent()
-    val esJuicioRapido = juzgado.tipoJuicio.contains("rápido", ignoreCase = true) ||
-            juzgado.tipoJuicio.contains("rapido", ignoreCase = true)
+    fun imprimirAtestadoCompleto(
+        context: Context,
+        mac: String,
+        sigs: PrintSignatures? = null,
+        onProgress: (index: Int, total: Int, docName: String) -> Unit,
+        onFinished: () -> Unit,
+        onError: (String) -> Unit
+    ) {
+        val juzgado = JuzgadoAtestadoStorage(context).loadCurrent()
+        val esJuicioRapido = juzgado.tipoJuicio.contains("rápido", ignoreCase = true) ||
+                juzgado.tipoJuicio.contains("rapido", ignoreCase = true)
 
-    data class DocJob(val name: String, val print: suspend () -> Unit)
+        data class DocJob(val name: String, val print: suspend () -> Unit)
 
-    val docs = buildList<DocJob> {
-        add(DocJob("Diligencia de derechos del investigado") {
-            DocumentPrinter.imprimirDerechosSuspend(context, mac, sigs)
-        })
-        add(DocJob("Información asistencia jurídica gratuita") {
-            // 03letradogratis.json: se asume que existe función imprimirLetradoGratisSuspend
-            if (DocumentPrinter::class.members.any { it.name == "imprimirLetradoGratisSuspend" }) {
-                val method = DocumentPrinter::class.members.first { it.name == "imprimirLetradoGratisSuspend" }
-                method.callSuspend(DocumentPrinter, context, mac, sigs)
-            }
-        })
-        add(DocJob("Manifestación del investigado") {
-            DocumentPrinter.imprimirManifestacionSuspend(context, mac, sigs)
-        })
-        add(DocJob(if (esJuicioRapido) "Citacion a juicio rápido" else "Citacion a juicio") {
-            if (esJuicioRapido) DocumentPrinter.imprimirCitacionJuicioRapidoSuspend(context, mac, sigs)
-            else DocumentPrinter.imprimirCitacionJuicioSuspend(context, mac, sigs)
-        })
-        // Añadir 05inmovilizacion si existe la función
-        if (DocumentPrinter::class.members.any { it.name == "imprimirInmovilizacionSuspend" }) {
+        val docs = buildList<DocJob> {
+            // 1. 01inicio
+            add(DocJob("Diligencia de inicio") {
+                // Se asume que existe la función imprimirInicioSuspend
+                if (DocumentPrinter::class.members.any { it.name == "imprimirInicioSuspend" }) {
+                    val method =
+                        DocumentPrinter::class.members.first { it.name == "imprimirInicioSuspend" }
+                    method.callSuspend(DocumentPrinter, context, mac, sigs)
+                }
+            })
+            // 2. 02derechos
+            add(DocJob("Diligencia de derechos del investigado") {
+                DocumentPrinter.imprimirDerechosSuspend(context, mac, sigs)
+            })
+            // 3. 03letradogratis
+            add(DocJob("Información asistencia jurídica gratuita") {
+                if (DocumentPrinter::class.members.any { it.name == "imprimirLetradoGratisSuspend" }) {
+                    val method =
+                        DocumentPrinter::class.members.first { it.name == "imprimirLetradoGratisSuspend" }
+                    method.callSuspend(DocumentPrinter, context, mac, sigs)
+                }
+            })
+            // 4. 04manifestacion
+            add(DocJob("Manifestación del investigado") {
+                DocumentPrinter.imprimirManifestacionSuspend(context, mac, sigs)
+            })
+            // 5. Citación (la que corresponda)
+            add(DocJob(if (esJuicioRapido) "Citacion a juicio rápido" else "Citacion a juicio") {
+                if (esJuicioRapido) DocumentPrinter.imprimirCitacionJuicioRapidoSuspend(
+                    context,
+                    mac,
+                    sigs
+                )
+                else DocumentPrinter.imprimirCitacionJuicioSuspend(context, mac, sigs)
+            })
+            // 6. 05inmovilizacion
             add(DocJob("Acta de inmovilización") {
-                val method = DocumentPrinter::class.members.first { it.name == "imprimirInmovilizacionSuspend" }
+                val method =
+                    DocumentPrinter::class.members.first { it.name == "imprimirInmovilizacionSuspend" }
                 method.callSuspend(DocumentPrinter, context, mac, sigs)
             })
         }
-    }
 
-    CoroutineScope(Dispatchers.IO).launch {
-        try {
-            for ((i, doc) in docs.withIndex()) {
-                withContext(Dispatchers.Main) {
-                    onProgress(i + 1, docs.size, doc.name)
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                for ((i, doc) in docs.withIndex()) {
+                    withContext(Dispatchers.Main) {
+                        onProgress(i + 1, docs.size, doc.name)
+                    }
+                    doc.print()
+                    kotlinx.coroutines.delay(3000L)
                 }
-                doc.print()
-                kotlinx.coroutines.delay(3000L)
+                withContext(Dispatchers.Main) { onFinished() }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) { onError(e.message ?: "Error desconocido") }
             }
-            withContext(Dispatchers.Main) { onFinished() }
-        } catch (e: Exception) {
-            withContext(Dispatchers.Main) { onError(e.message ?: "Error desconocido") }
         }
     }
 }
+
