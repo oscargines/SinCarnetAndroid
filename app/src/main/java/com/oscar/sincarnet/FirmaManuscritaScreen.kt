@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -62,86 +63,102 @@ fun FirmaManuscritaScreen(
         modifier = modifier
             .fillMaxSize()
             .padding(horizontal = 16.dp, vertical = 24.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.SpaceBetween
     ) {
-        Text(
-            text = stringResource(R.string.firma_screen_title, signerName),
-            style = MaterialTheme.typography.titleMedium
-        )
-
-        Box(
+        // Título + área de firma centrada verticalmente en el espacio disponible
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
                 .weight(1f)
-                .border(2.dp, MaterialTheme.colorScheme.outline, MaterialTheme.shapes.medium)
-                .background(Color.White, MaterialTheme.shapes.medium)
+                .fillMaxWidth(),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            if (isEmpty) {
-                Text(
-                    text = stringResource(R.string.firma_hint),
-                    color = Color.LightGray,
-                    modifier = Modifier.align(Alignment.Center)
-                )
-            }
-
-            Canvas(
+            Text(
+                text = stringResource(R.string.firma_screen_title, signerName),
+                style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier
-                    .fillMaxSize()
-                    .pointerInput(Unit) {
-                        detectDragGestures(
-                            onDragStart = { offset ->
-                                currentPath.clear()
-                                currentPath.add(offset)
-                            },
-                            onDrag = { change, _ ->
-                                change.consume()
-                                currentPath.add(change.position)
-                            },
-                            onDragEnd = {
-                                if (currentPath.isNotEmpty()) {
-                                    paths.add(currentPath.toList())
-                                    currentPath.clear()
-                                }
-                            },
-                            onDragCancel = {
-                                currentPath.clear()
-                            }
-                        )
-                    }
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp)
+            )
+
+            // Altura 220dp: proporción apaisada similar al box de impresión,
+            // con espacio suficiente para firmar cómodamente.
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(260.dp)
+                    .border(2.dp, MaterialTheme.colorScheme.outline, MaterialTheme.shapes.medium)
+                    .background(Color.White, MaterialTheme.shapes.medium)
             ) {
-                canvasWidthPx = size.width.toInt()
-                canvasHeightPx = size.height.toInt()
-
-                val strokeStyle = Stroke(
-                    width = SIGNATURE_STROKE_WIDTH_DP.dp.toPx(),
-                    cap = StrokeCap.Round,
-                    join = StrokeJoin.Round
-                )
-
-                val allPaths = buildList {
-                    addAll(paths)
-                    if (currentPath.isNotEmpty()) add(currentPath.toList())
+                if (isEmpty) {
+                    Text(
+                        text = stringResource(R.string.firma_hint),
+                        color = Color.LightGray,
+                        modifier = Modifier.align(Alignment.Center),
+                        style = MaterialTheme.typography.bodySmall
+                    )
                 }
 
-                allPaths.forEach { pts ->
-                    when {
-                        pts.size >= 2 -> {
-                            val path = Path().apply {
-                                moveTo(pts.first().x, pts.first().y)
-                                pts.drop(1).forEach { lineTo(it.x, it.y) }
-                            }
-                            drawPath(path = path, color = SIGNATURE_COLOR, style = strokeStyle)
+                Canvas(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .pointerInput(Unit) {
+                            detectDragGestures(
+                                onDragStart = { offset ->
+                                    currentPath.clear()
+                                    currentPath.add(offset)
+                                },
+                                onDrag = { change, _ ->
+                                    change.consume()
+                                    currentPath.add(change.position)
+                                },
+                                onDragEnd = {
+                                    if (currentPath.isNotEmpty()) {
+                                        paths.add(currentPath.toList())
+                                        currentPath.clear()
+                                    }
+                                },
+                                onDragCancel = {
+                                    currentPath.clear()
+                                }
+                            )
                         }
-                        pts.size == 1 -> drawCircle(
-                            color = SIGNATURE_COLOR,
-                            radius = SIGNATURE_DOT_RADIUS_DP.dp.toPx(),
-                            center = pts.first()
-                        )
+                ) {
+                    canvasWidthPx = size.width.toInt()
+                    canvasHeightPx = size.height.toInt()
+
+                    val strokeStyle = Stroke(
+                        width = SIGNATURE_STROKE_WIDTH_DP.dp.toPx(),
+                        cap = StrokeCap.Round,
+                        join = StrokeJoin.Round
+                    )
+
+                    val allPaths = buildList {
+                        addAll(paths)
+                        if (currentPath.isNotEmpty()) add(currentPath.toList())
+                    }
+
+                    allPaths.forEach { pts ->
+                        when {
+                            pts.size >= 2 -> {
+                                val path = Path().apply {
+                                    moveTo(pts.first().x, pts.first().y)
+                                    pts.drop(1).forEach { lineTo(it.x, it.y) }
+                                }
+                                drawPath(path = path, color = SIGNATURE_COLOR, style = strokeStyle)
+                            }
+                            pts.size == 1 -> drawCircle(
+                                color = SIGNATURE_COLOR,
+                                radius = SIGNATURE_DOT_RADIUS_DP.dp.toPx(),
+                                center = pts.first()
+                            )
+                        }
                     }
                 }
             }
         }
 
+        // Botones fijos en la parte inferior
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp),

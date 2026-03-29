@@ -1,6 +1,6 @@
 {
   "documento": {
-    "titulo": "DILIGENCIA INVESTIGACIÓN E INFORMACIÓN DERECHOS A INVESTIGADO NO DETENIDO",
+    "titulo": "DILIGENCIA DE CONOCIMIENTO E INICIO DE DILIGENCIAS.",
     "cuerpo": {
       "descripcion": "En [[lugar]], término municipal de [[terminomunicipal]] y Partido Judicial de [[partidojudicial]], siendo las [[hora]] horas del día [[fechacompleta]], siendo el Instructor de las presentes el Guardia Civil con TIP número [[instructor]], y actuando como Secretario el Guardia Civil con TIP numero [[secretario]], mediante la presente, se hace constar que se procede a la identificación de D./Dña. [[nombrecompletoinvestigado]] con documento nacional de identidad número [[documentoidentificacion]], identidad acreditada documentalmente, nacido/a el [[fechanacimiento]], en la localidad de [[lugarnacimiento]], hijo de [[nombrepadre]] y de [[nombremadre]], con domicilio en [[domicilio]] con teléfono móvil [[telefono]] y correo electrónico [[correoelectronico]].",
       "campos_variables": {

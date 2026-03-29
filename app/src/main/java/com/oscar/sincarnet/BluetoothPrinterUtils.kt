@@ -320,8 +320,8 @@ private fun StringBuilder.appendSignatureBlock(
         append("TEXT $SIG_FONT $SIG_FONT_SZ ${SIG_SECR_X + 4} ${row1Y + 28} TIP: ${sigs.secretaryTip}\r\n")
 
     // ── Imágenes / texto fila 1 ───────────────────────────────
-    val sigImgMaxW = SIG_W1 - 8
-    val sigImgMaxH = SIG_H - SIG_LABEL_H - 8
+    val sigImgMaxW = SIG_W1 - 2
+    val sigImgMaxH = SIG_H - SIG_LABEL_H - 2
 
     fun appendSigContent(sig: ImageBitmap?, boxX: Int, boxY: Int, boxW: Int = sigImgMaxW) {
         if (sig != null) {

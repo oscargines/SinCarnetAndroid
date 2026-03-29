@@ -8,7 +8,9 @@ internal data class OcurrenciaDelitData(
     val localidad: String = "",
     val terminoMunicipal: String = "",
     val fecha: String = "",
-    val hora: String = ""
+    val hora: String = "",
+
+    val derechosInformacionMomento: String = ""
 )
 
 internal class OcurrenciaDelitStorage(context: Context) {
@@ -20,7 +22,9 @@ internal class OcurrenciaDelitStorage(context: Context) {
         localidad = prefs.getString(KEY_LOCALIDAD, "").orEmpty(),
         terminoMunicipal = prefs.getString(KEY_TERMINO_MUNICIPAL, "").orEmpty(),
         fecha = prefs.getString(KEY_FECHA, "").orEmpty(),
-        hora = prefs.getString(KEY_HORA, "").orEmpty()
+        hora = prefs.getString(KEY_HORA, "").orEmpty(),
+        // ✅ Nuevo campo persistente
+        derechosInformacionMomento = prefs.getString(KEY_DERECHOS_INFORMACION_MOMENTO, "").orEmpty()
     )
 
     fun saveCurrent(data: OcurrenciaDelitData) {
@@ -31,6 +35,7 @@ internal class OcurrenciaDelitStorage(context: Context) {
             .putString(KEY_TERMINO_MUNICIPAL, data.terminoMunicipal)
             .putString(KEY_FECHA, data.fecha)
             .putString(KEY_HORA, data.hora)
+            .putString(KEY_DERECHOS_INFORMACION_MOMENTO, data.derechosInformacionMomento)
             .apply()
     }
 
@@ -42,6 +47,7 @@ internal class OcurrenciaDelitStorage(context: Context) {
             .remove(KEY_TERMINO_MUNICIPAL)
             .remove(KEY_FECHA)
             .remove(KEY_HORA)
+            .remove(KEY_DERECHOS_INFORMACION_MOMENTO)
             .apply()
     }
 
@@ -53,6 +59,6 @@ internal class OcurrenciaDelitStorage(context: Context) {
         const val KEY_TERMINO_MUNICIPAL = "termino_municipal"
         const val KEY_FECHA = "fecha"
         const val KEY_HORA = "hora"
+        const val KEY_DERECHOS_INFORMACION_MOMENTO = "derechos_informacion_momento"
     }
 }
-

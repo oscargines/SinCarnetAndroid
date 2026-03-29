@@ -323,57 +323,18 @@ class MainActivity : ComponentActivity() {
                                     currentRoute = BLUETOOTH_PRINTER_ROUTE
                                 },
                                 onPrintSummons = {
-                                    val hasMinimumSignatures =
-                                        signaturesBySigner.containsKey(SIGNER_INSTRUCTOR) &&
-                                                signaturesBySigner.containsKey(SIGNER_SECRETARY)
-                                    if (!hasMinimumSignatures) {
-                                        signaturesOpenedFromCourt = true
-                                        currentRoute = ATESTADO_SIGNATURES_ROUTE
+                                    val mac = BluetoothPrinterStorage(applicationContext).getDefaultPrinter()?.mac
+                                    if (mac.isNullOrBlank()) {
+                                        throw IllegalStateException("No hay impresora configurada")
                                     } else {
-                                        runCatching {
-                                            val courtData = JuzgadoAtestadoStorage(applicationContext).loadCurrent()
-                                            val pdfPersonData = PersonaInvestigadaStorage(applicationContext).loadCurrent()
-                                            val ocurrenciaData = OcurrenciaDelitStorage(applicationContext).loadCurrent()
-                                            val vehicleData = VehiculoStorage(applicationContext).loadCurrent()
-                                            val manifestacionData = ManifestacionStorage(applicationContext).loadCurrent()
-                                            val investigatedWantsToSign = signaturesBySigner.containsKey(SIGNER_INVESTIGATED)
-                                            val mappedSignatures = mapSignaturesForPdf(
-                                                signaturesBySigner = signaturesBySigner,
-                                                investigatedWantsToSign = investigatedWantsToSign,
-                                                investigatedNoSignText = getString(R.string.atestado_signature_no_desire)
-                                            )
-                                            generateAtestadoContinuousPdf(
-                                                context = applicationContext,
-                                                courtData = courtData,
-                                                personData = pdfPersonData,
-                                                ocurrenciaData = ocurrenciaData,
-                                                vehicleData = vehicleData,
-                                                manifestacionData = manifestacionData,
-                                                signatures = mappedSignatures,
-                                                investigatedNoSignText = getString(R.string.atestado_signature_no_desire),
-                                                instructorTip = instructorTip,
-                                                secretaryTip = secretaryTip,
-                                                instructorUnit = instructorUnit,
-                                                inicioModalData = AtestadoInicioModalData(
-                                                    motivo = atestadoGenerateReason,
-                                                    norma = atestadoGenerateArticleNorm,
-                                                    articulo = atestadoGenerateArticleText,
-                                                    dgtNoRecord = atestadoDgtNoRecord,
-                                                    internationalNoRecord = atestadoInternationalNoRecord,
-                                                    existsRecord = atestadoExistsRecord,
-                                                    vicisitudesOption = atestadoVicisitudesOption,
-                                                    jefaturaProvincial = atestadoJefaturaProvincial,
-                                                    tiempoPrivacion = atestadoTiempoPrivacion,
-                                                    juzgadoDecreta = atestadoJuzgadoDecreta
-                                                ),
-                                                hasSecondDriver = hasSecondDriver
-                                            )
-                                        }.onSuccess { result ->
-                                            lastGeneratedPdfPath = result.file.absolutePath
-                                            val opened = openGeneratedPdf(result.file)
-                                            if (!opened) Toast.makeText(applicationContext, getString(R.string.atestado_pdf_open_error), Toast.LENGTH_LONG).show()
-                                        }.onFailure {
-                                            Toast.makeText(applicationContext, getString(R.string.atestado_pdf_generated_error), Toast.LENGTH_LONG).show()
+                                        val courtData = JuzgadoAtestadoStorage(applicationContext).loadCurrent()
+                                        val esJuicioRapido = courtData.tipoJuicio.contains("rápido", ignoreCase = true) ||
+                                                courtData.tipoJuicio.contains("rapido", ignoreCase = true)
+
+                                        if (esJuicioRapido) {
+                                            DocumentPrinter.imprimirCitacionJuicioRapido(applicationContext, mac)
+                                        } else {
+                                            DocumentPrinter.imprimirCitacionJuicio(applicationContext, mac)
                                         }
                                     }
                                 }

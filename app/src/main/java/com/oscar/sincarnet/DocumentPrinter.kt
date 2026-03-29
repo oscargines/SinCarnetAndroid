@@ -473,15 +473,15 @@ object DocumentPrinter {
                 for (i in 0 until opts.length()) {
                     val opt = opts.getJSONObject(i)
                     val id = opt.optInt("id")
-
-                    // Usamos directamente el placeholder que ya contiene "SI" o "NO"
                     val respuesta = when (id) {
                         1 -> ph["renunciaAsistenciaLetrada"] ?: "SI/NO"
                         2 -> ph["deseaDeclarar"] ?: "SI/NO"
                         else -> opt.optString("respuesta", "SI/NO")
                     }
-
-                    line("  $id. ${opt.optString("texto", "")}  [$respuesta]")
+                    // Primero el texto de la opción (puede hacer wrap)
+                    line("  $id. ${opt.optString("texto", "")}")
+                    // Luego la respuesta en línea propia, siempre visible
+                    line("     Respuesta: [$respuesta]")
                 }
             }
             blank()

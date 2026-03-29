@@ -33,6 +33,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -45,10 +46,13 @@ import androidx.compose.ui.unit.dp
 import com.oscar.sincarnet.ui.theme.SinCarnetTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.delay
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import androidx.compose.material3.CircularProgressIndicator
+import kotlinx.coroutines.launch
 
 private val JUZGADO_DATE_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy")
 private const val TIPO_JUICIO_RAPIDO = "rapido"
@@ -123,6 +127,11 @@ fun DatosJuzgadoAtestadoScreen(
     var showRequiredFieldsError by rememberSaveable { mutableStateOf(false) }
     var requiredFieldsErrorText by rememberSaveable { mutableStateOf("") }
     var showQuickTrialDatePicker by rememberSaveable { mutableStateOf(false) }
+
+    var isPrintingCitation by rememberSaveable { mutableStateOf(false) }
+    var printErrorMessage by rememberSaveable { mutableStateOf<String?>(null) }
+    var printErrorDetails by rememberSaveable { mutableStateOf<String?>(null) }
+    var showPrintInfoModal by rememberSaveable { mutableStateOf(false) }
 
     // Guarda los datos y dispara onPrintSummons, o muestra el error de campos obligatorios.
     val performSaveAndPrint: () -> Unit = {
@@ -656,14 +665,49 @@ fun DatosJuzgadoAtestadoScreen(
             }
         }
 
+
+        val scope = rememberCoroutineScope()
+
+        // En el Button de "Imprimir citación":
         Button(
-            onClick = performSaveAndPrint,
+            onClick = {
+                isPrintingCitation = true
+                printErrorMessage = null
+                printErrorDetails = null
+
+                scope.launch {
+                    var huboError = false
+                    try {
+                        withContext(Dispatchers.IO) {
+                            onPrintSummons()
+                        }
+                    } catch (e: Exception) {
+                        huboError = true
+                        printErrorMessage = context.getString(R.string.printing_citation_error_message)
+                        val rawMessage = e.localizedMessage ?: e.javaClass.simpleName
+                        printErrorDetails = if (rawMessage.contains("bluetooth", ignoreCase = true) ||
+                            rawMessage.contains("printer", ignoreCase = true) ||
+                            rawMessage.contains("conect", ignoreCase = true)) {
+                            context.getString(R.string.printing_citation_error_details, rawMessage)
+                        } else {
+                            null
+                        }
+                    } finally {
+                        delay(3000)
+                        isPrintingCitation = false
+                        if (!huboError) {
+                            showPrintInfoModal = true
+                        }
+                    }
+                }
+            },
             modifier = Modifier.fillMaxWidth(),
             shape = MaterialTheme.shapes.medium,
             colors = ButtonDefaults.buttonColors(
                 containerColor = MaterialTheme.colorScheme.secondary,
                 contentColor = MaterialTheme.colorScheme.onSecondary
-            )
+            ),
+            enabled = !isPrintingCitation
         ) {
             Text(text = stringResource(R.string.atestado_court_print_summons))
         }
@@ -735,6 +779,67 @@ fun DatosJuzgadoAtestadoScreen(
             text = { Text(text = stringResource(R.string.atestado_court_save_confirm_message)) },
             confirmButton = {
                 TextButton(onClick = { showSaveConfirmation = false }) {
+                    Text(text = stringResource(R.string.accept_action))
+                }
+            }
+        )
+    }
+    // Diálogo de progreso mientras se imprime
+    if (isPrintingCitation) {
+        AlertDialog(
+            onDismissRequest = { }, // No permitir cerrar manualmente
+            title = { Text(text = stringResource(R.string.printing_citation_title)) },
+            text = {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    Text(text = stringResource(R.string.printing_citation_message))
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(48.dp),
+                        strokeWidth = 4.dp
+                    )
+                }
+            },
+            confirmButton = { } // Sin botón para forzar espera
+        )
+    }
+
+    // Modal informativo tras imprimir
+    if (showPrintInfoModal) {
+        AlertDialog(
+            onDismissRequest = { showPrintInfoModal = false },
+            title = { Text(text = stringResource(R.string.printing_citation_info_title)) },
+            text = {
+                Text(text = stringResource(R.string.printing_citation_info_message))
+            },
+            confirmButton = {
+                TextButton(onClick = { showPrintInfoModal = false }) {
+                    Text(text = stringResource(R.string.accept_action))
+                }
+            }
+        )
+    }
+
+// Diálogo de error si falla la impresión
+    if (printErrorMessage != null) {
+        AlertDialog(
+            onDismissRequest = { printErrorMessage = null },
+            title = { Text(text = stringResource(R.string.printing_citation_error_title)) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(text = printErrorMessage!!)
+                    if (!printErrorDetails.isNullOrBlank()) {
+                        Text(
+                            text = stringResource(R.string.printing_citation_error_details, printErrorDetails!!),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { printErrorMessage = null }) {
                     Text(text = stringResource(R.string.accept_action))
                 }
             }

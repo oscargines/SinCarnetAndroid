@@ -1,6 +1,7 @@
 package com.oscar.sincarnet
 
 import android.app.TimePickerDialog
+import androidx.compose.foundation.clickable  // ← IMPORTANTE
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -22,6 +23,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.RadioButton  // ← IMPORTANTE
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
@@ -62,6 +64,11 @@ fun DatosOcurrenciaDelitScreen(
     var terminoMunicipal by rememberSaveable { mutableStateOf(initialData.terminoMunicipal) }
     var fecha by rememberSaveable { mutableStateOf(initialData.fecha) }
     var hora by rememberSaveable { mutableStateOf(initialData.hora) }
+    // ← NUEVO: Variable de estado para el momento de información de derechos
+    var derechosInformacionMomento by rememberSaveable {
+        mutableStateOf(initialData.derechosInformacionMomento)
+    }
+
     var showDatePicker by rememberSaveable { mutableStateOf(false) }
 
     Column(
@@ -118,7 +125,7 @@ fun DatosOcurrenciaDelitScreen(
                     label = { Text(stringResource(R.string.ocurrencia_delit_termino_municipal)) }
                 )
 
-                // Fecha — mismo patrón que DatosJuzgadoAtestadoScreen
+                // Fecha
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -147,7 +154,7 @@ fun DatosOcurrenciaDelitScreen(
                     }
                 }
 
-                // Hora — mismo patrón que DatosJuzgadoAtestadoScreen
+                // Hora
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -186,6 +193,53 @@ fun DatosOcurrenciaDelitScreen(
                     }
                 }
 
+                // ← NUEVO: Grupo de radio buttons
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = stringResource(R.string.ocurrencia_delit_derechos_moment_title),
+                    style = MaterialTheme.typography.titleSmall,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    // Opción 1: En el mismo momento
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { derechosInformacionMomento = "mismo_momento" }
+                            .padding(vertical = 4.dp)
+                    ) {
+                        RadioButton(
+                            selected = derechosInformacionMomento == "mismo_momento",
+                            onClick = { derechosInformacionMomento = "mismo_momento" }
+                        )
+                        Text(
+                            text = stringResource(R.string.ocurrencia_delit_derechos_moment_same_time),
+                            modifier = Modifier.padding(start = 8.dp)
+                        )
+                    }
+
+                    // Opción 2: Lo más inmediato posible
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { derechosInformacionMomento = "inmediato" }
+                            .padding(vertical = 4.dp)
+                    ) {
+                        RadioButton(
+                            selected = derechosInformacionMomento == "inmediato",
+                            onClick = { derechosInformacionMomento = "inmediato" }
+                        )
+                        Text(
+                            text = stringResource(R.string.ocurrencia_delit_derechos_moment_immediate),
+                            modifier = Modifier.padding(start = 8.dp)
+                        )
+                    }
+                }
+
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Button(
@@ -197,7 +251,9 @@ fun DatosOcurrenciaDelitScreen(
                                 localidad = localidad,
                                 terminoMunicipal = terminoMunicipal,
                                 fecha = fecha,
-                                hora = hora
+                                hora = hora,
+                                // ← NUEVO: Guardar el campo persistente
+                                derechosInformacionMomento = derechosInformacionMomento
                             )
                         )
                         onBackClick()
@@ -221,6 +277,8 @@ fun DatosOcurrenciaDelitScreen(
                         terminoMunicipal = ""
                         fecha = ""
                         hora = ""
+                        // ← NUEVO: Limpiar el campo
+                        derechosInformacionMomento = ""
                     },
                     modifier = Modifier.fillMaxWidth(),
                     shape = MaterialTheme.shapes.medium,
@@ -253,7 +311,7 @@ fun DatosOcurrenciaDelitScreen(
         }
     }
 
-    // Material3 DatePickerDialog — mismo patrón que DatosJuzgadoAtestadoScreen
+    // DatePickerDialog
     if (showDatePicker) {
         val datePickerState = rememberDatePickerState(
             initialSelectedDateMillis = fecha.toOcurrenciaDateMillisOrNull()
