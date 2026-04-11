@@ -19,6 +19,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DropdownMenuItem
@@ -151,6 +152,8 @@ fun DatosPersonaInvestigadaScreen(
     val nfcReadErrorTitle = stringResource(R.string.nfc_read_error_title)
     val nfcScanDialogTitle = stringResource(R.string.nfc_scan_dialog_title)
     val nfcWaitingTagMessage = stringResource(R.string.nfc_waiting_tag_message)
+    val nfcReadingProgressTitle = stringResource(R.string.nfc_reading_progress_title)
+    val nfcReadingProgressMessage = stringResource(R.string.nfc_reading_progress_message)
     val sexMaleLabel = stringResource(R.string.person_data_sex_male)
     val sexFemaleLabel = stringResource(R.string.person_data_sex_female)
     val sexUnknownLabel = stringResource(R.string.person_data_sex_unknown)
@@ -544,6 +547,28 @@ fun DatosPersonaInvestigadaScreen(
         )
     }
 
+    // Modal de progreso: se muestra mientras se lee el chip NFC (puede tardar 2-5s)
+    if (isReadingNfc) {
+        AlertDialog(
+            onDismissRequest = { /* no cancelable mientras lee */ },
+            title = { Text(nfcReadingProgressTitle) },
+            text = {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    CircularProgressIndicator()
+                    Text(
+                        text = nfcReadingProgressMessage,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            },
+            confirmButton = {}
+        )
+    }
+
 
     if (showNfcDataDialog && pendingNfcData != null) {
         val data = pendingNfcData!!
@@ -562,7 +587,7 @@ fun DatosPersonaInvestigadaScreen(
                     Text(stringResource(R.string.nfc_field_name, data.firstName))
                     Text(stringResource(R.string.nfc_field_lastname1, data.lastName1))
                     Text(stringResource(R.string.nfc_field_lastname2, data.lastName2))
-                    Text(stringResource(R.string.nfc_field_document, data.documentNumber))
+                    Text(stringResource(R.string.nfc_field_nif, data.optionalData))
                     Text(stringResource(R.string.nfc_field_birth_date, previewBirthDate))
                     Text(stringResource(R.string.nfc_field_birth_place, data.birthPlace))
                     Text(stringResource(R.string.nfc_field_birth_province, data.birthProvince))
@@ -586,8 +611,9 @@ fun DatosPersonaInvestigadaScreen(
                     firstName = data.firstName.uppercase()
                     lastName1 = data.lastName1.uppercase()
                     lastName2 = data.lastName2.uppercase()
-                    if (data.documentNumber.isNotBlank()) {
-                        documentIdentification = data.documentNumber.uppercase()
+                    // optionalData contiene el NIF/NIE del titular (dato opcional MRZ zona 1)
+                    if (data.optionalData.isNotBlank()) {
+                        documentIdentification = data.optionalData.uppercase()
                     }
                     fatherName = data.fatherName
                     motherName = data.motherName

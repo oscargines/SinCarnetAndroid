@@ -17,7 +17,10 @@ internal data class NfcDniPersonData(
     val firstName: String,
     val lastName1: String,
     val lastName2: String,
+    /** Número de soporte (campo docNumber de DG1, p.ej. "AAA000000"). Solo para log/debug. */
     val documentNumber: String,
+    /** Dato opcional de DG1 → NIF/NIE del titular (p.ej. "12345678A"). */
+    val optionalData: String,
     val fatherName: String,
     val motherName: String,
     val birthDateAammdd: String,
@@ -68,6 +71,9 @@ internal object NfcDniReader {
         // Llamadas directas a la API (sin reflexión)
         val firstName = dg1.name?.trim().orEmpty()
         val documentNumber = dg1.docNumber?.trim().orEmpty()
+        // optData contiene el NIF/NIE en el DNIe español (dato opcional zona 1 del MRZ).
+        // El MRZ rellena con '<'; se eliminan antes de devolver el valor.
+        val optionalData = dg1.optData?.trim()?.trimEnd('<')?.trim().orEmpty()
         val birthDateAammdd = dg1.dateOfBirth?.trim().orEmpty()
         val nationality = dg1.nationality?.trim().orEmpty()
         val sex = dg1.sex?.trim().orEmpty()
@@ -104,6 +110,7 @@ internal object NfcDniReader {
             lastName1 = lastName1,
             lastName2 = lastName2,
             documentNumber = documentNumber,
+            optionalData = optionalData,
             fatherName = fatherName,
             motherName = motherName,
             birthDateAammdd = birthDateAammdd,
