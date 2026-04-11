@@ -59,16 +59,33 @@ fun loadCitacionDocument(context: Context, tipoJuicio: String): CitacionDocument
         val root = JSONObject(content).getJSONObject("documento")
         Log.d("CITACION", "loaded documento titulo='${root.optString("titulo", "")} for file=$fileName")
 
+        // El cuerpo principal está en "cuerpo" > "descripcion" (objeto anidado, no clave plana)
+        val cuerpoDescripcion = root.optJSONObject("cuerpo")?.optString("descripcion", "")
+            ?: root.optString("cuerpo_descripcion", "")   // fallback por compatibilidad
+
         val secciones = mutableListOf<CitacionSeccion>()
         val seccionesJson = root.optJSONArray("secciones")
         if (seccionesJson != null) {
             for (i in 0 until seccionesJson.length()) {
                 val sectionJson = seccionesJson.getJSONObject(i)
+
+                // items (lista de bullets)
                 val items = mutableListOf<CitacionItem>()
                 val itemsJson = sectionJson.optJSONArray("items")
                 if (itemsJson != null) {
                     for (j in 0 until itemsJson.length()) {
-                        items.add(CitacionItem(itemsJson.getJSONObject(j).getString("descripcion")))
+                        val desc = itemsJson.getJSONObject(j).optString("descripcion", "")
+                        if (desc.isNotBlank()) items.add(CitacionItem(desc))
+                    }
+                }
+
+                // opciones (lista de opciones, p.ej. "No designa Letrado…")
+                val opciones = mutableListOf<CitacionOpcion>()
+                val opcionesJson = sectionJson.optJSONArray("opciones")
+                if (opcionesJson != null) {
+                    for (j in 0 until opcionesJson.length()) {
+                        val desc = opcionesJson.getJSONObject(j).optString("descripcion", "")
+                        if (desc.isNotBlank()) opciones.add(CitacionOpcion(desc))
                     }
                 }
 
@@ -76,7 +93,9 @@ fun loadCitacionDocument(context: Context, tipoJuicio: String): CitacionDocument
                     CitacionSeccion(
                         titulo = sectionJson.optString("titulo", ""),
                         contenido = sectionJson.optString("contenido", ""),
-                        items = items
+                        items = items,
+                        opciones = opciones,
+                        informacionAdicional = sectionJson.optString("informacion_adicional", "")
                     )
                 )
             }
@@ -88,7 +107,7 @@ fun loadCitacionDocument(context: Context, tipoJuicio: String): CitacionDocument
 
         CitacionDocument(
             titulo = root.optString("titulo", ""),
-            cuerpoDescripcion = root.optString("cuerpo_descripcion", ""),
+            cuerpoDescripcion = cuerpoDescripcion,
             secciones = secciones,
             cierre = root.optString("cierre", ""),
             enteradoTitulo = enteradoTitulo,
