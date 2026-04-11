@@ -12,8 +12,11 @@ internal data class PersonaInvestigadaData(
     val address: String = "",
     val birthDate: String = "",
     val birthPlace: String = "",
+    val birthProvince: String = "",
     val fatherName: String = "",
     val motherName: String = "",
+    val residencePopulation: String = "",
+    val residenceProvince: String = "",
     val phone: String = "",
     val email: String = "",
     val rightToRemainSilentInformed: Boolean? = null,
@@ -38,8 +41,11 @@ internal class PersonaInvestigadaStorage(context: Context) {
         address = prefs.getString(KEY_ADDRESS, "").orEmpty(),
         birthDate = prefs.getString(KEY_BIRTH_DATE, "").orEmpty(),
         birthPlace = prefs.getString(KEY_BIRTH_PLACE, "").orEmpty(),
+        birthProvince = prefs.getString(KEY_BIRTH_PROVINCE, "").orEmpty(),
         fatherName = prefs.getString(KEY_FATHER_NAME, "").orEmpty(),
         motherName = prefs.getString(KEY_MOTHER_NAME, "").orEmpty(),
+        residencePopulation = prefs.getString(KEY_RESIDENCE_POPULATION, "").orEmpty(),
+        residenceProvince = prefs.getString(KEY_RESIDENCE_PROVINCE, "").orEmpty(),
         phone = prefs.getString(KEY_PHONE, "").orEmpty(),
         email = prefs.getString(KEY_EMAIL, "").orEmpty(),
         rightToRemainSilentInformed = prefs.getNullableBoolean(KEY_RIGHT_TO_REMAIN_SILENT_INFORMED),
@@ -62,8 +68,11 @@ internal class PersonaInvestigadaStorage(context: Context) {
             .putString(KEY_ADDRESS, data.address)
             .putString(KEY_BIRTH_DATE, data.birthDate)
             .putString(KEY_BIRTH_PLACE, data.birthPlace)
+            .putString(KEY_BIRTH_PROVINCE, data.birthProvince)
             .putString(KEY_FATHER_NAME, data.fatherName)
             .putString(KEY_MOTHER_NAME, data.motherName)
+            .putString(KEY_RESIDENCE_POPULATION, data.residencePopulation)
+            .putString(KEY_RESIDENCE_PROVINCE, data.residenceProvince)
             .putString(KEY_PHONE, data.phone)
             .putString(KEY_EMAIL, data.email)
             .putBooleanOrRemove(KEY_RIGHT_TO_REMAIN_SILENT_INFORMED, data.rightToRemainSilentInformed)
@@ -105,8 +114,11 @@ internal class PersonaInvestigadaStorage(context: Context) {
             .remove(KEY_ADDRESS)
             .remove(KEY_BIRTH_DATE)
             .remove(KEY_BIRTH_PLACE)
+            .remove(KEY_BIRTH_PROVINCE)
             .remove(KEY_FATHER_NAME)
             .remove(KEY_MOTHER_NAME)
+            .remove(KEY_RESIDENCE_POPULATION)
+            .remove(KEY_RESIDENCE_PROVINCE)
             .remove(KEY_PHONE)
             .remove(KEY_EMAIL)
             .remove(KEY_RIGHT_TO_REMAIN_SILENT_INFORMED)
@@ -141,8 +153,11 @@ internal class PersonaInvestigadaStorage(context: Context) {
         const val KEY_ADDRESS = "address"
         const val KEY_BIRTH_DATE = "birth_date"
         const val KEY_BIRTH_PLACE = "birth_place"
+        const val KEY_BIRTH_PROVINCE = "birth_province"
         const val KEY_FATHER_NAME = "father_name"
         const val KEY_MOTHER_NAME = "mother_name"
+        const val KEY_RESIDENCE_POPULATION = "residence_population"
+        const val KEY_RESIDENCE_PROVINCE = "residence_province"
         const val KEY_PHONE = "phone"
         const val KEY_EMAIL = "email"
         const val KEY_RIGHT_TO_REMAIN_SILENT_INFORMED = "right_to_remain_silent_informed"

@@ -61,14 +61,14 @@
         "respuesta": "SI/NO",
         "datos_conductor_habilitado": {
           "descripcion": "Datos de la persona que se hace cargo del vehículo:",
-          "campo_variable": "[[personasehacecargo]]",
+          "campo_variable": "[[datosconductorhabilitado]]",
           "condiciones": "Con permiso de conducción en vigor y convenientemente autorizada por la persona interesada abajo firmante. Antes de hacerse cargo del vehículo se ha sometido voluntariamente a una prueba de alcoholemia en aire espirado y a la prueba de detección de drogas que han resultado negativas y se ha comprobado que posee permiso o licencia de conducción válida para su conducción."
         }
       },
       {
         "id": 2,
         "texto": "Esperar a que desaparezcan las causas de la inmovilización",
-        "respuesta": "SI/NO",
+        "respuesta": "SI",
         "informacion_levantamiento": "El levantamiento de la Inmovilización o Depósito deberá hacerse justificando ante los miembros de la Agrupación de Tráfico de la Guardia Civil, la desaparición de las causas que motivaron tal medida; mediante llamada a Central de Comunicaciones de la Guardia Civil (062) puede ponerse en contacto, una vez desaparezcan las causas que motivaron la inmovilización, para solicitar esa presencia en el lugar de la inmovilización y una vez comprobada la documentación que acredite que el conductor está habilitado para su conducción, y realizadas las pruebas de alcoholemia y/o drogas, proceder a levantarla."
       },
       {

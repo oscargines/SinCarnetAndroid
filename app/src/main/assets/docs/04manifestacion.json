@@ -73,49 +73,49 @@
     "preguntas": [
       {
         "id": 1,
-        "pregunta": "Si en el momento en el que se encontraba realizando la acción de la conducción del vehículo reseñado era conocedor de que carecía del derecho a la conducción de vehículos a motor.",
-        "campo_variable": "[[primerapregunta]]"
+        "pregunta": "PREGUNTADO/A si en el momento en el que se encontraba realizando la acción de la conducción del vehículo reseñado era conocedor de que carecía del derecho a la conducción de vehículos a motor.",
+        "campo_variable": "MANIFIESTA que [[primerapregunta]]"
       },
       {
         "id": 2,
-        "pregunta": "Si es consciente de los peligros que entraña la conducción careciendo de título habilitante para ello.",
-        "campo_variable": "[[segundapregunta]]"
+        "pregunta": "PREGUNTADO/A si es consciente de los peligros que entraña la conducción careciendo de título habilitante para ello.",
+        "campo_variable": "MANIFIESTA que [[segundapregunta]]"
       },
       {
         "id": 3,
-        "pregunta": "Si realiza comúnmente la acción de conducción, de este o cualquier vehículo.",
-        "campo_variable": "[[tercerapregunta]]"
+        "pregunta": "PREGUNTADO/A si realiza comúnmente la acción de conducción, de este o cualquier vehículo.",
+        "campo_variable": "MANIFIESTA que [[tercerapregunta]]"
       },
       {
         "id": 4,
-        "pregunta": "Si cuando conduce, lo realiza solo o acompañado de otras personas.",
-        "campo_variable": "[[cuartapregunta]]"
+        "pregunta": "PREGUNTADO/A si cuando conduce, lo realiza solo o acompañado de otras personas.",
+        "campo_variable": "MANIFIESTA que [[cuartapregunta]]"
       },
       {
         "id": 5,
-        "pregunta": "Si conoce los mecanismos de los que dispone la DGT para comprobar los datos personales y el vigor de la documentación de la que dispone, así como de las infracciones existentes anotadas en los distintos registros de la administración.",
-        "campo_variable": "[[quintapregunta]]"
+        "pregunta": "PREGUNTADO/A si conoce los mecanismos de los que dispone la DGT para comprobar los datos personales y el vigor de la documentación de la que dispone, así como de las infracciones existentes anotadas en los distintos registros de la administración.",
+        "campo_variable": "MANIFIESTA que [[quintapregunta]]"
       },
       {
         "id": 6,
-        "pregunta": "Que en caso de responder afirmativamente a la pregunta anterior, ha hecho alguna vez uso de esos mecanismos para realizar la comprobación del estado legal de su autorización para conducir.",
-        "campo_variable": "[[sextapregunta]]"
+        "pregunta": "PREGUNTADO/A si, en caso de responder afirmativamente a la pregunta anterior, ha hecho alguna vez uso de esos mecanismos para realizar la comprobación del estado legal de su autorización para conducir.",
+        "campo_variable": "MANIFIESTA que [[sextapregunta]]"
       },
       {
         "id": 7,
-        "pregunta": "Si es consciente de las repercusiones legales que acarrean la conducción sin tener autorización en vigor, o habiendo sido privado del derecho a la conducción de vehículos a motor.",
-        "campo_variable": "[[septimapregunta]]"
+        "pregunta": "PREGUNTADO/A si es consciente de las repercusiones legales que acarrean la conducción sin tener autorización en vigor, o habiendo sido privado del derecho a la conducción de vehículos a motor.",
+        "campo_variable": "MANIFIESTA que [[septimapregunta]]"
       },
       {
         "id": 8,
-        "pregunta": "Si tiene algo más que declarar o desea realizar alguna ampliación o aclaración a lo arriba afirmado.",
-        "campo_variable": "[[octavapregunta]]"
+        "pregunta": "PREGUNTADO/A si tiene algo más que declarar o desea realizar alguna ampliación o aclaración a lo arriba afirmado.",
+        "campo_variable": "MANIFIESTA que [[octavapregunta]]"
       }
     ],
     "cierre": {
       "texto": "Y para que conste, se extiende la presente diligencia, que firma la persona investigada no detenida, tras haberla leído por sí, a las [[segundafechahora]] y de la fuerza actuante.",
       "campos_variables": {
-        "segunda_fecha_hora": "[[segundafechahora]]"
+        "segunda_fecha_hora": "MANIFIESTA que [[segundafechahora]]"
       }
     }
   }

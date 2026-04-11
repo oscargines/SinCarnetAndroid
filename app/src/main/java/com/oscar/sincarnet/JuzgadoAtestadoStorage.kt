@@ -40,6 +40,8 @@ internal class JuzgadoAtestadoStorage(context: Context) {
     )
 
     fun saveCurrent(data: JuzgadoAtestadoData) {
+        // Use commit() to ensure synchronous write so callers that immediately read
+        // the preferences (e.g. printing logic) see the updated values.
         prefs.edit()
             .putIntOrRemove(KEY_CCAA_ID, data.ccaaId)
             .putString(KEY_CCAA_NOMBRE, data.ccaaNombre)
@@ -55,10 +57,11 @@ internal class JuzgadoAtestadoStorage(context: Context) {
             .putString(KEY_TIPO_JUICIO, data.tipoJuicio)
             .putString(KEY_FECHA_RAPIDO, data.fechaJuicioRapido)
             .putString(KEY_HORA_RAPIDO, data.horaJuicioRapido)
-            .apply()
+            .commit()
     }
 
     fun clearCurrent() {
+        // Use commit() to synchronously remove stored values.
         prefs.edit()
             .remove(KEY_CCAA_ID)
             .remove(KEY_CCAA_NOMBRE)
@@ -74,7 +77,7 @@ internal class JuzgadoAtestadoStorage(context: Context) {
             .remove(KEY_TIPO_JUICIO)
             .remove(KEY_FECHA_RAPIDO)
             .remove(KEY_HORA_RAPIDO)
-            .apply()
+            .commit()
     }
 
     private fun android.content.SharedPreferences.Editor.putIntOrRemove(
@@ -101,5 +104,18 @@ internal class JuzgadoAtestadoStorage(context: Context) {
         const val KEY_FECHA_RAPIDO = "fecha_juicio_rapido"
         const val KEY_HORA_RAPIDO = "hora_juicio_rapido"
     }
+}
+
+// Helper para detectar si el juzgado indica 'juicio rápido'
+internal fun JuzgadoAtestadoData.isJuicioRapido(): Boolean {
+    // Normalizar y eliminar diacríticos
+    val tipoNormalized = java.text.Normalizer.normalize(this.tipoJuicio, java.text.Normalizer.Form.NFD)
+        .replace("\\p{InCombiningDiacriticalMarks}+".toRegex(), "")
+        .lowercase()
+        .trim()
+
+    if (tipoNormalized.contains("rapido")) return true
+    if (this.fechaJuicioRapido.isNotBlank() || this.horaJuicioRapido.isNotBlank()) return true
+    return false
 }
 

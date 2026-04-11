@@ -54,10 +54,16 @@ internal fun generateAtestadoContinuousPdf(
     instructorUnit: String,
     inicioModalData: AtestadoInicioModalData = AtestadoInicioModalData()
 ): AtestadoPdfResult {
+
+    val prefs = context.getSharedPreferences("segundo_conductor", android.content.Context.MODE_PRIVATE)
+    val segundoConductorNombre = prefs.getString("nombre", "")?.trim() ?: ""
+    val segundoConductorDocumento = prefs.getString("documento", "")?.trim() ?: ""
+    android.util.Log.d("PDF", "Segundo conductor: nombre='$segundoConductorNombre', documento='$segundoConductorDocumento'")
+
     val now = System.currentTimeMillis()
     val pdfDocument = PdfDocument()
-
     val orderedDocuments = mutableListOf<CitacionDocument>()
+
     val staticFiles = listOf(
         "01inicio.json",
         "02derechos.json",
@@ -66,7 +72,8 @@ internal fun generateAtestadoContinuousPdf(
         "05inmovilizacion.json"
     )
     staticFiles.forEach { fileName ->
-        orderedDocuments += loadAtestadoTemplateAsCitacion(
+        android.util.Log.d("ATEN", "load static template: $fileName")
+        val doc = loadAtestadoTemplateAsCitacion(
             context = context,
             fileName = fileName,
             inicioModalData = inicioModalData,
@@ -74,10 +81,21 @@ internal fun generateAtestadoContinuousPdf(
             courtData = courtData,
             ocurrenciaData = ocurrenciaData,
             vehicleData = vehicleData,
-            hasSecondDriver = hasSecondDriver
+            hasSecondDriver = hasSecondDriver,
+            manifestacionData = manifestacionData,
+            segundoConductorNombre = segundoConductorNombre,
+            segundoConductorDocumento = segundoConductorDocumento
         )
+        android.util.Log.d("ATEN", "  loaded template title='${doc.titulo}' for file=$fileName")
+        orderedDocuments += doc
     }
-    orderedDocuments += loadCitacionDocument(context, courtData.tipoJuicio)
+    // Si courtData.tipoJuicio está vacío, inferir juicio rápido por fecha/hora disponibles
+    val tipoJuicioForTemplate = when {
+        courtData.tipoJuicio.isNotBlank() -> courtData.tipoJuicio
+        courtData.fechaJuicioRapido.isNotBlank() || courtData.horaJuicioRapido.isNotBlank() -> "rapido"
+        else -> ""
+    }
+    orderedDocuments += loadCitacionDocument(context, tipoJuicioForTemplate)
 
     val calibriRegular = loadTypefaceFromAssets(context, "fonts/calibri-regular.ttf")
     val calibriBold = loadTypefaceFromAssets(context, "fonts/calibri-bold.ttf") ?: calibriRegular
@@ -109,7 +127,7 @@ internal fun generateAtestadoContinuousPdf(
     }
 
     var pageNumber = 1
-    orderedDocuments.forEach { document ->
+    orderedDocuments.forEachIndexed { documentIndex, document ->
         var pageState = startContinuousPage(
             pdfDocument = pdfDocument,
             context = context,
@@ -121,6 +139,22 @@ internal fun generateAtestadoContinuousPdf(
         pageNumber += 1
 
         val maxContentY = A4_HEIGHT_PT - mmToPt(BOTTOM_MARGIN_MM)
+
+        fun replaceForDocument(text: String): String = replaceCitacionPlaceholders(
+            text = text,
+            courtData = courtData,
+            personData = personData,
+            ocurrenciaData = ocurrenciaData,
+            instructorTip = instructorTip,
+            secretaryTip = secretaryTip,
+            instructorUnit = instructorUnit,
+            vehicleData = vehicleData,
+            manifestacionData = manifestacionData,
+            inicioModalData = inicioModalData,
+            segundoConductorNombre = segundoConductorNombre,
+            segundoConductorDocumento = segundoConductorDocumento,
+            documentSequenceIndex = documentIndex
+        )
 
         fun drawBlock(text: String, paint: Paint, lineHeight: Float, bottomSpacing: Float = 0f) {
             // Ignorar si el texto es nulo, vacío o solo saltos de línea/espacios
@@ -161,76 +195,21 @@ internal fun generateAtestadoContinuousPdf(
             pageState.cursorY += bottomSpacing
         }
 
-        val title = replaceCitacionPlaceholders(
-            text = document.titulo,
-            courtData = courtData,
-            personData = personData,
-            ocurrenciaData = ocurrenciaData,
-            instructorTip = instructorTip,
-            secretaryTip = secretaryTip,
-            instructorUnit = instructorUnit,
-            vehicleData = vehicleData,
-            manifestacionData = manifestacionData,
-            inicioModalData = inicioModalData
-        )
+        val title = replaceForDocument(document.titulo)
         drawBlock(title, titlePaint, 14f, 10f)
 
-        val body = replaceCitacionPlaceholders(
-            text = document.cuerpoDescripcion,
-            courtData = courtData,
-            personData = personData,
-            ocurrenciaData = ocurrenciaData,
-            instructorTip = instructorTip,
-            secretaryTip = secretaryTip,
-            instructorUnit = instructorUnit,
-            vehicleData = vehicleData,
-            manifestacionData = manifestacionData,
-            inicioModalData = inicioModalData
-        )
+        val body = replaceForDocument(document.cuerpoDescripcion)
         drawBlock(body, textPaint, 13f, 10f)
 
         document.secciones.forEach { section ->
-            val sectionTitle = replaceCitacionPlaceholders(
-                text = section.titulo,
-                courtData = courtData,
-                personData = personData,
-                ocurrenciaData = ocurrenciaData,
-                instructorTip = instructorTip,
-                secretaryTip = secretaryTip,
-                instructorUnit = instructorUnit,
-                vehicleData = vehicleData,
-                manifestacionData = manifestacionData,
-                inicioModalData = inicioModalData
-            )
+            val sectionTitle = replaceForDocument(section.titulo)
             drawBlock(sectionTitle, headingPaint, 13f, 4f)
 
-            val sectionContent = replaceCitacionPlaceholders(
-                text = section.contenido,
-                courtData = courtData,
-                personData = personData,
-                ocurrenciaData = ocurrenciaData,
-                instructorTip = instructorTip,
-                secretaryTip = secretaryTip,
-                instructorUnit = instructorUnit,
-                vehicleData = vehicleData,
-                manifestacionData = manifestacionData,
-                inicioModalData = inicioModalData
-            )
+            val sectionContent = replaceForDocument(section.contenido)
             drawBlock(sectionContent, textPaint, 13f, 6f)
 
             section.items.forEach { item ->
-                val itemText = replaceCitacionPlaceholders(
-                    text = item.descripcion,
-                    courtData = courtData,
-                    personData = personData,
-                    ocurrenciaData = ocurrenciaData,
-                    instructorTip = instructorTip,
-                    secretaryTip = secretaryTip,
-                    instructorUnit = instructorUnit,
-                    vehicleData = vehicleData,
-                    manifestacionData = manifestacionData,
-                    inicioModalData = inicioModalData
-                )
+                val itemText = replaceForDocument(item.descripcion)
                 if (itemText.isNotBlank()) {
                     val itemLines = wrapTextLines("- $itemText", (pageState.right - pageState.left) - 12f, textPaint)
                     itemLines.forEach { alignedLine ->
@@ -261,20 +240,8 @@ internal fun generateAtestadoContinuousPdf(
                     pageState.cursorY += 4f
                 }
             }
-
             section.opciones.forEach { option ->
-                val optionText = replaceCitacionPlaceholders(
-                    text = option.descripcion,
-                    courtData = courtData,
-                    personData = personData,
-                    ocurrenciaData = ocurrenciaData,
-                    instructorTip = instructorTip,
-                    secretaryTip = secretaryTip,
-                    instructorUnit = instructorUnit,
-                    vehicleData = vehicleData,
-                    manifestacionData = manifestacionData,
-                    inicioModalData = inicioModalData
-                )
+                val optionText = replaceForDocument(option.descripcion)
                 if (optionText.isNotBlank()) {
                     val optionLines = wrapTextLines("- $optionText", (pageState.right - pageState.left) - 12f, textPaint)
                     optionLines.forEach { alignedLine ->
@@ -306,62 +273,21 @@ internal fun generateAtestadoContinuousPdf(
                 }
             }
 
-            val extraInfo = replaceCitacionPlaceholders(
-                text = section.informacionAdicional,
-                courtData = courtData,
-                personData = personData,
-                ocurrenciaData = ocurrenciaData,
-                instructorTip = instructorTip,
-                secretaryTip = secretaryTip,
-                instructorUnit = instructorUnit,
-                vehicleData = vehicleData,
-                manifestacionData = manifestacionData,
-                inicioModalData = inicioModalData
-            )
+            val extraInfo = replaceForDocument(section.informacionAdicional)
             drawBlock(extraInfo, textPaint, 13f, 8f)
         }
 
-        val closeText = replaceCitacionPlaceholders(
-            text = document.cierre,
-            courtData = courtData,
-            personData = personData,
-            ocurrenciaData = ocurrenciaData,
-            instructorTip = instructorTip,
-            secretaryTip = secretaryTip,
-            instructorUnit = instructorUnit,
-            vehicleData = vehicleData,
-            manifestacionData = manifestacionData,
-            inicioModalData = inicioModalData
-        )
+        val closeText = replaceForDocument(document.cierre)
         drawBlock(closeText, textPaint, 13f, 8f)
 
-        val enteradoTitle = replaceCitacionPlaceholders(
-            text = document.enteradoTitulo,
-            courtData = courtData,
-            personData = personData,
-            ocurrenciaData = ocurrenciaData,
-            instructorTip = instructorTip,
-            secretaryTip = secretaryTip,
-            instructorUnit = instructorUnit,
-            vehicleData = vehicleData,
-            manifestacionData = manifestacionData,
-            inicioModalData = inicioModalData
-        )
+        val enteradoTitle = replaceForDocument(document.enteradoTitulo)
+        val enteradoText = replaceForDocument(document.enteradoTexto)
         drawBlock(enteradoTitle, headingPaint, 13f, 4f)
+        drawBlock(enteradoText, textPaint, 13f, 8f)
 
-        val enteradoText = replaceCitacionPlaceholders(
-            text = document.enteradoTexto,
-            courtData = courtData,
-            personData = personData,
-            ocurrenciaData = ocurrenciaData,
-            instructorTip = instructorTip,
-            secretaryTip = secretaryTip,
-            instructorUnit = instructorUnit,
-            vehicleData = vehicleData,
-            manifestacionData = manifestacionData,
-            inicioModalData = inicioModalData
-        )
-        drawBlock(enteradoText, textPaint, 13f, 0f)
+        // Las firmas se dibujarán más abajo (una sola vez):
+        // - si el documento es 03letradogratis.json sólo se dibuja la firma del investigado con 'Enterado'
+        // - en caso contrario se dibuja la disposición completa de firmas
 
         if (pageState.cursorY + MIN_SIGNATURE_SECTION_HEIGHT_PT > maxContentY) {
             pdfDocument.finishPage(pageState.page)
@@ -376,8 +302,11 @@ internal fun generateAtestadoContinuousPdf(
             pageNumber += 1
         }
 
-        // Si el documento es 03letradogratis.json, solo dibujar la firma del investigado con el texto 'Enterado'
-        if (document.titulo.trim().equals("INFORMACIÓN SOBRE EL DERECHO DE ASISTENCIA JURÍDICA GRATUITA", ignoreCase = true)) {
+        // Loguear título del documento para depuración: queremos garantizar que
+        // drawSoloInvestigadoSignature sólo se invoque para el documento correcto.
+        android.util.Log.d("PDF_SIG", "Signing decision for document.titulo='${document.titulo.trim()}' hasSecondDriver=$hasSecondDriver")
+        // Si el documento fue marcado como 'onlyEnterado' (03letradogratis.json), solo dibujar la firma del investigado con el texto 'Enterado'
+        if (document.onlyEnterado) {
             drawSoloInvestigadoSignature(
                 canvas = pageState.canvas,
                 signatures = signatures,
@@ -390,7 +319,7 @@ internal fun generateAtestadoContinuousPdf(
                 tipPaint = textPaintSmall
             )
         } else {
-            drawCitacionSignatures(
+                drawCitacionSignatures(
                 canvas = pageState.canvas,
                 signatures = signatures,
                 startY = pageState.cursorY + 6f,
@@ -403,6 +332,13 @@ internal fun generateAtestadoContinuousPdf(
                 investigatedNoSignText = investigatedNoSignText,
                 textPaint = textPaint,
                 tipPaint = textPaintSmall
+                ,
+                hasSecondDriver = hasSecondDriver,
+                secondDriverName = if (segundoConductorNombre.isNotBlank() && segundoConductorDocumento.isNotBlank())
+                    "$segundoConductorNombre ($segundoConductorDocumento)"
+                else
+                    segundoConductorNombre,
+                allowSecondDriver = document.allowSecondDriver
             )
         }
 
@@ -563,14 +499,29 @@ private fun drawCitacionSignatures(
     secretaryTip: String,
     investigatedNoSignText: String,
     textPaint: Paint,
-    tipPaint: Paint
+    tipPaint: Paint,
+    hasSecondDriver: Boolean = false,  // ← AÑADIR parámetro
+    secondDriverName: String = "",    // ← AÑADIR parámetro
+    allowSecondDriver: Boolean = false // ← nuevo: si el documento permite segundo conductor
 ) {
+    android.util.Log.d("PDF_SIG", "drawCitacionSignatures called: hasSecondDriver=$hasSecondDriver, secondDriverName='$secondDriverName'")
+    signatures.forEach { (k, v) ->
+        android.util.Log.d("PDF_SIG", "  slot=$k, type=${v?.let { it::class.simpleName } ?: "null"}${if (v is PdfSignatureContent.Image) " id=${System.identityHashCode(v.value)}" else ""}")
+    }
     var cursorY = startY
     val availableHeight = (pageHeight - bottomMargin) - cursorY
     val signatureGap = 10f
     val spaceBetweenSignatures = mmToPt(20f)
     val maxSignatureBoxWidth = mmToPt(50f)
     val maxSignatureBoxHeight = mmToPt(40f)
+
+    // ← MODIFICAR: Calcular filas según haya segundo conductor. Solo si el documento permite mostrarlo.
+    // para cubrir el caso en que la flag externa no esté sincronizada pero la firma sí existe.
+    val effectiveHasSecondDriver = allowSecondDriver && (hasSecondDriver || (signatures[PdfSignatureSlot.SECOND_DRIVER] != null))
+    val totalSignatureBoxes = if (effectiveHasSecondDriver) 4 else 3
+    val boxesPerRow = 2
+    val rowsNeeded = (totalSignatureBoxes + boxesPerRow - 1) / boxesPerRow
+
     val previousTopRowHeight = (availableHeight * 0.42f).coerceAtLeast(92f)
     val previousBottomRowHeight = (availableHeight - previousTopRowHeight - signatureGap).coerceAtLeast(92f)
     val topRowHeight = (previousTopRowHeight - mmToPt(1f))
@@ -591,6 +542,7 @@ private fun drawCitacionSignatures(
     val totalWidthNeeded = (2 * topBoxWidth) + spaceBetweenSignatures
     val leftPadding = (topRowWidth - totalWidthNeeded) / 2f
 
+    // Fila 1: Instructor y Secretario
     val instructorRect = RectF(
         leftX + leftPadding,
         cursorY,
@@ -626,23 +578,68 @@ private fun drawCitacionSignatures(
     )
 
     cursorY = instructorRect.bottom + signatureGap
-    val investigatedLeftPadding = (topRowWidth - investigatedBoxWidth) / 2f
-    val investigatedRect = RectF(
-        leftX + investigatedLeftPadding,
-        cursorY,
-        leftX + investigatedLeftPadding + investigatedBoxWidth,
-        (cursorY + bottomRowHeight).coerceAtMost(pageHeight - bottomMargin)
-    )
-    drawSignatureBlock(
-        canvas = canvas,
-        rect = investigatedRect,
-        title = "Investigado",
-        tip = null,
-        content = signatures[PdfSignatureSlot.INVESTIGATED],
-        fallbackText = investigatedNoSignText,
-        textPaint = textPaint,
-        tipPaint = tipPaint
-    )
+
+    // ← MODIFICAR: Fila 2 - Investigado y Segundo Conductor (si existe)
+    if (effectiveHasSecondDriver) {
+        val secondDriverBoxWidth = ((topRowWidth - spaceBetweenSignatures) / 2f)
+            .coerceAtLeast(40f)
+            .coerceAtMost(maxSignatureBoxWidth)
+
+        val investigatedRect = RectF(
+            leftX + leftPadding,
+            cursorY,
+            leftX + leftPadding + secondDriverBoxWidth,
+            (cursorY + bottomRowHeight).coerceAtMost(pageHeight - bottomMargin)
+        )
+        val secondDriverRect = RectF(
+            leftX + leftPadding + secondDriverBoxWidth + spaceBetweenSignatures,
+            cursorY,
+            leftX + leftPadding + secondDriverBoxWidth + spaceBetweenSignatures + secondDriverBoxWidth,
+            (cursorY + bottomRowHeight).coerceAtMost(pageHeight - bottomMargin)
+        )
+        val investigatedContent = signatures[PdfSignatureSlot.INVESTIGATED]
+        val secondDriverContent = signatures[PdfSignatureSlot.SECOND_DRIVER]
+
+        drawSignatureBlock(
+            canvas = canvas,
+            rect = investigatedRect,
+            title = "Investigado",
+            tip = null,
+            content = investigatedContent,
+            fallbackText = investigatedNoSignText,
+            textPaint = textPaint,
+            tipPaint = tipPaint
+        )
+        drawSignatureBlock(
+            canvas = canvas,
+            rect = secondDriverRect,
+            title = "Conductor Habilitado",
+            tip = secondDriverName.takeIf { it.isNotBlank() },
+            content = secondDriverContent,
+            fallbackText = "Sin firma",
+            textPaint = textPaint,
+            tipPaint = tipPaint
+        )
+    } else {
+        // Comportamiento original sin segundo conductor
+        val investigatedLeftPadding = (topRowWidth - investigatedBoxWidth) / 2f
+        val investigatedRect = RectF(
+            leftX + investigatedLeftPadding,
+            cursorY,
+            leftX + investigatedLeftPadding + investigatedBoxWidth,
+            (cursorY + bottomRowHeight).coerceAtMost(pageHeight - bottomMargin)
+        )
+        drawSignatureBlock(
+            canvas = canvas,
+            rect = investigatedRect,
+            title = "Investigado",
+            tip = null,
+            content = signatures[PdfSignatureSlot.INVESTIGATED],
+            fallbackText = investigatedNoSignText,
+            textPaint = textPaint,
+            tipPaint = tipPaint
+        )
+    }
 }
 
 private fun drawSignatureBlock(
@@ -655,6 +652,12 @@ private fun drawSignatureBlock(
     textPaint: Paint,
     tipPaint: Paint
 ) {
+    android.util.Log.d("PDF_SIG", "drawSignatureBlock: title='$title', content=${content?.let { it::class.simpleName } ?: "null"}")
+    if (content is PdfSignatureContent.Image) {
+        try {
+            android.util.Log.d("PDF_SIG", "  image identity=${System.identityHashCode(content.value)}")
+        } catch (_: Throwable) { }
+    }
     drawTextEmbedded(canvas, title, rect.left + 8f, rect.top + 14f, textPaint)
 
     val tipText = tip?.takeIf { it.isNotBlank() }?.let { "TIP: $it" }
@@ -708,6 +711,10 @@ private fun drawSoloInvestigadoSignature(
     textPaint: Paint,
     tipPaint: Paint
 ) {
+    android.util.Log.d("PDF_SIG", "drawSoloInvestigadoSignature called")
+    signatures.forEach { (k, v) ->
+        android.util.Log.d("PDF_SIG", "  slot=$k, type=${v?.let { it::class.simpleName } ?: "null"}${if (v is PdfSignatureContent.Image) " id=${System.identityHashCode(v.value)}" else ""}")
+    }
     val availableHeight = (pageHeight - bottomMargin) - startY
     val signatureBoxWidth = ((rightX - leftX) / 2f).coerceAtLeast(40f)
     val signatureBoxHeight = (availableHeight * 0.42f).coerceAtLeast(80f).coerceAtMost(mmToPt(40f))
@@ -759,6 +766,51 @@ private fun drawBitmapAlignedTopRight(
     val dst = RectF(right - targetWidth, top, right, top + targetWidth * aspect)
     canvas.drawBitmap(bitmap, null, dst, null)
 }
+private fun buildManifestacionPreguntasText(
+    value: Any?,
+    manifestacionData: ManifestacionData
+): String {
+    val array = value as? JSONArray ?: return ""
+    val lines = mutableListOf<String>()
+
+    val placeholderMap = mapOf(
+        1 to "primerapregunta",
+        2 to "segundapregunta",
+        3 to "tercerapregunta",
+        4 to "cuartapregunta",
+        5 to "quintapregunta",
+        6 to "sextapregunta",
+        7 to "septimapregunta",
+        8 to "octavapregunta"
+    )
+
+    for (i in 0 until array.length()) {
+        val pregunta = array.optJSONObject(i) ?: continue
+        val id = pregunta.optInt("id", i + 1)
+        val textoPregunta = pregunta.optString("pregunta", "").trim()
+        val campoVariable = pregunta.optString("campo_variable", "").trim()
+
+        if (textoPregunta.isNotBlank()) lines += textoPregunta
+
+        if (campoVariable.isNotBlank()) {
+            val placeholderName = placeholderMap[id]
+            val respuesta = if (placeholderName != null) {
+                manifestacionData.respuestasPreguntas[id].orEmpty().ifBlank { "_______________" }
+            } else {
+                "_______________"
+            }
+            // Sustituir el placeholder dentro del campo_variable
+            val campoResuelto = if (placeholderName != null) {
+                campoVariable.replace("[[$placeholderName]]", respuesta)
+            } else {
+                campoVariable
+            }
+            lines += campoResuelto
+        }
+    }
+
+    return lines.joinToString("\n\n")
+}
 
 private fun loadAtestadoTemplateAsCitacion(
     context: Context,
@@ -768,7 +820,10 @@ private fun loadAtestadoTemplateAsCitacion(
     courtData: JuzgadoAtestadoData,
     ocurrenciaData: OcurrenciaDelitData,
     vehicleData: VehiculoData,
-    hasSecondDriver: Boolean
+    hasSecondDriver: Boolean,
+    manifestacionData: ManifestacionData = ManifestacionData(),
+    segundoConductorNombre: String = "",
+    segundoConductorDocumento: String = ""
 ): CitacionDocument {
     return runCatching {
         val inputStream = context.assets.open("docs/$fileName")
@@ -806,10 +861,21 @@ private fun loadAtestadoTemplateAsCitacion(
                     buildDerechosArticulo520Text(value)
                 fileName == "02derechos.json" && key == "manifestacion_investigado" ->
                     buildDerechosManifestacionInvestigadoText(value, personData, courtData, ocurrenciaData, vehicleData)
+                fileName == "02derechos.json" && key == "momento_informacion_derechos" ->          // ← NUEVO
+                    buildDerechosMomentoInformacionText(value, ocurrenciaData.derechosInformacionMomento) // ← NUEVO
                 fileName == "04manifestacion.json" && key == "documentacion" ->
-                    collectOrderedTextManifestacionAnexos(value, personData, courtData, ocurrenciaData, vehicleData)
+                    collectOrderedTextManifestacionAnexos(value, personData, courtData, ocurrenciaData, vehicleData, manifestacionData)
+                fileName == "04manifestacion.json" && key == "preguntas" ->    // ← AÑADIR
+                    buildManifestacionPreguntasText(value, manifestacionData)  // ← AÑADIR
                 fileName == "05inmovilizacion.json" && key == "manifestaciones" ->
-                    collectOrderedTextInmovilizacionManifestaciones(value, hasSecondDriver)
+                    // Combinar nombre y documento del segundo conductor cuando ambos estén presentes
+                    run {
+                        val segundoDatos = if (segundoConductorNombre.isNotBlank() && segundoConductorDocumento.isNotBlank())
+                            "$segundoConductorNombre ($segundoConductorDocumento)"
+                        else
+                            segundoConductorNombre
+                        collectOrderedTextInmovilizacionManifestaciones(value, hasSecondDriver, segundoDatos)
+                    }
                 else -> collectOrderedText(value)
             }
             CitacionSeccion(
@@ -823,7 +889,10 @@ private fun loadAtestadoTemplateAsCitacion(
             cuerpoDescripcion = body,
             secciones = sections,
             cierre = root.optJSONObject("cierre")?.optString("texto", "")
-                ?: root.optString("cierre", "")
+                ?: root.optString("cierre", ""),
+            onlyEnterado = fileName == "03letradogratis.json"
+            ,
+            allowSecondDriver = fileName == "05inmovilizacion.json"
         )
     }.getOrElse {
         CitacionDocument(
@@ -831,6 +900,32 @@ private fun loadAtestadoTemplateAsCitacion(
             cuerpoDescripcion = "No se pudo cargar el documento $fileName"
         )
     }
+}
+private fun buildDerechosMomentoInformacionText(value: Any?, selectedMomento: String): String {
+    val obj = value as? JSONObject ?: return collectOrderedText(value)
+    val lines = mutableListOf<String>()
+
+    obj.optString("descripcion", "").takeIf { it.isNotBlank() }?.let { lines += it }
+
+    val opciones = obj.optJSONArray("opciones") ?: return lines.joinToString("\n\n")
+
+    // id 1 → "mismo_momento", id 2 → "inmediato"
+    val targetId = when (selectedMomento) {
+        "mismo_momento" -> 1
+        "inmediato"     -> 2
+        else            -> null   // si no hay selección, no pinta ninguna
+    }
+
+    for (i in 0 until opciones.length()) {
+        val opcion = opciones.optJSONObject(i) ?: continue
+        val id = opcion.optInt("id", -1)
+        if (targetId != null && id != targetId) continue   // filtra la no seleccionada
+
+        val texto = opcion.optString("texto", "").trim()
+        if (texto.isNotBlank()) lines += texto
+    }
+
+    return lines.joinToString("\n\n")
 }
 
 private fun buildInicioSections(root: JSONObject, inicioModalData: AtestadoInicioModalData): List<CitacionSeccion> {
@@ -1189,7 +1284,8 @@ private fun collectOrderedTextManifestacionAnexos(
     personData: PersonaInvestigadaData,
     courtData: JuzgadoAtestadoData,
     ocurrenciaData: OcurrenciaDelitData,
-    vehicleData: VehiculoData
+    vehicleData: VehiculoData,
+    manifestacionData: ManifestacionData = ManifestacionData()
 ): String {
     val lines = mutableListOf<String>()
     if (value is JSONObject && value.has("anexos")) {
@@ -1204,7 +1300,8 @@ private fun collectOrderedTextManifestacionAnexos(
                     personData,
                     courtData,
                     ocurrenciaData,
-                    vehicleData
+                    vehicleData,
+                    manifestacionData
                 )
                 lines += "$id) $interpolated"
             }
@@ -1213,33 +1310,65 @@ private fun collectOrderedTextManifestacionAnexos(
     return lines.joinToString("\n\n")
 }
 
-private fun collectOrderedTextInmovilizacionManifestaciones(value: Any?, hasSecondDriver: Boolean): String {
+private fun collectOrderedTextInmovilizacionManifestaciones(
+    value: Any?,
+    hasSecondDriver: Boolean,
+    personasehacecargo: String = " "
+): String {
     val lines = mutableListOf<String>()
     val array = when (value) {
         is JSONArray -> value
         is JSONObject -> JSONArray().apply { put(value) }
-        else -> return ""
+        else -> return " "
     }
     for (i in 0 until array.length()) {
         val obj = array.optJSONObject(i) ?: continue
         val id = obj.optInt("id", i + 1)
-        // Solo mostrar la manifestación del conductor habilitado si hasSecondDriver es true
-        if (id == 1 && !hasSecondDriver) continue
-        val texto = obj.optString("texto", "").trim()
+        if (hasSecondDriver) {
+            if (id != 1) continue
+        } else {
+            if (id == 1) continue
+        }
+        var texto = obj.optString("texto", " ").trim()
+
+        // ← MODIFICAR: Usar personasehacecargo si está disponible
+        if (id == 1 && hasSecondDriver && personasehacecargo.isNotBlank()) {
+            texto = texto.replace("[[personasehacecargo]]", personasehacecargo)
+        } else if (id == 1 && hasSecondDriver) {
+            // Fallback: usar placeholder vacío si no hay datos
+            texto = texto.replace("[[personasehacecargo]]", "_______________")
+        }
+
         if (texto.isNotBlank()) {
             lines += "- $texto"
         }
+
         // Si tiene datos_conductor_habilitado y es el id=1 y hasSecondDriver, mostrar los datos
         if (id == 1 && hasSecondDriver) {
             obj.optJSONObject("datos_conductor_habilitado")?.let { datos ->
-                val desc = datos.optString("descripcion", "").trim()
-                val condiciones = datos.optString("condiciones", "").trim()
+                val desc = datos.optString("descripcion", " ").trim()
+                val campoVar = datos.optString("campo_variable", "").trim()
+                val condiciones = datos.optString("condiciones", " ").trim()
+
                 if (desc.isNotBlank()) lines += "  $desc"
+
+                // Si hay un campo_variable, intentamos sustituirlo por personasehacecargo
+                if (campoVar.isNotBlank()) {
+                    val resolved = if (personasehacecargo.isNotBlank()) personasehacecargo else "_______________"
+                    // campoVar puede contener placeholders como [[datosconductorhabilitado]]
+                    val campoResuelto = campoVar.replace("[[datosconductorhabilitado]]", resolved)
+                        .replace("[[personasehacecargo]]", resolved)
+                    if (campoResuelto.isNotBlank()) {
+                        // Usar indicador [[CENTER]] para que el renderizado centre horizontalmente esta línea
+                        lines += "[[CENTER]]$campoResuelto"
+                    }
+                }
+
                 if (condiciones.isNotBlank()) lines += "  $condiciones"
             }
         }
-        // Si tiene informacion_levantamiento, mostrarlo
-        obj.optString("informacion_levantamiento", "").takeIf { it.isNotBlank() }?.let {
+
+        obj.optString("informacion_levantamiento", " ").takeIf { it.isNotBlank() }?.let {
             lines += "  $it"
         }
     }

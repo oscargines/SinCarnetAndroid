@@ -81,6 +81,7 @@ object DocumentPrinter {
     // Diligencia de citación para juicio rápido
     // ----------------------------------------------------------
     fun imprimirCitacionJuicioRapido(context: Context, mac: String?) {
+        android.util.Log.d("CITACION_PRINT", "imprimirCitacionJuicioRapido: usando plantilla docs/citacionjuiciorapido.json")
         val ocurrencia = OcurrenciaDelitStorage(context).loadCurrent()
         val juzgado = JuzgadoAtestadoStorage(context).loadCurrent()
         val actuantes = ActuantesStorage(context).loadCurrent()
@@ -110,6 +111,7 @@ object DocumentPrinter {
     // Diligencia de citación para juicio ordinario
     // ----------------------------------------------------------
     fun imprimirCitacionJuicio(context: Context, mac: String?) {
+        android.util.Log.d("CITACION_PRINT", "imprimirCitacionJuicio: usando plantilla docs/citacionjuicio.json")
         val ocurrencia = OcurrenciaDelitStorage(context).loadCurrent()
         val juzgado = JuzgadoAtestadoStorage(context).loadCurrent()
         val actuantes = ActuantesStorage(context).loadCurrent()
@@ -867,8 +869,8 @@ object DocumentPrinter {
         val vehiculo = VehiculoStorage(context).loadCurrent()
         val prefs = context.getSharedPreferences("segundo_conductor", Context.MODE_PRIVATE)
         val existeSegundoConductor = prefs.getBoolean("existe", false)
-        val nombreSegundo = prefs.getString("nombre", "") ?: ""
-        val docSegundo = prefs.getString("documento", "") ?: ""
+        val nombreSegundo = prefs.getString("nombre", "")?.trim() ?: ""
+        val docSegundo = prefs.getString("documento", "")?.trim() ?: ""
         val datosSegundoCompleto =
             if (nombreSegundo.isNotBlank() && docSegundo.isNotBlank()) "$nombreSegundo ($docSegundo)" else nombreSegundo
         android.util.Log.d(
@@ -971,8 +973,7 @@ object DocumentPrinter {
         onError: (String) -> Unit
     ) {
         val juzgado = JuzgadoAtestadoStorage(context).loadCurrent()
-        val esJuicioRapido = juzgado.tipoJuicio.contains("rápido", ignoreCase = true) ||
-                juzgado.tipoJuicio.contains("rapido", ignoreCase = true)
+        val esJuicioRapido = juzgado.isJuicioRapido()
 
         data class DocJob(val name: String, val print: suspend () -> Unit)
 

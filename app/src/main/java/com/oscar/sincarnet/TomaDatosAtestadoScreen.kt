@@ -158,7 +158,6 @@ fun TomaDatosAtestadoScreen(
                     containerColor = Color(0xFF4A148C)
                 )
 
-                // ...eliminado botón de impresión del atestado completo...
             }
         }
 

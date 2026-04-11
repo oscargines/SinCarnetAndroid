@@ -105,7 +105,8 @@ internal fun replaceManifestacionPlaceholders(
     personData: PersonaInvestigadaData,
     courtData: JuzgadoAtestadoData,
     ocurrenciaData: OcurrenciaDelitData,
-    vehicleData: VehiculoData
+    vehicleData: VehiculoData,
+    manifestacionData: ManifestacionData = ManifestacionData()
 ): String {
     val nombreCompleto = listOf(personData.firstName, personData.lastName1, personData.lastName2)
         .filter { it.isNotBlank() }
@@ -115,9 +116,21 @@ internal fun replaceManifestacionPlaceholders(
         .filter { it.isNotBlank() }
         .joinToString(" del día ")
 
-    // Si otrosdocumentos está vacío, sustituir por línea
     val otrosDocumentos = if (personData.otrosDocumentos.isNullOrBlank()) "_______________" else personData.otrosDocumentos
-    return text
+
+    // Mapa de id de pregunta → nombre del placeholder en el JSON
+    val preguntaPlaceholders = mapOf(
+        1 to "primerapregunta",
+        2 to "segundapregunta",
+        3 to "tercerapregunta",
+        4 to "cuartapregunta",
+        5 to "quintapregunta",
+        6 to "sextapregunta",
+        7 to "septimapregunta",
+        8 to "octavapregunta"
+    )
+
+    var result = text
         .replace("[[horafechamanifestacion]]", horaFechaManifestacion)
         .replace("[[terminomunicipal]]", ocurrenciaData.terminoMunicipal)
         .replace("[[partidojudicial]]", courtData.municipioNombre)
@@ -126,5 +139,14 @@ internal fun replaceManifestacionPlaceholders(
         .replace("[[matricula]]", vehicleData.plate)
         .replace("[[otrosdocumentos]]", otrosDocumentos)
         .replace("[[segundafechahora]]", horaFechaManifestacion)
+
+    // Sustituir las respuestas de cada pregunta
+    preguntaPlaceholders.forEach { (id, placeholderName) ->
+        val respuesta = manifestacionData.respuestasPreguntas[id].orEmpty()
+            .ifBlank { "_______________" }  // línea en blanco si no hay respuesta
+        result = result.replace("[[$placeholderName]]", respuesta)
+    }
+
+    return result
 }
 

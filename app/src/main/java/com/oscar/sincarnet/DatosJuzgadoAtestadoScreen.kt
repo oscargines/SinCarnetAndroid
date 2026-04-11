@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -679,6 +680,26 @@ fun DatosJuzgadoAtestadoScreen(
                     var huboError = false
                     try {
                         withContext(Dispatchers.IO) {
+                            // Guardar la configuración actual del juzgado antes de imprimir la citación
+                            storage.saveCurrent(
+                                JuzgadoAtestadoData(
+                                    ccaaId = selectedCcaaId,
+                                    ccaaNombre = selectedCcaaName,
+                                    provinciaId = selectedProvinciaId,
+                                    provinciaNombre = selectedProvinciaName,
+                                    municipioNombre = selectedMunicipioName,
+                                    sedeId = selectedSedeId,
+                                    sedeNombre = selectedSedeName,
+                                    sedeDireccion = selectedSedeDireccion,
+                                    sedeTelefono = selectedSedeTelefono,
+                                    sedeCodigoPostal = selectedSedeCodigoPostal,
+                                    numeroDiligencias = numeroDiligencias,
+                                    tipoJuicio = trialType,
+                                    fechaJuicioRapido = quickTrialDate,
+                                    horaJuicioRapido = quickTrialTime
+                                )
+                            )
+                            android.util.Log.d("CITACION_DECISION", "Datos del juzgado guardados automáticamente antes de imprimir: tipoJuicio='$trialType', fecha='$quickTrialDate', hora='$quickTrialTime'")
                             onPrintSummons()
                         }
                     } catch (e: Exception) {
@@ -925,7 +946,8 @@ private fun CourtDropdownField(
 
         DropdownMenu(
             expanded = expanded,
-            onDismissRequest = onDismissRequest
+            onDismissRequest = onDismissRequest,
+            modifier = Modifier.heightIn(max = 320.dp)
         ) {
             options.forEach { option ->
                 DropdownMenuItem(
