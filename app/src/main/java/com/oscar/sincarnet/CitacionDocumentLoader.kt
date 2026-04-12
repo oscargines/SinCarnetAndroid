@@ -243,11 +243,13 @@ internal fun replaceCitacionPlaceholders(
     result = result.replace("[[direccionjuzgado]]", courtData.sedeDireccion, ignoreCase = true)
     result = result.replace("[[telefonojuzgado]]", courtData.sedeTelefono, ignoreCase = true)
     result = result.replace("[[codigopostaljuzgado]]", courtData.sedeCodigoPostal, ignoreCase = true)
+    result = result.replace("[[provinciajuzgado]]", courtData.provinciaNombre, ignoreCase = true)
 
-    // Datos del juzgado (composición completa)
+    // Datos del juzgado (composición completa, incluye municipio)
     val datosJuzgado = listOf(
         courtData.sedeNombre,
         courtData.sedeDireccion,
+        courtData.municipioNombre,
         courtData.sedeTelefono,
         courtData.sedeCodigoPostal
     ).map { it.trim() }
@@ -255,6 +257,7 @@ internal fun replaceCitacionPlaceholders(
         .joinToString(", ")
         .ifBlank { courtData.sedeNombre.ifBlank { courtData.municipioNombre } }
     result = result.replace("[[datosjuzgado]]", datosJuzgado, ignoreCase = true)
+    result = result.replace("[[municipiojuzgado]]", courtData.municipioNombre, ignoreCase = true)
 
     // Juicio rápido
     result = result.replace("[[horajuicio]]", courtData.horaJuicioRapido, ignoreCase = true)
@@ -316,6 +319,8 @@ internal fun replaceCitacionPlaceholders(
     putNorm("lugarfechahoralecturaderechos", "$fechaHoraLecturaDerechos en $lugarComisionDelito")
     putNorm("lugarfechahoracomisióndelito", "$fechaHoraComisionDelito en $lugarComisionDelito")
     putNorm("datosjuzgado", datosJuzgado)
+    putNorm("municipiojuzgado", courtData.municipioNombre)
+    putNorm("provinciajuzgado", courtData.provinciaNombre)
     putNorm("horajuicio", courtData.horaJuicioRapido)
     putNorm("fechajuicio", courtData.fechaJuicioRapido)
 

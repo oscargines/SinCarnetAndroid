@@ -193,7 +193,7 @@ class MainActivity : ComponentActivity() {
                 val resetAtestadoSession: () -> Unit = {
                     signaturesBySigner.clear()
                     actingStatusMessage = ""
-                    manifestacionStorage.clearCurrent()
+                    // Mantener borrador de manifestación entre reinicios de app/sesión.
                     investigatedNationality = "España"
                     investigatedSex = getString(R.string.person_data_sex_unknown)
                     investigatedFirstName = ""
@@ -586,6 +586,19 @@ class MainActivity : ComponentActivity() {
                                                     investigatedWantsToSign = wantsToSign,
                                                     investigatedNoSignText = getString(R.string.atestado_signature_no_desire)
                                                 )
+                                                val inicioModalData = AtestadoInicioModalData(
+                                                    motivo = atestadoGenerateReason,
+                                                    norma = atestadoGenerateArticleNorm,
+                                                    articulo = atestadoGenerateArticleText,
+                                                    dgtNoRecord = atestadoDgtNoRecord,
+                                                    internationalNoRecord = atestadoInternationalNoRecord,
+                                                    existsRecord = atestadoExistsRecord,
+                                                    vicisitudesOption = atestadoVicisitudesOption,
+                                                    jefaturaProvincial = atestadoJefaturaProvincial,
+                                                    tiempoPrivacion = atestadoTiempoPrivacion,
+                                                    juzgadoDecreta = atestadoJuzgadoDecreta
+                                                )
+                                                AtestadoInicioStorage(applicationContext).saveCurrent(inicioModalData)
                                                 generateAtestadoContinuousPdf(
                                                     context = applicationContext,
                                                     courtData = courtData,
@@ -598,18 +611,7 @@ class MainActivity : ComponentActivity() {
                                                     instructorTip = instructorTip,
                                                     secretaryTip = secretaryTip,
                                                     instructorUnit = instructorUnit,
-                                                    inicioModalData = AtestadoInicioModalData(
-                                                        motivo = atestadoGenerateReason,
-                                                        norma = atestadoGenerateArticleNorm,
-                                                        articulo = atestadoGenerateArticleText,
-                                                        dgtNoRecord = atestadoDgtNoRecord,
-                                                        internationalNoRecord = atestadoInternationalNoRecord,
-                                                        existsRecord = atestadoExistsRecord,
-                                                        vicisitudesOption = atestadoVicisitudesOption,
-                                                        jefaturaProvincial = atestadoJefaturaProvincial,
-                                                        tiempoPrivacion = atestadoTiempoPrivacion,
-                                                        juzgadoDecreta = atestadoJuzgadoDecreta
-                                                    ),
+                                                    inicioModalData = inicioModalData,
                                                     hasSecondDriver = hasSecondDriver
                                                 )
                                             }

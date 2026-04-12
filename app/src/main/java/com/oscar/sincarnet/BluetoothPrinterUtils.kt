@@ -323,14 +323,14 @@ private fun StringBuilder.appendSignatureBlock(
     val sigImgMaxW = SIG_W1 - 2
     val sigImgMaxH = SIG_H - SIG_LABEL_H - 2
 
-    fun appendSigContent(sig: ImageBitmap?, boxX: Int, boxY: Int, boxW: Int = sigImgMaxW) {
+    fun appendSigContent(sig: ImageBitmap?, boxX: Int, boxY: Int, boxW: Int = sigImgMaxW, fallbackText: String = "Sin firma") {
         if (sig != null) {
             val eg = imageBitmapToEg(sig, boxW, sigImgMaxH)
             val imgX = boxX + 4 + (boxW - eg.width) / 2
             val imgY = boxY + SIG_LABEL_H + (sigImgMaxH - eg.height) / 2
             append("EG ${eg.needed} ${eg.height} $imgX $imgY ${eg.hexData}\r\n")
         } else {
-            val text = "Sin firma"
+            val text = fallbackText
             val textX = boxX + 4 + (boxW - text.length * charW) / 2
             val textY = boxY + SIG_H / 2 + 5
             append("TEXT $SIG_FONT $SIG_FONT_SZ $textX $textY $text\r\n")
@@ -355,14 +355,14 @@ private fun StringBuilder.appendSignatureBlock(
         append("TEXT $SIG_FONT $SIG_FONT_SZ ${invX + 4} ${row2Y + 14} Investigado\r\n")
         append("TEXT $SIG_FONT $SIG_FONT_SZ ${segX + 4} ${row2Y + 14} Segundo conductor\r\n")
 
-        appendSigContent(sigs.investigated, invX, row2Y, boxW - 8)
+        appendSigContent(sigs.investigated, invX, row2Y, boxW - 8, sigs.investigatedNoSignText)
         appendSigContent(sigs.secondDriver, segX, row2Y, boxW - 8)
     } else {
         // Layout estándar: solo Investigado centrado
         append("BOX $SIG_INV_X $row2Y ${SIG_INV_X + SIG_INV_W} $row2BotY 2\r\n")
         append("TEXT $SIG_FONT $SIG_FONT_SZ ${SIG_INV_X + 4} ${row2Y + 14} Investigado\r\n")
         val invImgMaxW = SIG_INV_W - 8
-        appendSigContent(sigs.investigated, SIG_INV_X, row2Y, invImgMaxW)
+        appendSigContent(sigs.investigated, SIG_INV_X, row2Y, invImgMaxW, sigs.investigatedNoSignText)
     }
 
     return row2BotY + 8
@@ -430,7 +430,8 @@ suspend fun printDocumentResolvedSuspend(
     context: Context, mac: String,
     title: String, body: String,
     sigs: PrintSignatures? = null,
-    juicioData: Map<String, String>? = null
+    juicioData: Map<String, String>? = null,
+    sharedConn: Connection? = null          // ← conexión compartida opcional
 ) {
     val pw         = PAPER_W
     val titleLines = wrapText(title, TITLE_CHARS)
@@ -502,7 +503,7 @@ suspend fun printDocumentResolvedSuspend(
         append("PRINT\r\n")
     }
     Log.d(TAG, "CPCL generado:\n" + cpcl)
-    sendToPrinter(context, mac, contentH, cpcl, pw)
+    sendToPrinter(context, mac, contentH, cpcl, pw, sharedConn)   // ← pasa sharedConn
     Log.d(TAG, "printDocumentResolvedSuspend OK contentH=$contentH")
 }
 
@@ -661,26 +662,73 @@ suspend fun printDocumentSuspend(context: Context, mac: String,
 }
 
 // ============================================================
-// sendToPrinter
+// Gestión de conexión BT compartida
+// Permite abrir la conexión UNA SOLA VEZ para imprimir varios
+// documentos sin provocar nuevos diálogos de emparejamiento.
 // ============================================================
-private suspend fun sendToPrinter(context: Context, mac: String,
-                                  contentH: Int, bodyCpcl: String, pw: Int) {
+
+/**
+ * Abre una conexión Bluetooth y configura el lenguaje CPCL.
+ * Llamar UNA VEZ antes de imprimir una serie de documentos.
+ * Cerrar siempre con [closeSharedBtConnection] en un bloque finally.
+ */
+internal suspend fun openSharedBtConnection(mac: String): Connection =
+    withContext(Dispatchers.IO) {
+        val conn = BluetoothConnection(mac, 5_000, 2_000)
+        conn.open()
+        Log.d(TAG, "BT compartido abierto mac=$mac")
+        SGD.SET("device.languages", "cpcl", conn)
+        Thread.sleep(500)
+        conn
+    }
+
+/** Cierra la conexión BT compartida obtenida con [openSharedBtConnection]. */
+internal suspend fun closeSharedBtConnection(conn: Connection) =
+    withContext(Dispatchers.IO) {
+        try { conn.close() } catch (_: IOException) {}
+        Log.d(TAG, "BT compartido cerrado")
+    }
+
+// ============================================================
+// sendToPrinter
+// Si se pasa sharedConn (conexión ya abierta) se reutiliza;
+// si no, se abre y cierra una conexión propia (uso individual).
+// ============================================================
+private suspend fun sendToPrinter(
+    context: Context, mac: String,
+    contentH: Int, bodyCpcl: String, pw: Int,
+    sharedConn: Connection? = null
+) {
     return withContext(Dispatchers.IO) {
-        var connection: Connection? = null
-        try {
-            connection = BluetoothConnection(mac, 5000, 2000)
-            connection.open()
-            Log.d(TAG, "BT abierto")
-            SGD.SET("device.languages", "cpcl", connection)
-            Thread.sleep(500)
-            connection.write("! 0 200 200 $contentH 1\r\nPAGE-WIDTH $pw\r\n"
-                .toByteArray(Charsets.ISO_8859_1))
-            connection.write(bodyCpcl.toByteArray(Charsets.ISO_8859_1))
-            Log.d(TAG, "Enviados "+bodyCpcl.length+" bytes")
-            Thread.sleep(2500)
-        } finally {
-            try { connection?.close() } catch (_: IOException) {}
-            Log.d(TAG, "BT cerrado")
+        if (sharedConn != null) {
+            // Reutilizar la conexión compartida — no abrir ni cerrar
+            sharedConn.write(
+                "! 0 200 200 $contentH 1\r\nPAGE-WIDTH $pw\r\n"
+                    .toByteArray(Charsets.ISO_8859_1)
+            )
+            sharedConn.write(bodyCpcl.toByteArray(Charsets.ISO_8859_1))
+            Log.d(TAG, "Enviados ${bodyCpcl.length} bytes (conexión compartida)")
+            Thread.sleep(4000)
+        } else {
+            // Conexión individual: abrir → enviar → cerrar
+            var connection: Connection? = null
+            try {
+                connection = BluetoothConnection(mac, 5_000, 2_000)
+                connection.open()
+                Log.d(TAG, "BT abierto")
+                SGD.SET("device.languages", "cpcl", connection)
+                Thread.sleep(500)
+                connection.write(
+                    "! 0 200 200 $contentH 1\r\nPAGE-WIDTH $pw\r\n"
+                        .toByteArray(Charsets.ISO_8859_1)
+                )
+                connection.write(bodyCpcl.toByteArray(Charsets.ISO_8859_1))
+                Log.d(TAG, "Enviados ${bodyCpcl.length} bytes")
+                Thread.sleep(4000)
+            } finally {
+                try { connection?.close() } catch (_: IOException) {}
+                Log.d(TAG, "BT cerrado")
+            }
         }
     }
 }
@@ -1121,7 +1169,8 @@ object BluetoothPrinterUtils {
         context: Context, mac: String,
         title: String, body: String,
         sigs: PrintSignatures? = null,
-        juicioData: Map<String, String>? = null
+        juicioData: Map<String, String>? = null,
+        sharedConn: Connection? = null          // ← conexión compartida opcional
     ) {
         val pw         = PAPER_W
         val titleLines = wrapText(title, TITLE_CHARS)
@@ -1184,13 +1233,16 @@ object BluetoothPrinterUtils {
                 append("TEXT $BODY_FONT $BODY_SIZE $MARGIN $curY $line\r\n")
                 curY += BODY_LINE_H
             }
-
+            android.util.Log.d("Impresion", "[printDiligenciaSuspend] sigs antes de llamar: " +
+                    "isInmovilizacion=${sigs?.isInmovilizacion}, " +
+                    "hasSecondDriver=${sigs?.hasSecondDriver}, " +
+                    "secondDriver=${sigs?.secondDriver != null}")
             if (sigs != null) appendSignatureBlock(sigs, curY, pw)
 
             append("PRINT\r\n")
         }
         Log.d(TAG, "CPCL generado:\n" + cpcl)
-        sendToPrinter(context, mac, contentH, cpcl, pw)
+        sendToPrinter(context, mac, contentH, cpcl, pw, sharedConn)   // ← pasa sharedConn
         Log.d(TAG, "printDocumentResolvedSuspend OK contentH=$contentH")
     }
 
@@ -1329,6 +1381,10 @@ object BluetoothPrinterUtils {
             }
 
             val afterContent = curY + qrBlockH
+            android.util.Log.d("Impresion", "[printDiligenciaSuspend] sigs antes de llamar: " +
+                    "isInmovilizacion=${sigs?.isInmovilizacion}, " +
+                    "hasSecondDriver=${sigs?.hasSecondDriver}, " +
+                    "secondDriver=${sigs?.secondDriver != null}")
             if (sigs != null) appendSignatureBlock(sigs, afterContent, pw)
 
             append("PRINT\r\n")
@@ -1347,24 +1403,41 @@ object BluetoothPrinterUtils {
     // ============================================================
     // sendToPrinter
     // ============================================================
-    private suspend fun sendToPrinter(context: Context, mac: String,
-                                      contentH: Int, bodyCpcl: String, pw: Int) {
+    private suspend fun sendToPrinter(
+        context: Context, mac: String,
+        contentH: Int, bodyCpcl: String, pw: Int,
+        sharedConn: Connection? = null
+    ) {
         return withContext(Dispatchers.IO) {
-            var connection: Connection? = null
-            try {
-                connection = BluetoothConnection(mac, 5000, 2000)
-                connection.open()
-                Log.d(TAG, "BT abierto")
-                SGD.SET("device.languages", "cpcl", connection)
-                Thread.sleep(500)
-                connection.write("! 0 200 200 $contentH 1\r\nPAGE-WIDTH $pw\r\n"
-                    .toByteArray(Charsets.ISO_8859_1))
-                connection.write(bodyCpcl.toByteArray(Charsets.ISO_8859_1))
-                Log.d(TAG, "Enviados "+bodyCpcl.length+" bytes")
-                Thread.sleep(2500)   // ← restaurar esto
-            } finally {
-                try { connection?.close() } catch (_: IOException) {}
-                Log.d(TAG, "BT cerrado")
+            if (sharedConn != null) {
+                // Reutilizar la conexión compartida — no abrir ni cerrar
+                sharedConn.write(
+                    "! 0 200 200 $contentH 1\r\nPAGE-WIDTH $pw\r\n"
+                        .toByteArray(Charsets.ISO_8859_1)
+                )
+                sharedConn.write(bodyCpcl.toByteArray(Charsets.ISO_8859_1))
+                Log.d(TAG, "Enviados ${bodyCpcl.length} bytes (conexión compartida)")
+                Thread.sleep(4000)
+            } else {
+                // Conexión individual: abrir → enviar → cerrar
+                var connection: Connection? = null
+                try {
+                    connection = BluetoothConnection(mac, 5_000, 2_000)
+                    connection.open()
+                    Log.d(TAG, "BT abierto")
+                    SGD.SET("device.languages", "cpcl", connection)
+                    Thread.sleep(500)
+                    connection.write(
+                        "! 0 200 200 $contentH 1\r\nPAGE-WIDTH $pw\r\n"
+                            .toByteArray(Charsets.ISO_8859_1)
+                    )
+                    connection.write(bodyCpcl.toByteArray(Charsets.ISO_8859_1))
+                    Log.d(TAG, "Enviados ${bodyCpcl.length} bytes")
+                    Thread.sleep(4000)
+                } finally {
+                    try { connection?.close() } catch (_: IOException) {}
+                    Log.d(TAG, "BT cerrado")
+                }
             }
         }
     }
@@ -1400,3 +1473,4 @@ object BluetoothPrinterUtils {
         return result
     }
 }
+

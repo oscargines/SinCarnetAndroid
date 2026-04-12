@@ -1,12 +1,12 @@
 package com.oscar.sincarnet
 
 import android.content.Context
-import com.oscar.sincarnet.BluetoothPrinterUtils
+import com.zebra.sdk.comm.Connection
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlin.reflect.full.callSuspend
+import org.json.JSONArray
 import org.json.JSONObject
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -29,7 +29,11 @@ import java.time.format.DateTimeFormatter
 //   DocumentPrinter.imprimirManifestacion(context, mac)
 // ============================================================
 object DocumentPrinter {
-    private const val DELAY_BETWEEN_DOCS_MS: Long = 3000L
+    private const val DELAY_BETWEEN_DOCS_MS: Long = 5000L
+    private const val FINAL_DRAIN_BEFORE_CLOSE_MS: Long = 15000L  // Aumentado a 15s para asegurar impresión del último doc
+    private const val BATCH_LOG_TAG = "AtestadoPrintBatch"
+    internal const val MANIFESTACION_REQUIRED_MSG =
+        "Debe completar la manifestación (renuncia letrada y desea declarar) antes de imprimir"
 
     // Marcador especial que BluetoothPrinterUtils detecta en el body para
     // pintar las cajas CPCL de citación a juicio en ese punto exacto.
@@ -100,7 +104,8 @@ object DocumentPrinter {
             "unidadinferior" to actuantes.instructorUnit,
             "horajuicio" to juzgado.horaJuicioRapido,
             "fechajuicio" to juzgado.fechaJuicioRapido,
-            "datosjuzgado" to buildDatosJuzgado(juzgado)
+            "datosjuzgado" to buildDatosJuzgado(juzgado),
+            "provinciajuzgado" to juzgado.provinciaNombre
         )
 
         printDiligencia(context, mac, "docs/citacionjuiciorapido.json", placeholders, investigado)
@@ -128,7 +133,8 @@ object DocumentPrinter {
             "nombrecompletoinvestigado" to buildNombreCompleto(investigado),
             "documentoidentificacion" to investigado.documentIdentification,
             "unidadinferior" to actuantes.instructorUnit,
-            "datosjuzgado" to buildDatosJuzgado(juzgado)
+            "datosjuzgado" to buildDatosJuzgado(juzgado),
+            "provinciajuzgado" to juzgado.provinciaNombre
         )
 
         printDiligencia(context, mac, "docs/citacionjuicio.json", placeholders, investigado)
@@ -144,6 +150,7 @@ object DocumentPrinter {
         val investigado = PersonaInvestigadaStorage(context).loadCurrent()
         val vehiculo = VehiculoStorage(context).loadCurrent()
         val manifestacion = ManifestacionStorage(context).loadCurrent()
+        validateManifestacionForPrint(manifestacion)
         val now = LocalDateTime.now()
         val formatter = DateTimeFormatter.ofPattern("HH:mm 'horas del día' dd/MM/yyyy")
         val horaFechaAhora = now.format(formatter)
@@ -151,16 +158,14 @@ object DocumentPrinter {
         val respuestas = manifestacion.respuestasPreguntas
 
         // === CAMBIO: placeholders con el texto final "SI" / "NO" ===
-        val renunciaStr = when (manifestacion.renunciaAsistenciaLetrada) {
-            true -> "SI"
-            false -> "NO"
-            null -> "SI/NO"
-        }
-        val deseaStr = when (manifestacion.deseaDeclarar) {
-            true -> "SI"
-            false -> "NO"
-            null -> "SI/NO"
-        }
+        val renunciaStr = manifestacionSiNo(
+            manifestacion.renunciaAsistenciaLetrada,
+            "renunciaAsistenciaLetrada"
+        )
+        val deseaStr = manifestacionSiNo(
+            manifestacion.deseaDeclarar,
+            "deseaDeclarar"
+        )
 
         val placeholders = mapOf(
             "horafechamanifestacion" to horaFechaAhora,
@@ -180,7 +185,10 @@ object DocumentPrinter {
             "octavapregunta" to (respuestas[8] ?: ""),
             "segundafechahora" to horaFechaAhora,
             "renunciaAsistenciaLetrada" to renunciaStr,
-            "deseaDeclarar" to deseaStr
+            "deseaDeclarar" to deseaStr,
+            // Claves alternativas para mantener compatibilidad entre flujos de impresión.
+            "respuesta_manifestacion_1" to renunciaStr,
+            "respuesta_manifestacion_2" to deseaStr
         )
 
         printDiligencia(context, mac, "docs/04manifestacion.json", placeholders, investigado)
@@ -206,25 +214,146 @@ object DocumentPrinter {
         return parts.joinToString(", ")
     }
 
+    private fun manifestacionSiNo(value: Boolean?, fieldName: String): String = when (value) {
+        true -> "SI"
+        false -> "NO"
+        null -> {
+            android.util.Log.w(
+                "Impresion",
+                "[Manifestacion] '$fieldName' es null. Se imprimirá 'NO' para evitar el literal '[SI/NO]'"
+            )
+            "NO"
+        }
+    }
+
+    private fun validateManifestacionForPrint(data: ManifestacionData) {
+        if (data.renunciaAsistenciaLetrada == null || data.deseaDeclarar == null) {
+            android.util.Log.w(
+                "Impresion",
+                "[validateManifestacionForPrint] Manifestación incompleta " +
+                        "(renunciaAsistenciaLetrada=${data.renunciaAsistenciaLetrada}, " +
+                        "deseaDeclarar=${data.deseaDeclarar}). " +
+                        "Se imprimirá con valores por defecto 'NO'."
+            )
+        }
+    }
+
+    private fun findJsonOptionById(array: JSONArray?, id: Any): JSONObject? {
+        if (array == null) return null
+        val target = id.toString()
+        for (i in 0 until array.length()) {
+            val option = array.optJSONObject(i) ?: continue
+            if (option.opt("id")?.toString() == target) return option
+        }
+        return null
+    }
+
+    private fun buildInicioBody(
+        doc: JSONObject,
+        inicioData: AtestadoInicioModalData,
+        ocurrencia: OcurrenciaDelitData,
+        juzgado: JuzgadoAtestadoData,
+        actuantes: ActuantesData,
+        investigado: PersonaInvestigadaData,
+        vehiculo: VehiculoData
+    ): String {
+        fun resolveInicio(text: String): String = replaceCitacionPlaceholders(
+            text = text,
+            courtData = juzgado,
+            personData = investigado,
+            ocurrenciaData = ocurrencia,
+            instructorTip = actuantes.instructorTip,
+            secretaryTip = actuantes.secretaryTip,
+            instructorUnit = actuantes.instructorUnit,
+            vehicleData = vehiculo,
+            inicioModalData = inicioData
+        )
+
+        val sb = StringBuilder()
+        fun line(text: String) {
+            val resolved = resolveInicio(text).trim()
+            if (resolved.isNotBlank()) sb.appendLine(resolved)
+        }
+        fun blank() {
+            if (sb.isNotEmpty()) sb.appendLine()
+        }
+
+        doc.optJSONObject("cuerpo")?.optString("descripcion", "")?.let {
+            line(it)
+            blank()
+        }
+
+        doc.optJSONObject("vehiculo")?.optString("descripcion", "")?.let {
+            line(it)
+            blank()
+        }
+
+        doc.optJSONObject("motivo_identificacion")?.let { motivo ->
+            line(motivo.optString("descripcion", ""))
+            val motivoId = when (inicioData.motivo) {
+                "Siniestro Vial" -> 1
+                "Control preventivo" -> 2
+                "Cometer infracción" -> 3
+                else -> null
+            }
+            motivoId?.let { id ->
+                val motivoSeleccionado = findJsonOptionById(motivo.optJSONArray("opciones"), id)
+                    ?.optString("texto", "")
+                    .orEmpty()
+                line(motivoSeleccionado)
+            }
+            blank()
+        }
+
+        doc.optJSONObject("constatacion_carencia_autorizacion")?.let { constatacion ->
+            line(constatacion.optString("descripcion", ""))
+            val situaciones: JSONArray? = constatacion.optJSONArray("situaciones")
+            if (inicioData.dgtNoRecord) {
+                line(findJsonOptionById(situaciones, 1)?.optString("texto", "").orEmpty())
+            }
+            if (inicioData.internationalNoRecord) {
+                line(findJsonOptionById(situaciones, 2)?.optString("texto", "").orEmpty())
+            }
+            if (inicioData.existsRecord) {
+                val situacion3 = findJsonOptionById(situaciones, 3)
+                line(situacion3?.optString("texto", "").orEmpty())
+                val subOptionId = when (inicioData.vicisitudesOption) {
+                    "No ha obtenido nunca" -> "3a"
+                    "Pérdida de vigencia por pérdida de puntos" -> "3b"
+                    "Condena firme en vigor" -> "3c"
+                    "No consta realización y superación de cursos" -> "3d"
+                    else -> null
+                }
+                subOptionId?.let { id ->
+                    val subtexto = findJsonOptionById(situacion3?.optJSONArray("subopciones"), id)
+                        ?.optString("texto", "")
+                        .orEmpty()
+                    line(subtexto)
+                }
+            }
+            blank()
+        }
+
+        when {
+            doc.has("cierre") && doc.get("cierre") is String -> line(doc.getString("cierre"))
+            doc.has("cierre") && doc.get("cierre") is JSONObject ->
+                line(doc.getJSONObject("cierre").optString("texto", ""))
+        }
+
+        return sb.toString().trimEnd()
+    }
+
     // ----------------------------------------------------------
-    // Motor de renderizado de diligencias
-    //
-    // Lee el JSON, construye el body resolviendo los placeholders,
-    // y llama a printDocument() de BluetoothPrinterUtils.
-    //
-    // El body se construye recorriendo las secciones conocidas
-    // del JSON en el orden en que aparecen.
+    // Motor de renderizado de diligencias (versión suspend)
     // ----------------------------------------------------------
-    // Versión suspend: bloquea hasta que el trabajo llega a la impresora.
-    // Usada tanto por las funciones públicas (lanzadas en corutina propia)
-    // como por el flujo secuencial de imprimirAtestadoCompleto.
     private suspend fun printDiligenciaSuspend(
         context: Context,
         mac: String,
         jsonAssetPath: String,
         placeholders: Map<String, String>,
         investigado: PersonaInvestigadaData,
-        sigs: PrintSignatures? = null
+        sigs: PrintSignatures? = null,
+        sharedConn: Connection? = null          // ← conexión compartida opcional
     ) {
         android.util.Log.d(
             "Impresion",
@@ -234,14 +363,10 @@ object DocumentPrinter {
         android.util.Log.d("Impresion", "[printDiligenciaSuspend] JSON leído (${raw.length} chars)")
         val json = JSONObject(raw)
         val doc = json.getJSONObject("documento")
-        // === AQUÍ SE FUERZA EL TÍTULO EXACTO ===
-        // Si es la diligencia de derechos (02derechos.json o cualquier JSON que contenga "derechos" o "inicio")
-        // se ignora lo que venga en el JSON y se usa exactamente el título que pediste.
         val tituloJson = doc.optString("titulo", "")
         val title = when {
             jsonAssetPath.contains("derechos") || jsonAssetPath.contains("inicio") ->
                 "DILIGENCIA INVESTIGACIÓN E INFORMACIÓN DERECHOS A INVESTIGADO NO DETENIDO"
-
             else -> resolve(tituloJson, placeholders)
         }
         android.util.Log.d("Impresion", "[printDiligenciaSuspend] Título: '$title'")
@@ -250,20 +375,20 @@ object DocumentPrinter {
             "Impresion",
             "[printDiligenciaSuspend] Body generado (${body.length} chars)"
         )
-        // --- Extraer QR si existe ---
         var qrDato: String? = null
         if (doc.has("qr")) {
             val qrObj = doc.getJSONObject("qr")
-            qrDato = qrObj.optString("dato", null)
+            qrDato = qrObj.opt("dato")?.toString()?.takeIf { it.isNotBlank() }
         }
         android.util.Log.d("Impresion", "[printDiligenciaSuspend] qrDato=$qrDato")
         try {
             if (!qrDato.isNullOrBlank()) {
+                // Documentos con QR: usan su propia conexión (no afecta al flujo de atestado)
                 android.util.Log.d(
                     "Impresion",
-                    "[printDiligenciaSuspend] Llamando a BluetoothPrinterUtils.printDocument..."
+                    "[printDiligenciaSuspend] Llamando a BluetoothPrinterUtils.printDocumentSuspend..."
                 )
-                BluetoothPrinterUtils.printDocument(context, mac, doc, title, qrDato, sigs)
+                BluetoothPrinterUtils.printDocumentSuspend(context, mac, doc, title, qrDato, sigs)
             } else {
                 android.util.Log.d(
                     "Impresion",
@@ -279,7 +404,8 @@ object DocumentPrinter {
                     title,
                     body,
                     sigs,
-                    juicioData = placeholders
+                    juicioData = placeholders,
+                    sharedConn = sharedConn         // ← propagar conexión compartida
                 )
             }
             android.util.Log.d("Impresion", "[printDiligenciaSuspend] Impresión finalizada OK")
@@ -475,14 +601,21 @@ object DocumentPrinter {
                 for (i in 0 until opts.length()) {
                     val opt = opts.getJSONObject(i)
                     val id = opt.optInt("id")
-                    val respuesta = when (id) {
-                        1 -> ph["renunciaAsistenciaLetrada"] ?: "SI/NO"
-                        2 -> ph["deseaDeclarar"] ?: "SI/NO"
-                        else -> opt.optString("respuesta", "SI/NO")
+                    val respuestaById = when (id) {
+                        1 -> ph["renunciaAsistenciaLetrada"]
+                            ?: ph["respuesta_manifestacion_1"]
+                        2 -> ph["deseaDeclarar"]
+                            ?: ph["respuesta_manifestacion_2"]
+                        else -> null
                     }
-                    // Primero el texto de la opción (puede hacer wrap)
+                    val respuestaByIndex = when (i) {
+                        0 -> ph["renunciaAsistenciaLetrada"] ?: ph["respuesta_manifestacion_1"]
+                        1 -> ph["deseaDeclarar"] ?: ph["respuesta_manifestacion_2"]
+                        else -> null
+                    }
+                    val respuesta = (respuestaById ?: respuestaByIndex ?: opt.optString("respuesta", "NO"))
+                        .ifBlank { "NO" }
                     line("  $id. ${opt.optString("texto", "")}")
-                    // Luego la respuesta en línea propia, siempre visible
                     line("     Respuesta: [$respuesta]")
                 }
             }
@@ -670,10 +803,40 @@ object DocumentPrinter {
     // se envía a la impresora. Usadas por imprimirAtestadoCompleto
     // para garantizar impresión secuencial sin conexiones solapadas.
     // ============================================================
+    suspend fun imprimirInicioSuspend(
+        context: Context,
+        mac: String,
+        sigs: PrintSignatures? = null,
+        sharedConn: Connection? = null
+    ) {
+        val ocurrencia = OcurrenciaDelitStorage(context).loadCurrent()
+        val juzgado = JuzgadoAtestadoStorage(context).loadCurrent()
+        val actuantes = ActuantesStorage(context).loadCurrent()
+        val investigado = PersonaInvestigadaStorage(context).loadCurrent()
+        val vehiculo = VehiculoStorage(context).loadCurrent()
+        val inicioData = AtestadoInicioStorage(context).loadCurrent()
+        val raw = context.assets.open("docs/01inicio.json").bufferedReader().readText()
+        val doc = JSONObject(raw).getJSONObject("documento")
+        val title = replaceCitacionPlaceholders(
+            text = doc.optString("titulo", ""),
+            courtData = juzgado,
+            personData = investigado,
+            ocurrenciaData = ocurrencia,
+            instructorTip = actuantes.instructorTip,
+            secretaryTip = actuantes.secretaryTip,
+            instructorUnit = actuantes.instructorUnit,
+            vehicleData = vehiculo,
+            inicioModalData = inicioData
+        )
+        val body = buildInicioBody(doc, inicioData, ocurrencia, juzgado, actuantes, investigado, vehiculo)
+        printDocumentResolvedSuspend(context, mac, title, body, sigs, sharedConn = sharedConn)
+    }
+
     suspend fun imprimirDerechosSuspend(
         context: android.content.Context,
         mac: String,
-        sigs: PrintSignatures? = null
+        sigs: PrintSignatures? = null,
+        sharedConn: Connection? = null      // ← añadido
     ) {
         val ocurrencia = OcurrenciaDelitStorage(context).loadCurrent()
         val juzgado = JuzgadoAtestadoStorage(context).loadCurrent()
@@ -707,14 +870,16 @@ object DocumentPrinter {
             "docs/02derechos.json",
             placeholders,
             investigado,
-            sigs
+            sigs,
+            sharedConn
         )
     }
 
     suspend fun imprimirCitacionJuicioRapidoSuspend(
         context: android.content.Context,
         mac: String,
-        sigs: PrintSignatures? = null
+        sigs: PrintSignatures? = null,
+        sharedConn: Connection? = null      // ← añadido
     ) {
         val ocurrencia = OcurrenciaDelitStorage(context).loadCurrent()
         val juzgado = JuzgadoAtestadoStorage(context).loadCurrent()
@@ -733,7 +898,8 @@ object DocumentPrinter {
             "unidadinferior" to actuantes.instructorUnit,
             "horajuicio" to juzgado.horaJuicioRapido,
             "fechajuicio" to juzgado.fechaJuicioRapido,
-            "datosjuzgado" to buildDatosJuzgado(juzgado)
+            "datosjuzgado" to buildDatosJuzgado(juzgado),
+            "provinciajuzgado" to juzgado.provinciaNombre
         )
         printDiligenciaSuspend(
             context,
@@ -741,14 +907,16 @@ object DocumentPrinter {
             "docs/citacionjuiciorapido.json",
             placeholders,
             investigado,
-            sigs
+            sigs,
+            sharedConn
         )
     }
 
     suspend fun imprimirCitacionJuicioSuspend(
         context: android.content.Context,
         mac: String,
-        sigs: PrintSignatures? = null
+        sigs: PrintSignatures? = null,
+        sharedConn: Connection? = null      // ← añadido
     ) {
         val ocurrencia = OcurrenciaDelitStorage(context).loadCurrent()
         val juzgado = JuzgadoAtestadoStorage(context).loadCurrent()
@@ -765,7 +933,8 @@ object DocumentPrinter {
             "nombrecompletoinvestigado" to buildNombreCompleto(investigado),
             "documentoidentificacion" to investigado.documentIdentification,
             "unidadinferior" to actuantes.instructorUnit,
-            "datosjuzgado" to buildDatosJuzgado(juzgado)
+            "datosjuzgado" to buildDatosJuzgado(juzgado),
+            "provinciajuzgado" to juzgado.provinciaNombre
         )
         printDiligenciaSuspend(
             context,
@@ -773,34 +942,36 @@ object DocumentPrinter {
             "docs/citacionjuicio.json",
             placeholders,
             investigado,
-            sigs
+            sigs,
+            sharedConn
         )
     }
 
     suspend fun imprimirManifestacionSuspend(
         context: android.content.Context,
         mac: String,
-        sigs: PrintSignatures? = null
+        sigs: PrintSignatures? = null,
+        sharedConn: Connection? = null      // ← añadido
     ) {
         val ocurrencia = OcurrenciaDelitStorage(context).loadCurrent()
         val juzgado = JuzgadoAtestadoStorage(context).loadCurrent()
         val investigado = PersonaInvestigadaStorage(context).loadCurrent()
         val vehiculo = VehiculoStorage(context).loadCurrent()
         val manifestacion = ManifestacionStorage(context).loadCurrent()
+        validateManifestacionForPrint(manifestacion)
         val formatter =
             java.time.format.DateTimeFormatter.ofPattern("HH:mm 'horas del día' dd/MM/yyyy")
         val horaFecha = java.time.LocalDateTime.now().format(formatter)
+
         val respuestas = manifestacion.respuestasPreguntas
-        val renunciaStr = when (manifestacion.renunciaAsistenciaLetrada) {
-            true -> "SI"
-            false -> "NO"
-            null -> "SI/NO"
-        }
-        val deseaStr = when (manifestacion.deseaDeclarar) {
-            true -> "SI"
-            false -> "NO"
-            null -> "SI/NO"
-        }
+        val renunciaStr = manifestacionSiNo(
+            manifestacion.renunciaAsistenciaLetrada,
+            "renunciaAsistenciaLetrada"
+        )
+        val deseaStr = manifestacionSiNo(
+            manifestacion.deseaDeclarar,
+            "deseaDeclarar"
+        )
         val placeholders = mapOf(
             "horafechamanifestacion" to horaFecha,
             "terminomunicipal" to ocurrencia.terminoMunicipal,
@@ -819,47 +990,33 @@ object DocumentPrinter {
             "octavapregunta" to (respuestas[8] ?: ""),
             "segundafechahora" to horaFecha,
             "renunciaAsistenciaLetrada" to renunciaStr,
-            "deseaDeclarar" to deseaStr
+            "deseaDeclarar" to deseaStr,
+            "respuesta_manifestacion_1" to renunciaStr,
+            "respuesta_manifestacion_2" to deseaStr
         )
         printDiligenciaSuspend(
-            context,
-            mac,
-            "docs/04manifestacion.json",
-            placeholders,
-            investigado,
-            sigs
+            context, mac, "docs/04manifestacion.json", placeholders, investigado, sigs, sharedConn
         )
     }
 
-    // ----------------------------------------------------------
-    // 03letradogratis.json
-    // Información sobre el derecho de asistencia jurídica gratuita
-    // ----------------------------------------------------------
     suspend fun imprimirLetradoGratisSuspend(
         context: Context,
         mac: String,
-        sigs: PrintSignatures? = null
+        sigs: PrintSignatures? = null,
+        sharedConn: Connection? = null      // ← añadido
     ) {
         val placeholders = emptyMap<String, String>()
-        // No imprimir firmas en 03letradogratis
         printDiligenciaSuspend(
-            context,
-            mac,
-            "docs/03letradogratis.json",
-            placeholders,
-            PersonaInvestigadaData(),
-            null
+            context, mac, "docs/03letradogratis.json",
+            placeholders, PersonaInvestigadaData(), null, sharedConn
         )
     }
 
-    // ============================================================
-// 05inmovilizacion.json
-// Acta de inmovilización
-// ============================================================
     suspend fun imprimirInmovilizacionSuspend(
         context: Context,
         mac: String,
-        sigs: PrintSignatures? = null
+        sigs: PrintSignatures? = null,
+        sharedConn: Connection? = null      // ← añadido
     ) {
         android.util.Log.d("Impresion", "[imprimirInmovilizacionSuspend] INICIO")
         val ocurrencia = OcurrenciaDelitStorage(context).loadCurrent()
@@ -873,10 +1030,6 @@ object DocumentPrinter {
         val docSegundo = prefs.getString("documento", "")?.trim() ?: ""
         val datosSegundoCompleto =
             if (nombreSegundo.isNotBlank() && docSegundo.isNotBlank()) "$nombreSegundo ($docSegundo)" else nombreSegundo
-        android.util.Log.d(
-            "Impresion",
-            "[imprimirInmovilizacionSuspend] existeSegundoConductor=$existeSegundoConductor, datosSegundoCompleto='$datosSegundoCompleto'"
-        )
         val conductorPrincipal = listOf(
             investigado.firstName,
             investigado.lastName1,
@@ -884,14 +1037,11 @@ object DocumentPrinter {
         ).filter { it.isNotBlank() }.joinToString("  ")
         val datosConductorYDoc =
             if (conductorPrincipal.isNotBlank() && investigado.documentIdentification.isNotBlank()) "$conductorPrincipal (${investigado.documentIdentification})" else conductorPrincipal
-        android.util.Log.d(
-            "Impresion",
-            "[imprimirInmovilizacionSuspend] datosConductorYDoc='$datosConductorYDoc'"
-        )
         val now = java.time.LocalDateTime.now()
         val formatter = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
         val horafecha = now.format(formatter)
-        android.util.Log.d("Impresion", "[imprimirInmovilizacionSuspend] horafecha='$horafecha'")
+        val hasSecond = sigs?.hasSecondDriver == true
+        val datosSegundoParaActa = if (hasSecond) datosSegundoCompleto else ""
         val placeholders = mutableMapOf(
             "lugarhechos" to (ocurrencia.localidad.ifBlank { ocurrencia.terminoMunicipal }),
             "horafecha" to horafecha,
@@ -899,8 +1049,8 @@ object DocumentPrinter {
             "modelo" to vehiculo.model,
             "matricula" to vehiculo.plate,
             "datosconductorydocumento" to datosConductorYDoc,
-            "datosconductorhabilitado" to datosSegundoCompleto,
-            "personasehacecargo" to datosSegundoCompleto,
+            "datosconductorhabilitado" to datosSegundoParaActa,
+            "personasehacecargo" to datosSegundoParaActa,
             "lugar" to (ocurrencia.localidad.ifBlank { ocurrencia.terminoMunicipal }),
             "terminomunicipal" to ocurrencia.terminoMunicipal,
             "partidojudicial" to juzgado.municipioNombre,
@@ -912,21 +1062,17 @@ object DocumentPrinter {
             "documentoidentificacion" to investigado.documentIdentification
         )
         // --- Lógica de manifestaciones ---
-        var respuesta1 = "NO"
-        var respuesta2 = "SI"
-        if (existeSegundoConductor && datosSegundoCompleto.isNotBlank()) {
-            respuesta1 = "SI"
-            respuesta2 = "NO"
-        }
+        val respuesta1 = if (hasSecond) "SI" else "NO"
+        val respuesta2 = if (hasSecond) "NO" else "SI"
         placeholders["respuesta_manifestacion_1"] = respuesta1
         placeholders["respuesta_manifestacion_2"] = respuesta2
+
         android.util.Log.d(
             "Impresion",
-            "[imprimirInmovilizacionSuspend] placeholders=$placeholders"
+            "[imprimirInmovilizacionSuspend] hasSecondUI=$hasSecond, " +
+                "prefExiste=$existeSegundoConductor, datosSegundo='${datosSegundoParaActa}'"
         )
 
-        // === CORRECCIÓN: Crear PrintSignatures con flags correctas ===
-        val hasSecond = existeSegundoConductor && datosSegundoCompleto.isNotBlank()
         val firmasInmovilizacion = PrintSignatures(
             instructor = sigs?.instructor,
             instructorTip = sigs?.instructorTip ?: actuantes.instructorTip,
@@ -937,33 +1083,18 @@ object DocumentPrinter {
             isInmovilizacion = true,
             hasSecondDriver = hasSecond
         )
-        android.util.Log.d(
-            "Impresion",
-            "[DEBUG] firmasInmovilizacion => isInmovilizacion=${firmasInmovilizacion.isInmovilizacion}, " +
-                    "hasSecondDriver=${firmasInmovilizacion.hasSecondDriver}, " +
-                    "secondDriver=${firmasInmovilizacion.secondDriver != null}"
-        )
-        // ===========================================================
-
         printDiligenciaSuspend(
-            context,
-            mac,
-            "docs/05inmovilizacion.json",
-            placeholders,
-            investigado,
-            firmasInmovilizacion
+            context, mac, "docs/05inmovilizacion.json",
+            placeholders, investigado, firmasInmovilizacion, sharedConn
         )
         android.util.Log.d("Impresion", "[imprimirInmovilizacionSuspend] finalizado")
     }
 
     // ============================================================
-// Estado del progreso de impresión (compartido)
-// ============================================================
-
-
+    // imprimirAtestadoCompleto
+    // Abre UNA SOLA conexión BT → imprime todos los documentos →
+    // cierra la conexión. Así el emparejamiento sólo ocurre una vez.
     // ============================================================
-// imprimirAtestadoCompleto (compartido)
-// ============================================================
     fun imprimirAtestadoCompleto(
         context: Context,
         mac: String,
@@ -975,65 +1106,93 @@ object DocumentPrinter {
         val juzgado = JuzgadoAtestadoStorage(context).loadCurrent()
         val esJuicioRapido = juzgado.isJuicioRapido()
 
-        data class DocJob(val name: String, val print: suspend () -> Unit)
+        // Cada trabajo recibe la conexión compartida ya abierta
+        data class DocJob(val name: String, val print: suspend (Connection) -> Unit)
 
         val docs = buildList<DocJob> {
-            // 1. 01inicio
-            add(DocJob("Diligencia de inicio") {
-                // Se asume que existe la función imprimirInicioSuspend
-                if (DocumentPrinter::class.members.any { it.name == "imprimirInicioSuspend" }) {
-                    val method =
-                        DocumentPrinter::class.members.first { it.name == "imprimirInicioSuspend" }
-                    method.callSuspend(DocumentPrinter, context, mac, sigs)
-                }
+            // 1. Diligencia de inicio
+            add(DocJob("Diligencia de conocimiento e inicio") { conn ->
+                DocumentPrinter.imprimirInicioSuspend(context, mac, sigs, conn)
             })
-            // 2. 02derechos
-            add(DocJob("Diligencia de derechos del investigado") {
-                DocumentPrinter.imprimirDerechosSuspend(context, mac, sigs)
+            // 2. Diligencia de derechos
+            add(DocJob("Diligencia de derechos del investigado") { conn ->
+                DocumentPrinter.imprimirDerechosSuspend(context, mac, sigs, conn)
             })
-            // 3. 03letradogratis
-            add(DocJob("Información asistencia jurídica gratuita") {
-                if (DocumentPrinter::class.members.any { it.name == "imprimirLetradoGratisSuspend" }) {
-                    val method =
-                        DocumentPrinter::class.members.first { it.name == "imprimirLetradoGratisSuspend" }
-                    method.callSuspend(DocumentPrinter, context, mac, sigs)
-                }
+            // 3. Letrado gratuito
+            add(DocJob("Información asistencia jurídica gratuita") { conn ->
+                DocumentPrinter.imprimirLetradoGratisSuspend(context, mac, sigs, conn)
             })
-            // 4. 04manifestacion
-            add(DocJob("Manifestación del investigado") {
-                DocumentPrinter.imprimirManifestacionSuspend(context, mac, sigs)
+            // 4. Manifestación
+            add(DocJob("Manifestación del investigado") { conn ->
+                DocumentPrinter.imprimirManifestacionSuspend(context, mac, sigs, conn)
             })
-            // 5. Citación (la que corresponda)
-            add(DocJob(if (esJuicioRapido) "Citacion a juicio rápido" else "Citacion a juicio") {
-                if (esJuicioRapido) DocumentPrinter.imprimirCitacionJuicioRapidoSuspend(
-                    context,
-                    mac,
-                    sigs
-                )
-                else DocumentPrinter.imprimirCitacionJuicioSuspend(context, mac, sigs)
+            // 5. Citación
+            add(DocJob(if (esJuicioRapido) "Citacion a juicio rápido" else "Citacion a juicio") { conn ->
+                if (esJuicioRapido) DocumentPrinter.imprimirCitacionJuicioRapidoSuspend(context, mac, sigs, conn)
+                else DocumentPrinter.imprimirCitacionJuicioSuspend(context, mac, sigs, conn)
             })
-            // 6. 05inmovilizacion
-            add(DocJob("Acta de inmovilización") {
-                val method =
-                    DocumentPrinter::class.members.first { it.name == "imprimirInmovilizacionSuspend" }
-                method.callSuspend(DocumentPrinter, context, mac, sigs)
+            // 6. Acta de inmovilización
+            add(DocJob("Acta de inmovilización") { conn ->
+                DocumentPrinter.imprimirInmovilizacionSuspend(context, mac, sigs, conn)
             })
         }
 
         CoroutineScope(Dispatchers.IO).launch {
+            var sharedConn: Connection? = null
             try {
-                for ((i, doc) in docs.withIndex()) {
-                    withContext(Dispatchers.Main) {
-                        onProgress(i + 1, docs.size, doc.name)
-                    }
-                    doc.print()
-                    kotlinx.coroutines.delay(3000L)
+                android.util.Log.i(BATCH_LOG_TAG, "Inicio lote impresión atestado: totalDocs=${docs.size}, mac=$mac")
+                // ── 1. Descubrimiento / Emparejamiento + Conexión BT (UNA SOLA VEZ) ──
+                withContext(Dispatchers.Main) {
+                    onProgress(0, docs.size, "Conectando con la impresora…")
                 }
+                val connectStartedAt = System.currentTimeMillis()
+                sharedConn = openSharedBtConnection(mac)
+                android.util.Log.i(
+                    BATCH_LOG_TAG,
+                    "Conexión BT lista en ${System.currentTimeMillis() - connectStartedAt} ms"
+                )
+
+                // ── 2-6. Preparación, Conversión, Envío de cada documento ────────────
+                for ((i, doc) in docs.withIndex()) {
+                    val jobIndex = i + 1
+                    val startedAt = System.currentTimeMillis()
+                    android.util.Log.i(
+                        BATCH_LOG_TAG,
+                        "[$jobIndex/${docs.size}] INICIO doc='${doc.name}'"
+                    )
+                    withContext(Dispatchers.Main) {
+                        onProgress(jobIndex, docs.size, doc.name)
+                    }
+                    doc.print(sharedConn)
+                    android.util.Log.i(
+                        BATCH_LOG_TAG,
+                        "[$jobIndex/${docs.size}] FIN doc='${doc.name}' en ${System.currentTimeMillis() - startedAt} ms"
+                    )
+                    if (i < docs.size - 1) {
+                        android.util.Log.d(
+                            BATCH_LOG_TAG,
+                            "[$jobIndex/${docs.size}] Espera entre documentos: ${DELAY_BETWEEN_DOCS_MS} ms"
+                        )
+                        kotlinx.coroutines.delay(DELAY_BETWEEN_DOCS_MS)
+                    }
+                }
+                android.util.Log.i(BATCH_LOG_TAG, "Lote impresión atestado finalizado correctamente")
                 withContext(Dispatchers.Main) { onFinished() }
             } catch (e: Exception) {
+                android.util.Log.e(BATCH_LOG_TAG, "Error en lote impresión atestado: ${e.message}", e)
                 withContext(Dispatchers.Main) { onError(e.message ?: "Error desconocido") }
+            } finally {
+                // ── 7. Desconexión (siempre, aunque haya error) ──────────────────────
+                sharedConn?.let {
+                    android.util.Log.i(
+                        BATCH_LOG_TAG,
+                        "Espera final antes de cerrar BT: ${FINAL_DRAIN_BEFORE_CLOSE_MS} ms"
+                    )
+                    kotlinx.coroutines.delay(FINAL_DRAIN_BEFORE_CLOSE_MS)
+                    closeSharedBtConnection(it)
+                }
+                android.util.Log.i(BATCH_LOG_TAG, "Conexión BT de lote cerrada")
             }
         }
     }
 }
-

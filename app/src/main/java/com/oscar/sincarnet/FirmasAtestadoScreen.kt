@@ -99,6 +99,7 @@ fun FirmasAtestadoScreen(
     var showJefaturaDialog by rememberSaveable { mutableStateOf(false) }
     var showCondenaDetailsDialog by rememberSaveable { mutableStateOf(false) }
     var showSecondDriverDialog by rememberSaveable { mutableStateOf(false) }
+    var showManifestacionRequiredDialog by rememberSaveable { mutableStateOf(false) }
 
     var printProgress by remember { mutableStateOf(PrintProgress()) }
 
@@ -118,6 +119,7 @@ fun FirmasAtestadoScreen(
 
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
+    val investigatedNoDesireText = stringResource(R.string.atestado_signature_no_desire)
 
     Column(
         modifier = modifier
@@ -182,7 +184,20 @@ fun FirmasAtestadoScreen(
                     ) {
                         Checkbox(
                             checked = hasSecondDriver,
-                            onCheckedChange = { onHasSecondDriverChange(it) }
+                            onCheckedChange = { checked ->
+                                if (!checked) {
+                                    onSecondDriverNameChange("")
+                                    onSecondDriverIdChange("")
+                                    context.getSharedPreferences("segundo_conductor", android.content.Context.MODE_PRIVATE)
+                                        .edit()
+                                        .putBoolean("existe", false)
+                                        .remove("nombre")
+                                        .remove("apellidos")
+                                        .remove("documento")
+                                        .apply()
+                                }
+                                onHasSecondDriverChange(checked)
+                            }
                         )
                         Text(text = stringResource(R.string.atestado_signature_has_second_driver))
                     }
@@ -254,11 +269,16 @@ fun FirmasAtestadoScreen(
                                 printProgress = PrintProgress()  // cierra el modal
                             },
                             onError = { msg: String ->
-                                printProgress = PrintProgress(
-                                    isVisible    = true,
-                                    isError      = true,
-                                    errorMessage = msg
-                                )
+                                if (msg.trim() == DocumentPrinter.MANIFESTACION_REQUIRED_MSG) {
+                                    printProgress = PrintProgress()
+                                    showManifestacionRequiredDialog = true
+                                } else {
+                                    printProgress = PrintProgress(
+                                        isVisible    = true,
+                                        isError      = true,
+                                        errorMessage = msg
+                                    )
+                                }
                             }
                         )
                     }
@@ -288,7 +308,15 @@ fun FirmasAtestadoScreen(
                             instructorTip    = "",
                             secretaryTip     = "",
                             isInmovilizacion = true,
-                            hasSecondDriver  = hasSecondDriver
+                            hasSecondDriver  = hasSecondDriver,
+                            investigatedNoSignText = if (wantsToSign) "Sin firma" else investigatedNoDesireText
+                        )
+                        // Mostrar progreso antes de iniciar la impresión
+                        printProgress = PrintProgress(
+                            isVisible    = true,
+                            currentDoc   = "Acta de inmovilización",
+                            currentIndex = 0,
+                            totalDocs    = 1
                         )
                         coroutineScope.launch {
                             try {
@@ -297,6 +325,8 @@ fun FirmasAtestadoScreen(
                                     mac = mac,
                                     sigs = sigs
                                 )
+                                // Cerrar el modal de progreso al finalizar
+                                printProgress = PrintProgress()
                             } catch (e: Exception) {
                                 printProgress = PrintProgress(
                                     isVisible    = true,
@@ -747,9 +777,22 @@ fun FirmasAtestadoScreen(
                 if (printProgress.isError) {
                     Text(text = printProgress.errorMessage.ifEmpty { "Error desconocido" })
                 } else {
+                    val progressLabel = when {
+                        printProgress.totalDocs <= 0 -> "Preparando impresión"
+                        printProgress.currentIndex <= 0 -> "Preparando lote de ${printProgress.totalDocs} documentos"
+                        else -> "Documento ${printProgress.currentIndex} de ${printProgress.totalDocs}"
+                    }
+                    val progressValue = if (printProgress.totalDocs > 0) {
+                        printProgress.currentIndex.toFloat() / printProgress.totalDocs.toFloat()
+                    } else {
+                        0f
+                    }
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(text = progressLabel)
                         Text(text = if (printProgress.currentDoc.isNotEmpty()) printProgress.currentDoc else "Imprimiendo...")
-                        LinearProgressIndicator(progress = if (printProgress.totalDocs > 0) printProgress.currentIndex.toFloat() / printProgress.totalDocs else 0f)
+                        Spacer(modifier = Modifier.height(8.dp))
+                        LinearProgressIndicator(progress = { progressValue }, modifier = Modifier.fillMaxWidth())
+                        Spacer(modifier = Modifier.height(8.dp))
                         Text(text = "${printProgress.currentIndex} / ${printProgress.totalDocs}")
                     }
                 }
@@ -759,6 +802,21 @@ fun FirmasAtestadoScreen(
                     TextButton(onClick = { printProgress = PrintProgress() }) {
                         Text(text = stringResource(R.string.accept_action))
                     }
+                }
+            }
+        )
+    }
+
+    if (showManifestacionRequiredDialog) {
+        AlertDialog(
+            onDismissRequest = { showManifestacionRequiredDialog = false },
+            title = { Text(text = stringResource(R.string.manifestacion_incomplete_print_title)) },
+            text = {
+                Text(text = stringResource(R.string.manifestacion_incomplete_print_message))
+            },
+            confirmButton = {
+                TextButton(onClick = { showManifestacionRequiredDialog = false }) {
+                    Text(text = stringResource(R.string.accept_action))
                 }
             }
         )

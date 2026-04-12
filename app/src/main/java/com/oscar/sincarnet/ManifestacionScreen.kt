@@ -21,19 +21,24 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import com.oscar.sincarnet.ui.theme.SinCarnetTheme
 
 private object ManifestacionUiIds {
@@ -67,6 +72,7 @@ fun ManifestacionScreen(
     onBackClick: () -> Unit = {}
 ) {
     val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
     val document = remember(context) { loadManifestacionDocument(context) }
     val storage = remember(context) { ManifestacionStorage(context) }
     val initialData = remember(context) { storage.loadCurrent() }
@@ -93,6 +99,27 @@ fun ManifestacionScreen(
     val requiredOption2Label = stringResource(R.string.manifestacion_required_option_2)
     val noDeseaManifestacionText = stringResource(R.string.manifestacion_no_declarar_text)
     val lastQuestionId = remember(document.preguntas) { document.preguntas.lastOrNull()?.id }
+    val renunciaOption = remember(document.opciones) {
+        document.opciones.firstOrNull { it.id == 1 } ?: document.opciones.firstOrNull()
+    }
+    val declararOption = remember(document.opciones) {
+        document.opciones.firstOrNull { it.id == 2 } ?: document.opciones.getOrNull(1)
+    }
+
+    fun reloadFromStorage() {
+        val latestData = storage.loadCurrent()
+        renunciaAsistenciaLetrada = latestData.renunciaAsistenciaLetrada
+        deseaDeclarar = latestData.deseaDeclarar
+        respuestasPreguntas.clear()
+        document.preguntas.forEach { pregunta ->
+            respuestasPreguntas[pregunta.id] = latestData.respuestasPreguntas[pregunta.id].orEmpty()
+        }
+    }
+
+    // Carga inicial al entrar en la pantalla
+    LaunchedEffect(Unit) {
+        reloadFromStorage()
+    }
 
     fun buildManifestacionSnapshot(): ManifestacionData {
         val respuestasToSave = if (deseaDeclarar == false) {
@@ -114,6 +141,20 @@ fun ManifestacionScreen(
         storage.saveCurrent(buildManifestacionSnapshot())
     }
 
+    // Sincroniza borrador al salir y recarga al volver al foco
+    DisposableEffect(lifecycleOwner, document) {
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_PAUSE -> persistManifestacionDraft()
+                Lifecycle.Event.ON_RESUME -> reloadFromStorage()
+                else -> Unit
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
 
     Column(
         modifier = modifier
@@ -137,10 +178,10 @@ fun ManifestacionScreen(
                     .testTag(ManifestacionUiIds.SCROLL_CONTENT),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                if (document.opciones.isNotEmpty()) {
+                renunciaOption?.let { option ->
                     Column(modifier = Modifier.testTag(ManifestacionUiIds.OPCION_RENUNCIA)) {
                         HorizontalYesNoQuestionBlock(
-                            questionText = document.opciones.firstOrNull()?.texto.orEmpty(),
+                            questionText = option.texto,
                             selectedValue = renunciaAsistenciaLetrada,
                             onValueChange = {
                                 renunciaAsistenciaLetrada = it
@@ -148,17 +189,18 @@ fun ManifestacionScreen(
                             }
                         )
                     }
-                    if (document.opciones.size > 1) {
-                        Column(modifier = Modifier.testTag(ManifestacionUiIds.OPCION_DECLARAR)) {
-                            HorizontalYesNoQuestionBlock(
-                                questionText = document.opciones[1].texto,
-                                selectedValue = deseaDeclarar,
-                                onValueChange = {
-                                    deseaDeclarar = it
-                                    persistManifestacionDraft()
-                                }
-                            )
-                        }
+                }
+
+                declararOption?.let { option ->
+                    Column(modifier = Modifier.testTag(ManifestacionUiIds.OPCION_DECLARAR)) {
+                        HorizontalYesNoQuestionBlock(
+                            questionText = option.texto,
+                            selectedValue = deseaDeclarar,
+                            onValueChange = {
+                                deseaDeclarar = it
+                                persistManifestacionDraft()
+                            }
+                        )
                     }
                 }
 
@@ -408,4 +450,3 @@ private fun ManifestacionScreenPreview() {
         ManifestacionScreen()
     }
 }
-

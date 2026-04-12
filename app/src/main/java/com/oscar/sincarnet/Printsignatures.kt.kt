@@ -29,5 +29,6 @@ data class PrintSignatures(
     // Nuevo: firma y flag para segundo conductor y layout especial
     val secondDriver: ImageBitmap? = null,
     val isInmovilizacion: Boolean = false,
-    val hasSecondDriver: Boolean = false
+    val hasSecondDriver: Boolean = false,
+    val investigatedNoSignText: String = "NO DESEA FIRMAR"  // Texto cuando el investigado no desea firmar
 )

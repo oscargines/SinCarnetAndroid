@@ -33,7 +33,7 @@
     <string name="expired_validity_infringement_message">INFRACCIÓN AL REGLAMENTO DE CONDUCTORES\n\nRGCond. Art. 1.1.5A\n500€</string>
     <string name="about_screen_title">Acerca de...</string>
     <string name="about_image_content_description">Escudo de la aplicacion</string>
-    <string name="about_message">App desarrollada por el\nGC scar I. Gins\nDestacamento de Trfico de Ribadesella\nSector de Asturias.\n\nSe ha realizado tomando como referencia el grfico elaborado por AEGC.\n\nhttps://github.com/oscargines/SinCarnetAndroid.git\n\n\nMarzo 2026.\n\nAgradecimiento a mis compañeros del XIV curso del cambio de modalidad por aguantar lo pesado que soy.</string>
+    <string name="about_message">App desarrollada por el\nGC Óscar I. Ginés\nDestacamento de Tráfico de Ribadesella\nSector de Asturias.\n\nSe ha realizado tomando como referencia el gráfico elaborado por AEGC.\n\nhttps://github.com/oscargines/SinCarnetAndroid.git\n\n\nMarzo-Abril 2026.\n\nAgradecimiento a mis compañeros del XIV Curso del Cambio de Modalidad\npor aguantar lo pesado que soy.</string>
     <string name="expired_validity_second_card_placeholder">Contenido pendiente de programar</string>
     <string name="judicial_suspension_screen_title">Suspensión Judicial</string>
     <string name="judicial_suspension_sentence_question">Tipo de condena</string>
@@ -394,6 +394,8 @@
     <string name="print_error_title">Error de impresión</string>
     <string name="printing_title">Imprimiendo documentos</string>
     <string name="no_printer_configured">No hay impresora configurada</string>
+    <string name="manifestacion_incomplete_print_title">Manifestación incompleta</string>
+    <string name="manifestacion_incomplete_print_message">Debe completar la manifestación (renuncia letrada y desea declarar) antes de imprimir</string>
 
     <string name="ocurrencia_delit_derechos_moment_title">¿Cuándo se produce la información de derechos?</string>
     <string name="ocurrencia_delit_derechos_moment_same_time">En el mismo momento</string>
