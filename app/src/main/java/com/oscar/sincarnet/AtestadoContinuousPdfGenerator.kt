@@ -13,9 +13,14 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asAndroidBitmap
 import org.json.JSONArray
 import org.json.JSONObject
+import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
 import java.io.InputStreamReader
+import java.util.zip.CRC32
+import java.util.zip.ZipEntry
+import java.util.zip.ZipInputStream
+import java.util.zip.ZipOutputStream
 
 private const val A4_WIDTH_PT = 595f
 private const val A4_HEIGHT_PT = 842f
@@ -55,7 +60,7 @@ internal fun generateAtestadoContinuousPdf(
     inicioModalData: AtestadoInicioModalData = AtestadoInicioModalData()
 ): AtestadoPdfResult {
 
-    val prefs = context.getSharedPreferences("segundo_conductor", android.content.Context.MODE_PRIVATE)
+    val prefs = context.getSharedPreferences("segundo_conductor", Context.MODE_PRIVATE)
     val segundoConductorNombre = prefs.getString("nombre", "")?.trim() ?: ""
     val segundoConductorDocumento = prefs.getString("documento", "")?.trim() ?: ""
     android.util.Log.d("PDF", "Segundo conductor: nombre='$segundoConductorNombre', documento='$segundoConductorDocumento'")
@@ -319,7 +324,7 @@ internal fun generateAtestadoContinuousPdf(
                 tipPaint = textPaintSmall
             )
         } else {
-                drawCitacionSignatures(
+            drawCitacionSignatures(
                 canvas = pageState.canvas,
                 signatures = signatures,
                 startY = pageState.cursorY + 6f,
@@ -331,8 +336,7 @@ internal fun generateAtestadoContinuousPdf(
                 secretaryTip = secretaryTip,
                 investigatedNoSignText = investigatedNoSignText,
                 textPaint = textPaint,
-                tipPaint = textPaintSmall
-                ,
+                tipPaint = textPaintSmall,
                 hasSecondDriver = hasSecondDriver,
                 secondDriverName = if (segundoConductorNombre.isNotBlank() && segundoConductorDocumento.isNotBlank())
                     "$segundoConductorNombre ($segundoConductorDocumento)"
@@ -355,6 +359,447 @@ internal fun generateAtestadoContinuousPdf(
     pdfDocument.close()
 
     return AtestadoPdfResult(file = file, createdAtMillis = now)
+}
+
+private data class OdtImageAsset(
+    val path: String,
+    val mediaType: String,
+    val bytes: ByteArray,
+    val widthCm: String,
+    val heightCm: String
+) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is OdtImageAsset) return false
+        return path == other.path &&
+            mediaType == other.mediaType &&
+            bytes.contentEquals(other.bytes) &&
+            widthCm == other.widthCm &&
+            heightCm == other.heightCm
+    }
+
+    override fun hashCode(): Int {
+        var result = path.hashCode()
+        result = 31 * result + mediaType.hashCode()
+        result = 31 * result + bytes.contentHashCode()
+        result = 31 * result + widthCm.hashCode()
+        result = 31 * result + heightCm.hashCode()
+        return result
+    }
+}
+
+internal fun generateAtestadoOdt(
+    context: Context,
+    courtData: JuzgadoAtestadoData,
+    personData: PersonaInvestigadaData,
+    ocurrenciaData: OcurrenciaDelitData,
+    vehicleData: VehiculoData,
+    manifestacionData: ManifestacionData,
+    hasSecondDriver: Boolean,
+    signatures: Map<PdfSignatureSlot, PdfSignatureContent<ImageBitmap>> = emptyMap(),
+    investigatedNoSignText: String = NO_DESEA_FIRMAR_TEXT,
+    instructorTip: String,
+    secretaryTip: String,
+    instructorUnit: String,
+    inicioModalData: AtestadoInicioModalData = AtestadoInicioModalData()
+): File {
+    val prefs = context.getSharedPreferences("segundo_conductor", Context.MODE_PRIVATE)
+    val segundoConductorNombre = prefs.getString("nombre", "")?.trim() ?: ""
+    val segundoConductorDocumento = prefs.getString("documento", "")?.trim() ?: ""
+
+    val orderedDocuments = mutableListOf<CitacionDocument>()
+    val staticFiles = listOf(
+        "01inicio.json",
+        "02derechos.json",
+        "03letradogratis.json",
+        "04manifestacion.json",
+        "05inmovilizacion.json"
+    )
+    staticFiles.forEach { fileName ->
+        orderedDocuments += loadAtestadoTemplateAsCitacion(
+            context = context,
+            fileName = fileName,
+            inicioModalData = inicioModalData,
+            personData = personData,
+            courtData = courtData,
+            ocurrenciaData = ocurrenciaData,
+            vehicleData = vehicleData,
+            hasSecondDriver = hasSecondDriver,
+            manifestacionData = manifestacionData,
+            segundoConductorNombre = segundoConductorNombre,
+            segundoConductorDocumento = segundoConductorDocumento
+        )
+    }
+    val tipoJuicioForTemplate = when {
+        courtData.tipoJuicio.isNotBlank() -> courtData.tipoJuicio
+        courtData.fechaJuicioRapido.isNotBlank() || courtData.horaJuicioRapido.isNotBlank() -> "rapido"
+        else -> ""
+    }
+    orderedDocuments += loadCitacionDocument(context, tipoJuicioForTemplate)
+
+    val secondDriverDisplayName = if (segundoConductorNombre.isNotBlank() && segundoConductorDocumento.isNotBlank()) {
+        "$segundoConductorNombre ($segundoConductorDocumento)"
+    } else {
+        segundoConductorNombre
+    }
+
+    val signatureAssets = buildOdtSignatureAssets(signatures)
+    val contentXml = buildAtestadoOdtContentXml(
+        orderedDocuments = orderedDocuments,
+        signatureAssets = signatureAssets,
+        courtData = courtData,
+        personData = personData,
+        ocurrenciaData = ocurrenciaData,
+        vehicleData = vehicleData,
+        manifestacionData = manifestacionData,
+        inicioModalData = inicioModalData,
+        instructorTip = instructorTip,
+        secretaryTip = secretaryTip,
+        instructorUnit = instructorUnit,
+        investigatedNoSignText = investigatedNoSignText,
+        secondDriverName = secondDriverDisplayName,
+        segundoConductorNombre = segundoConductorNombre,
+        segundoConductorDocumento = segundoConductorDocumento
+    )
+
+    val dir = File(context.filesDir, "atestados").apply { mkdirs() }
+    val file = File(dir, buildAtestadoOdtFileName(courtData.numeroDiligencias))
+    writeAtestadoOdtPackage(context, file, contentXml, signatureAssets.values.toList())
+    return file
+}
+
+private fun buildAtestadoOdtFileName(numeroDiligencias: String): String {
+    val safeNumber = numeroDiligencias
+        .trim()
+        .ifBlank { "" }
+        .replace(Regex("[^A-Za-z0-9._-]"), "_")
+    return if (safeNumber.isBlank()) "Atestado.odt" else "Atestado${safeNumber}.odt"
+}
+
+private fun buildAtestadoOdtContentXml(
+    orderedDocuments: List<CitacionDocument>,
+    signatureAssets: Map<PdfSignatureSlot, OdtImageAsset>,
+    courtData: JuzgadoAtestadoData,
+    personData: PersonaInvestigadaData,
+    ocurrenciaData: OcurrenciaDelitData,
+    vehicleData: VehiculoData,
+    manifestacionData: ManifestacionData,
+    inicioModalData: AtestadoInicioModalData,
+    instructorTip: String,
+    secretaryTip: String,
+    instructorUnit: String,
+    investigatedNoSignText: String,
+    secondDriverName: String,
+    segundoConductorNombre: String,
+    segundoConductorDocumento: String
+): String {
+    val body = StringBuilder()
+
+    fun replaceForDocument(text: String, index: Int): String = replaceCitacionPlaceholders(
+        text = text,
+        courtData = courtData,
+        personData = personData,
+        ocurrenciaData = ocurrenciaData,
+        instructorTip = instructorTip,
+        secretaryTip = secretaryTip,
+        instructorUnit = instructorUnit,
+        vehicleData = vehicleData,
+        manifestacionData = manifestacionData,
+        inicioModalData = inicioModalData,
+        segundoConductorNombre = segundoConductorNombre,
+        segundoConductorDocumento = segundoConductorDocumento,
+        documentSequenceIndex = index
+    )
+
+    fun appendParagraphs(rawText: String, styleName: String = "P_BODY") {
+        rawText
+            .split("\n")
+            .map { it.trim() }
+            .forEach { line ->
+                if (line.isBlank()) {
+                    body.append("<text:p text:style-name=\"P_BODY\"/>")
+                } else {
+                    val isCentered = line.startsWith("[[CENTER]]")
+                    val clean = if (isCentered) line.removePrefix("[[CENTER]]").trim() else line
+                    val style = if (isCentered) "P_CENTER" else styleName
+                    body.append("<text:p text:style-name=\"")
+                        .append(style)
+                        .append("\">")
+                        .append(escapeOdtXml(clean))
+                        .append("</text:p>")
+                }
+            }
+    }
+
+    fun appendSignatureBlock(title: String, asset: OdtImageAsset?, tip: String?, fallback: String) {
+        body.append("<text:p text:style-name=\"P_HEADING\">")
+            .append(escapeOdtXml(title))
+            .append("</text:p>")
+        tip?.takeIf { it.isNotBlank() }?.let {
+            body.append("<text:p text:style-name=\"P_BODY\">TIP: ")
+                .append(escapeOdtXml(it))
+                .append("</text:p>")
+        }
+        if (asset != null) {
+            body.append("<text:p text:style-name=\"P_BODY\"><draw:frame draw:name=\"")
+                .append(escapeOdtXml(title))
+                .append("\" text:anchor-type=\"paragraph\" svg:width=\"")
+                .append(asset.widthCm)
+                .append("\" svg:height=\"")
+                .append(asset.heightCm)
+                .append("\"><draw:image xlink:href=\"")
+                .append(asset.path)
+                .append("\" xlink:type=\"simple\" xlink:show=\"embed\" xlink:actuate=\"onLoad\"/></draw:frame></text:p>")
+        } else {
+            body.append("<text:p text:style-name=\"P_BODY\">")
+                .append(escapeOdtXml(fallback))
+                .append("</text:p>")
+        }
+    }
+
+    orderedDocuments.forEachIndexed { index, document ->
+        appendParagraphs(replaceForDocument(document.titulo, index), "P_TITLE")
+        appendParagraphs(replaceForDocument(document.cuerpoDescripcion, index))
+
+        document.secciones.forEach { section ->
+            appendParagraphs(replaceForDocument(section.titulo, index), "P_HEADING")
+            appendParagraphs(replaceForDocument(section.contenido, index))
+            section.items.forEach { item ->
+                appendParagraphs("- ${replaceForDocument(item.descripcion, index)}", "P_LIST")
+            }
+            section.opciones.forEach { option ->
+                appendParagraphs("- ${replaceForDocument(option.descripcion, index)}", "P_LIST")
+            }
+            appendParagraphs(replaceForDocument(section.informacionAdicional, index))
+        }
+
+        appendParagraphs(replaceForDocument(document.cierre, index))
+        appendParagraphs(replaceForDocument(document.enteradoTitulo, index), "P_HEADING")
+        appendParagraphs(replaceForDocument(document.enteradoTexto, index))
+
+        body.append("<text:p text:style-name=\"P_HEADING\">Firmas</text:p>")
+        if (document.onlyEnterado) {
+            appendSignatureBlock(
+                title = "Enterado",
+                asset = signatureAssets[PdfSignatureSlot.INVESTIGATED],
+                tip = null,
+                fallback = investigatedNoSignText
+            )
+        } else {
+            appendSignatureBlock(
+                title = "Instructor",
+                asset = signatureAssets[PdfSignatureSlot.INSTRUCTOR],
+                tip = instructorTip,
+                fallback = "Sin firma"
+            )
+            appendSignatureBlock(
+                title = "Secretario",
+                asset = signatureAssets[PdfSignatureSlot.SECRETARY],
+                tip = secretaryTip,
+                fallback = "Sin firma"
+            )
+            appendSignatureBlock(
+                title = "Investigado",
+                asset = signatureAssets[PdfSignatureSlot.INVESTIGATED],
+                tip = null,
+                fallback = investigatedNoSignText
+            )
+            if (document.allowSecondDriver) {
+                appendSignatureBlock(
+                    title = "Conductor habilitado",
+                    asset = signatureAssets[PdfSignatureSlot.SECOND_DRIVER],
+                    tip = secondDriverName,
+                    fallback = if (secondDriverName.isBlank()) "Sin firma" else "Conductor: $secondDriverName"
+                )
+            }
+        }
+
+        if (index < orderedDocuments.lastIndex) {
+            body.append("<text:p text:style-name=\"P_DOC_BREAK\"/>")
+        }
+    }
+
+    val automaticStyles = """
+        <office:automatic-styles>
+            <style:style style:name="P_TITLE" style:family="paragraph" style:parent-style-name="Normal" style:master-page-name="MP0">
+                <style:paragraph-properties fo:margin-top="0.25cm" fo:margin-bottom="0.2cm"/>
+                <style:text-properties style:font-name="Calibri" fo:font-family="Calibri" fo:font-size="11pt" fo:font-weight="bold"/>
+            </style:style>
+            <style:style style:name="P_HEADING" style:family="paragraph" style:parent-style-name="Normal">
+                <style:paragraph-properties fo:margin-top="0.18cm" fo:margin-bottom="0.1cm"/>
+                <style:text-properties style:font-name="Calibri" fo:font-family="Calibri" fo:font-size="11pt" fo:font-weight="bold"/>
+            </style:style>
+            <style:style style:name="P_BODY" style:family="paragraph" style:parent-style-name="Normal">
+                <style:paragraph-properties fo:margin-bottom="0.08cm"/>
+                <style:text-properties style:font-name="Calibri" fo:font-family="Calibri" fo:font-size="10pt"/>
+            </style:style>
+            <style:style style:name="P_LIST" style:family="paragraph" style:parent-style-name="Normal">
+                <style:paragraph-properties fo:margin-bottom="0.06cm" fo:margin-left="0.7cm" fo:text-indent="-0.35cm"/>
+                <style:text-properties style:font-name="Calibri" fo:font-family="Calibri" fo:font-size="10pt"/>
+            </style:style>
+            <style:style style:name="P_CENTER" style:family="paragraph" style:parent-style-name="Normal">
+                <style:paragraph-properties fo:text-align="center"/>
+                <style:text-properties style:font-name="Calibri" fo:font-family="Calibri" fo:font-size="10pt"/>
+            </style:style>
+            <style:style style:name="P_DOC_BREAK" style:family="paragraph" style:parent-style-name="Normal" style:master-page-name="MP0">
+                <style:paragraph-properties fo:break-before="page"/>
+            </style:style>
+        </office:automatic-styles>
+    """.trimIndent()
+
+    return """<?xml version="1.0" encoding="UTF-8"?><office:document-content xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0" xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0" xmlns:style="urn:oasis:names:tc:opendocument:xmlns:style:1.0" xmlns:fo="urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0" xmlns:draw="urn:oasis:names:tc:opendocument:xmlns:drawing:1.0" xmlns:svg="urn:oasis:names:tc:opendocument:xmlns:svg-compatible:1.0" xmlns:xlink="http://www.w3.org/1999/xlink" office:version="1.2">$automaticStyles<office:body><office:text>$body</office:text></office:body></office:document-content>"""
+}
+
+private fun buildOdtSignatureAssets(
+    signatures: Map<PdfSignatureSlot, PdfSignatureContent<ImageBitmap>>
+): Map<PdfSignatureSlot, OdtImageAsset> {
+    return buildMap {
+        signatures.forEach { (slot, content) ->
+            if (content is PdfSignatureContent.Image) {
+                put(slot, createOdtImageAsset(slot, content.value.asAndroidBitmap()))
+            }
+        }
+    }
+}
+
+private fun createOdtImageAsset(slot: PdfSignatureSlot, bitmap: Bitmap): OdtImageAsset {
+    val output = ByteArrayOutputStream()
+    bitmap.compress(Bitmap.CompressFormat.PNG, 100, output)
+    val aspectRatio = bitmap.width.toDouble().coerceAtLeast(1.0) / bitmap.height.toDouble().coerceAtLeast(1.0)
+    var widthCm = 8.0
+    var heightCm = widthCm / aspectRatio
+    if (heightCm > 3.0) {
+        heightCm = 3.0
+        widthCm = heightCm * aspectRatio
+    }
+    return OdtImageAsset(
+        path = "Pictures/${slot.name.lowercase()}.png",
+        mediaType = "image/png",
+        bytes = output.toByteArray(),
+        widthCm = String.format(java.util.Locale.US, "%.2fcm", widthCm),
+        heightCm = String.format(java.util.Locale.US, "%.2fcm", heightCm)
+    )
+}
+
+private fun writeAtestadoOdtPackage(
+    context: Context,
+    outputFile: File,
+    contentXml: String,
+    images: List<OdtImageAsset>
+) {
+    val mimetype = "application/vnd.oasis.opendocument.text"
+
+    val fallbackStylesXml = """<?xml version="1.0" encoding="UTF-8"?><office:document-styles xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0" xmlns:style="urn:oasis:names:tc:opendocument:xmlns:style:1.0" xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0" xmlns:fo="urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0" office:version="1.2"><office:styles><style:style style:name="P_TITLE" style:family="paragraph"><style:text-properties style:font-name="Calibri" fo:font-family="Calibri" fo:font-size="11pt" fo:font-weight="bold"/></style:style><style:style style:name="P_HEADING" style:family="paragraph"><style:text-properties style:font-name="Calibri" fo:font-family="Calibri" fo:font-size="11pt" fo:font-weight="bold"/></style:style><style:style style:name="P_BODY" style:family="paragraph"><style:text-properties style:font-name="Calibri" fo:font-family="Calibri" fo:font-size="10pt"/></style:style><style:style style:name="P_LIST" style:family="paragraph"><style:paragraph-properties fo:margin-left="0.7cm" fo:text-indent="-0.35cm"/><style:text-properties style:font-name="Calibri" fo:font-family="Calibri" fo:font-size="10pt"/></style:style><style:style style:name="P_CENTER" style:family="paragraph"><style:paragraph-properties fo:text-align="center"/><style:text-properties style:font-name="Calibri" fo:font-family="Calibri" fo:font-size="10pt"/></style:style></office:styles></office:document-styles>"""
+
+    val metaXml = """<?xml version="1.0" encoding="UTF-8"?><office:document-meta xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0" xmlns:meta="urn:oasis:names:tc:opendocument:xmlns:meta:1.0" xmlns:dc="http://purl.org/dc/elements/1.1/" office:version="1.2"><office:meta><meta:creation-date>${java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss").format(java.util.Date())}</meta:creation-date></office:meta></office:document-meta>"""
+
+    val settingsXml = """<?xml version="1.0" encoding="UTF-8"?><office:document-settings xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0" office:version="1.2"><office:settings/></office:document-settings>"""
+
+    val entries = linkedMapOf<String, ByteArray>()
+
+    // Cargar plantilla visual si está disponible en assets.
+    // IMPORTANTE: Solo cargar archivos esenciales de la plantilla, ignorar meta.xml, settings.xml, etc.
+    runCatching {
+        context.assets.open("docs/formatodocumento.odt").use { templateStream ->
+            ZipInputStream(templateStream).use { zipIn ->
+                var entry = zipIn.nextEntry
+                while (entry != null) {
+                    if (!entry.isDirectory && 
+                        !entry.name.equals("mimetype", ignoreCase = true) &&
+                        !entry.name.equals("meta.xml", ignoreCase = true) &&
+                        !entry.name.equals("settings.xml", ignoreCase = true) &&
+                        !entry.name.equals("content.xml", ignoreCase = true)) {
+                        val out = ByteArrayOutputStream()
+                        zipIn.copyTo(out)
+                        entries[entry.name] = out.toByteArray()
+                    }
+                    zipIn.closeEntry()
+                    entry = zipIn.nextEntry
+                }
+            }
+        }
+    }
+
+    entries["content.xml"] = contentXml.toByteArray(Charsets.UTF_8)
+    android.util.Log.d("ODT_GEN", "content.xml size: ${contentXml.length} bytes, starts with: ${contentXml.take(100)}")
+    
+    if (!entries.containsKey("styles.xml")) {
+        entries["styles.xml"] = fallbackStylesXml.toByteArray(Charsets.UTF_8)
+    }
+    if (!entries.containsKey("meta.xml")) {
+        entries["meta.xml"] = metaXml.toByteArray(Charsets.UTF_8)
+    }
+    if (!entries.containsKey("settings.xml")) {
+        entries["settings.xml"] = settingsXml.toByteArray(Charsets.UTF_8)
+    }
+
+    images.forEach { image -> entries[image.path] = image.bytes }
+
+    fun mediaTypeForPath(path: String): String = when {
+        path.equals("content.xml", ignoreCase = true) -> "text/xml"
+        path.equals("styles.xml", ignoreCase = true) -> "text/xml"
+        path.equals("settings.xml", ignoreCase = true) -> "text/xml"
+        path.equals("meta.xml", ignoreCase = true) -> "text/xml"
+        path.endsWith(".xml", ignoreCase = true) -> "text/xml"
+        path.endsWith(".png", ignoreCase = true) -> "image/png"
+        path.endsWith(".jpg", ignoreCase = true) || path.endsWith(".jpeg", ignoreCase = true) -> "image/jpeg"
+        else -> ""
+    }
+
+    val manifestEntries = StringBuilder().apply {
+        append("<manifest:file-entry manifest:full-path=\"/\" manifest:media-type=\"").append(mimetype).append("\"/>")
+        entries.keys.filter { !it.equals("META-INF/manifest.xml", ignoreCase = true) }.sorted().forEach { path ->
+            append("<manifest:file-entry manifest:full-path=\"").append(path).append("\" manifest:media-type=\"").append(mediaTypeForPath(path)).append("\"/>")
+        }
+    }.toString()
+
+    val manifestXml = """<?xml version="1.0" encoding="UTF-8"?><manifest:manifest xmlns:manifest="urn:oasis:names:tc:opendocument:xmlns:manifest:1.0" manifest:version="1.2">$manifestEntries</manifest:manifest>"""
+    entries["META-INF/manifest.xml"] = manifestXml.toByteArray(Charsets.UTF_8)
+
+    ZipOutputStream(FileOutputStream(outputFile)).use { zip ->
+        // PRIMERO: Escribir mimetype sin compresión (requisito ODF)
+        val mimeBytes = mimetype.toByteArray(Charsets.UTF_8)
+        val crc = CRC32().apply { update(mimeBytes) }
+        val mimeEntry = ZipEntry("mimetype").apply {
+            method = ZipEntry.STORED
+            size = mimeBytes.size.toLong()
+            compressedSize = mimeBytes.size.toLong()
+            this.crc = crc.value
+            time = System.currentTimeMillis()
+        }
+        zip.putNextEntry(mimeEntry)
+        zip.write(mimeBytes)
+        zip.closeEntry()
+
+        // SEGUNDO: Resto de archivos comprimidos
+        fun addEntry(path: String, bytes: ByteArray) {
+            val entry = ZipEntry(path).apply {
+                method = ZipEntry.DEFLATED
+                time = System.currentTimeMillis()
+            }
+            zip.putNextEntry(entry)
+            zip.write(bytes)
+            zip.closeEntry()
+        }
+
+        entries.keys.sorted().forEach { path ->
+            addEntry(path, entries.getValue(path))
+        }
+    }
+    
+    android.util.Log.d("ODT_GEN", "ODT file created at: ${outputFile.absolutePath}, size: ${outputFile.length()} bytes")
+}
+
+private fun escapeOdtXml(value: String): String {
+    // Escape in correct order to avoid double-escaping
+    return value
+        .replace("&", "&amp;")
+        .replace("<", "&lt;")
+        .replace(">", "&gt;")
+        .replace("\"", "&quot;")
+        .replace("'", "&apos;")
+        // Remove any control characters that might break XML
+        .replace(Regex("[\\x00-\\x08\\x0B-\\x0C\\x0E-\\x1F\\x7F]"), "")
 }
 
 private fun buildAtestadoPdfFileName(numeroDiligencias: String): String {
@@ -506,7 +951,7 @@ private fun drawCitacionSignatures(
 ) {
     android.util.Log.d("PDF_SIG", "drawCitacionSignatures called: hasSecondDriver=$hasSecondDriver, secondDriverName='$secondDriverName'")
     signatures.forEach { (k, v) ->
-        android.util.Log.d("PDF_SIG", "  slot=$k, type=${v?.let { it::class.simpleName } ?: "null"}${if (v is PdfSignatureContent.Image) " id=${System.identityHashCode(v.value)}" else ""}")
+        android.util.Log.d("PDF_SIG", "  slot=$k, type=${v.let { it::class.simpleName }}${if (v is PdfSignatureContent.Image) " id=${System.identityHashCode(v.value)}" else ""}")
     }
     var cursorY = startY
     val availableHeight = (pageHeight - bottomMargin) - cursorY
@@ -518,9 +963,6 @@ private fun drawCitacionSignatures(
     // ← MODIFICAR: Calcular filas según haya segundo conductor. Solo si el documento permite mostrarlo.
     // para cubrir el caso en que la flag externa no esté sincronizada pero la firma sí existe.
     val effectiveHasSecondDriver = allowSecondDriver && (hasSecondDriver || (signatures[PdfSignatureSlot.SECOND_DRIVER] != null))
-    val totalSignatureBoxes = if (effectiveHasSecondDriver) 4 else 3
-    val boxesPerRow = 2
-    val rowsNeeded = (totalSignatureBoxes + boxesPerRow - 1) / boxesPerRow
 
     val previousTopRowHeight = (availableHeight * 0.42f).coerceAtLeast(92f)
     val previousBottomRowHeight = (availableHeight - previousTopRowHeight - signatureGap).coerceAtLeast(92f)
@@ -713,7 +1155,7 @@ private fun drawSoloInvestigadoSignature(
 ) {
     android.util.Log.d("PDF_SIG", "drawSoloInvestigadoSignature called")
     signatures.forEach { (k, v) ->
-        android.util.Log.d("PDF_SIG", "  slot=$k, type=${v?.let { it::class.simpleName } ?: "null"}${if (v is PdfSignatureContent.Image) " id=${System.identityHashCode(v.value)}" else ""}")
+        android.util.Log.d("PDF_SIG", "  slot=$k, type=${v.let { it::class.simpleName }}${if (v is PdfSignatureContent.Image) " id=${System.identityHashCode(v.value)}" else ""}")
     }
     val availableHeight = (pageHeight - bottomMargin) - startY
     val signatureBoxWidth = ((rightX - leftX) / 2f).coerceAtLeast(40f)
@@ -1332,9 +1774,9 @@ private fun collectOrderedTextInmovilizacionManifestaciones(
         var texto = obj.optString("texto", " ").trim()
 
         // ← MODIFICAR: Usar personasehacecargo si está disponible
-        if (id == 1 && hasSecondDriver && personasehacecargo.isNotBlank()) {
+        if (personasehacecargo.isNotBlank()) {
             texto = texto.replace("[[personasehacecargo]]", personasehacecargo)
-        } else if (id == 1 && hasSecondDriver) {
+        } else {
             // Fallback: usar placeholder vacío si no hay datos
             texto = texto.replace("[[personasehacecargo]]", "_______________")
         }
@@ -1344,8 +1786,7 @@ private fun collectOrderedTextInmovilizacionManifestaciones(
         }
 
         // Si tiene datos_conductor_habilitado y es el id=1 y hasSecondDriver, mostrar los datos
-        if (id == 1 && hasSecondDriver) {
-            obj.optJSONObject("datos_conductor_habilitado")?.let { datos ->
+        obj.optJSONObject("datos_conductor_habilitado")?.let { datos ->
                 val desc = datos.optString("descripcion", " ").trim()
                 val campoVar = datos.optString("campo_variable", "").trim()
                 val condiciones = datos.optString("condiciones", " ").trim()
@@ -1365,7 +1806,6 @@ private fun collectOrderedTextInmovilizacionManifestaciones(
                 }
 
                 if (condiciones.isNotBlank()) lines += "  $condiciones"
-            }
         }
 
         obj.optString("informacion_levantamiento", " ").takeIf { it.isNotBlank() }?.let {
