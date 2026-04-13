@@ -81,6 +81,7 @@ class MainActivity : ComponentActivity() {
                 var printerReturnRoute by rememberSaveable { mutableStateOf(ATESTADO_DATA_ROUTE) }
                 var lastGeneratedPdfPath by rememberSaveable { mutableStateOf("") }
                 var isGeneratingAtestado by rememberSaveable { mutableStateOf(false) }
+                var isGeneratingOdt by rememberSaveable { mutableStateOf(false) }
                 var atestadoGenerateReason by rememberSaveable { mutableStateOf("Siniestro Vial") }
                 var atestadoGenerateArticleNorm by rememberSaveable { mutableStateOf("LSV") }
                 var atestadoGenerateArticleText by rememberSaveable { mutableStateOf("") }
@@ -660,7 +661,74 @@ class MainActivity : ComponentActivity() {
                                         ).show()
                                     }
                                 },
-                                isGeneratingAtestado = isGeneratingAtestado
+                                shareOdtEnabled = lastGeneratedPdfPath.isNotBlank(),
+                                onShareOdtClick = {
+                                    if (lastGeneratedPdfPath.isBlank()) {
+                                        Toast.makeText(
+                                            applicationContext,
+                                            getString(R.string.atestado_odt_not_found_error),
+                                            Toast.LENGTH_LONG
+                                        ).show()
+                                        return@FirmasAtestadoScreen
+                                    }
+                                    if (isGeneratingOdt) return@FirmasAtestadoScreen
+
+                                    mainScope.launch {
+                                        isGeneratingOdt = true
+                                        runCatching {
+                                            withContext(Dispatchers.IO) {
+                                                val courtData = JuzgadoAtestadoStorage(applicationContext).loadCurrent()
+                                                val pdfPersonData = PersonaInvestigadaStorage(applicationContext).loadCurrent()
+                                                val ocurrenciaData = OcurrenciaDelitStorage(applicationContext).loadCurrent()
+                                                val vehicleData = VehiculoStorage(applicationContext).loadCurrent()
+                                                val manifestacionData = ManifestacionStorage(applicationContext).loadCurrent()
+                                                val signaturesToUse = signaturesBySigner.toMutableMap().apply {
+                                                    if (!hasSecondDriver) remove(SIGNER_SECOND_DRIVER)
+                                                }
+                                                val mappedSignatures = mapSignaturesForPdf(
+                                                    signaturesBySigner = signaturesToUse,
+                                                    investigatedWantsToSign = wantsToSign,
+                                                    investigatedNoSignText = getString(R.string.atestado_signature_no_desire)
+                                                )
+                                                val inicioModalData = AtestadoInicioStorage(applicationContext).loadCurrent()
+                                                generateAtestadoOdt(
+                                                    context = applicationContext,
+                                                    courtData = courtData,
+                                                    personData = pdfPersonData,
+                                                    ocurrenciaData = ocurrenciaData,
+                                                    vehicleData = vehicleData,
+                                                    manifestacionData = manifestacionData,
+                                                    signatures = mappedSignatures,
+                                                    investigatedNoSignText = getString(R.string.atestado_signature_no_desire),
+                                                    instructorTip = instructorTip,
+                                                    secretaryTip = secretaryTip,
+                                                    instructorUnit = instructorUnit,
+                                                    inicioModalData = inicioModalData,
+                                                    hasSecondDriver = hasSecondDriver
+                                                )
+                                            }
+                                        }.onSuccess { odtFile ->
+                                            isGeneratingOdt = false
+                                            val shared = shareGeneratedOdt(odtFile)
+                                            if (!shared) {
+                                                Toast.makeText(
+                                                    applicationContext,
+                                                    getString(R.string.atestado_odt_share_error),
+                                                    Toast.LENGTH_LONG
+                                                ).show()
+                                            }
+                                        }.onFailure {
+                                            isGeneratingOdt = false
+                                            Toast.makeText(
+                                                applicationContext,
+                                                getString(R.string.atestado_odt_generate_error),
+                                                Toast.LENGTH_LONG
+                                            ).show()
+                                        }
+                                    }
+                                },
+                                isGeneratingAtestado = isGeneratingAtestado,
+                                isGeneratingOdt = isGeneratingOdt
                             )
 
                             DOCUMENT_SCANNER_ROUTE -> DocumentScannerScreen(
@@ -836,6 +904,33 @@ class MainActivity : ComponentActivity() {
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             }
             val chooser = Intent.createChooser(intent, getString(R.string.atestado_signature_share_pdf)).apply {
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            startActivity(chooser)
+            true
+        }.recoverCatching {
+            if (it is ActivityNotFoundException) {
+                false
+            } else {
+                throw it
+            }
+        }.getOrDefault(false)
+    }
+
+
+    private fun shareGeneratedOdt(odtFile: File): Boolean {
+        return runCatching {
+            val uri = FileProvider.getUriForFile(
+                this,
+                "$packageName.fileprovider",
+                odtFile
+            )
+            val intent = Intent(Intent.ACTION_SEND).apply {
+                type = "application/vnd.oasis.opendocument.text"
+                putExtra(Intent.EXTRA_STREAM, uri)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            val chooser = Intent.createChooser(intent, getString(R.string.atestado_signature_share_odt)).apply {
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             }
             startActivity(chooser)

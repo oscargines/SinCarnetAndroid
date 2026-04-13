@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -90,7 +92,10 @@ fun FirmasAtestadoScreen(
     onPrintInvestigatedCopyClick: () -> Unit = {},
     shareEnabled: Boolean = false,
     onSharePdfClick: () -> Unit = {},
-    isGeneratingAtestado: Boolean = false
+    shareOdtEnabled: Boolean = false,
+    onShareOdtClick: () -> Unit = {},
+    isGeneratingAtestado: Boolean = false,
+    isGeneratingOdt: Boolean = false
 ) {
     var showGenerateReasonDialog by rememberSaveable { mutableStateOf(false) }
     var showArticleNormDialog by rememberSaveable { mutableStateOf(false) }
@@ -136,6 +141,7 @@ fun FirmasAtestadoScreen(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
@@ -346,6 +352,13 @@ fun FirmasAtestadoScreen(
                     isSigned = false,
                     onClick = onSharePdfClick
                 )
+
+                AtestadoSignatureButton(
+                    text = stringResource(R.string.atestado_signature_share_odt),
+                    enabled = shareOdtEnabled,
+                    isSigned = false,
+                    onClick = onShareOdtClick
+                )
             }
         }
 
@@ -380,6 +393,24 @@ fun FirmasAtestadoScreen(
                 ) {
                     CircularProgressIndicator(modifier = Modifier.size(24.dp))
                     Text(text = stringResource(R.string.generating_pdf_message))
+                }
+            },
+            confirmButton = {}
+        )
+    }
+
+    if (isGeneratingOdt) {
+        AlertDialog(
+            onDismissRequest = {},
+            title = { Text(text = stringResource(R.string.atestado_signature_share_odt)) },
+            text = {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                    Text(text = stringResource(R.string.generating_odt_message))
                 }
             },
             confirmButton = {}
