@@ -21,7 +21,7 @@ android {
         minSdk = 31
         targetSdk = 35
         versionCode = 1
-        versionName = "1.21.13 "
+        versionName = "1.30.00 "
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -115,5 +115,14 @@ dependencies {
     // prov/pkix/core-1.5x.0.0 son versiones Android recortadas y están excluidos del fileTree.
     implementation("org.bouncycastle:bcprov-jdk15on:1.50")
     implementation("org.bouncycastle:bcpkix-jdk15on:1.50")
+
+    // CameraX – escáner de documentos (gratuito, Apache 2.0)
+    implementation("androidx.camera:camera-core:1.3.4")
+    implementation("androidx.camera:camera-camera2:1.3.4")
+    implementation("androidx.camera:camera-lifecycle:1.3.4")
+    implementation("androidx.camera:camera-view:1.3.4")
+    implementation("androidx.exifinterface:exifinterface:1.3.7")
+    // lifecycle-runtime-compose: LocalLifecycleOwner actualizado (no deprecado)
+    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.0")
 
 }

@@ -45,6 +45,7 @@ fun TomaDatosAtestadoScreen(
     onCourtDataClick: () -> Unit = {},
     onActingDataClick: () -> Unit = {},
     onSignaturesClick: () -> Unit = {},
+    onScanDocumentClick: () -> Unit = {},
     // Firmas capturadas en FirmasAtestadoScreen (estado elevado en MainActivity)
     printSignatures: PrintSignatures? = null
 ) {
@@ -157,6 +158,14 @@ fun TomaDatosAtestadoScreen(
                     onClick = onSignaturesClick,
                     containerColor = Color(0xFF4A148C)
                 )
+                Spacer(modifier = Modifier.height(30.dp))
+
+                AtestadoActionButton(
+                    text = stringResource(R.string.atestado_data_scan_document),
+                    onClick = onScanDocumentClick,
+                    containerColor = Color(0xFF263238)
+
+                )
 
             }
         }
@@ -221,6 +230,7 @@ fun TomaDatosAtestadoScreenPreview() {
             onCourtDataClick = {},
             onActingDataClick = {},
             onSignaturesClick = {},
+            onScanDocumentClick = {},
             printSignatures = null
         )
     }

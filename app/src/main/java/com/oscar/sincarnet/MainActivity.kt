@@ -48,6 +48,7 @@ private const val ATESTADO_ACTING_DATA_ROUTE = "atestado_acting_data"
 private const val ATESTADO_SIGNATURES_ROUTE = "atestado_signatures"
 private const val FIRMA_SCREEN_ROUTE = "firma_screen"
 private const val BLUETOOTH_PRINTER_ROUTE = "bluetooth_printer"
+private const val DOCUMENT_SCANNER_ROUTE = "document_scanner"
 
 class MainActivity : ComponentActivity() {
     private companion object {
@@ -317,6 +318,9 @@ class MainActivity : ComponentActivity() {
                                 onActingDataClick = { currentRoute = ATESTADO_ACTING_DATA_ROUTE },
                                 onSignaturesClick = {
                                     currentRoute = ATESTADO_SIGNATURES_ROUTE
+                                },
+                                onScanDocumentClick = {
+                                    currentRoute = DOCUMENT_SCANNER_ROUTE
                                 },
                                 printSignatures = PrintSignatures(
                                     instructor    = signaturesBySigner[SIGNER_INSTRUCTOR],
@@ -659,8 +663,32 @@ class MainActivity : ComponentActivity() {
                                 isGeneratingAtestado = isGeneratingAtestado
                             )
 
-                            FIRMA_SCREEN_ROUTE -> FirmaManuscritaScreen(
+                            DOCUMENT_SCANNER_ROUTE -> DocumentScannerScreen(
                                 modifier = Modifier.fillMaxSize().padding(innerPadding),
+                                onBackClick = { currentRoute = ATESTADO_DATA_ROUTE },
+                                onOpenPdf = { pdfFile ->
+                                    val opened = openGeneratedPdf(pdfFile)
+                                    if (!opened) {
+                                        Toast.makeText(
+                                            applicationContext,
+                                            getString(R.string.scan_pdf_open_error),
+                                            Toast.LENGTH_LONG
+                                        ).show()
+                                    }
+                                },
+                                onSharePdf = { pdfFile ->
+                                    val shared = shareGeneratedPdf(pdfFile)
+                                    if (!shared) {
+                                        Toast.makeText(
+                                            applicationContext,
+                                            getString(R.string.atestado_pdf_share_error),
+                                            Toast.LENGTH_LONG
+                                        ).show()
+                                    }
+                                }
+                            )
+
+                            FIRMA_SCREEN_ROUTE -> FirmaManuscritaScreen(                                modifier = Modifier.fillMaxSize().padding(innerPadding),
                                 signerName = when (currentSignerKey) {
                                     SIGNER_INSTRUCTOR -> stringResource(R.string.atestado_signature_instructor)
                                     SIGNER_SECRETARY -> stringResource(R.string.atestado_signature_secretary)
