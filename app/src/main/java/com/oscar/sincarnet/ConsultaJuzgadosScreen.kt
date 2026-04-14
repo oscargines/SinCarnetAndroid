@@ -17,6 +17,7 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -43,20 +44,24 @@ import java.io.File
 private var isJuzgadosDatabasePrepared = false
 private const val LOG_TAG_JUZGADOS = "ConsultaJuzgados"
 
+/** Comunidad autónoma disponible en la BD de juzgados. */
 private data class ComunidadAutonoma(
     val id: Int,
     val nombre: String
 )
 
+/** Provincia disponible para la CCAA seleccionada. */
 private data class Provincia(
     val id: Int,
     val nombre: String
 )
 
+/** Municipio judicial disponible para la provincia seleccionada. */
 private data class MunicipioJudicial(
     val nombre: String
 )
 
+/** Sede judicial con datos de contacto y localización. */
 private data class SedeJudicial(
     val id: Int,
     val nombre: String,
@@ -66,6 +71,14 @@ private data class SedeJudicial(
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
+/**
+ * Pantalla de consulta jerárquica de juzgados (CCAA → provincia → municipio → sede).
+ *
+ * Carga catálogo desde SQLite y permite visualizar datos de contacto de la sede.
+ *
+ * @param modifier Modificador raíz
+ * @param onBackClick Vuelve a la pantalla anterior
+ */
 @Composable
 fun ConsultaJuzgadosScreen(
     modifier: Modifier = Modifier,
@@ -256,7 +269,7 @@ fun ConsultaJuzgadosScreen(
                                     ExposedDropdownMenuDefaults.TrailingIcon(expanded = ccaaExpanded)
                                 },
                                 modifier = Modifier
-                                    .menuAnchor()
+                                    .menuAnchor(MenuAnchorType.PrimaryNotEditable)
                                     .fillMaxWidth()
                             )
 
@@ -306,7 +319,7 @@ fun ConsultaJuzgadosScreen(
                                             ExposedDropdownMenuDefaults.TrailingIcon(expanded = provinciaExpanded)
                                         },
                                         modifier = Modifier
-                                            .menuAnchor()
+                                            .menuAnchor(MenuAnchorType.PrimaryNotEditable)
                                             .fillMaxWidth()
                                     )
 
@@ -351,7 +364,7 @@ fun ConsultaJuzgadosScreen(
                                             ExposedDropdownMenuDefaults.TrailingIcon(expanded = municipioExpanded)
                                         },
                                         modifier = Modifier
-                                            .menuAnchor()
+                                            .menuAnchor(MenuAnchorType.PrimaryNotEditable)
                                             .fillMaxWidth()
                                     )
 
@@ -393,7 +406,7 @@ fun ConsultaJuzgadosScreen(
                                             ExposedDropdownMenuDefaults.TrailingIcon(expanded = sedeExpanded)
                                         },
                                         modifier = Modifier
-                                            .menuAnchor()
+                                            .menuAnchor(MenuAnchorType.PrimaryNotEditable)
                                             .fillMaxWidth()
                                     )
 

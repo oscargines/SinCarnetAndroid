@@ -8,20 +8,46 @@ import java.io.File
 private var isAestadoJuzgadosDatabasePrepared = false
 private const val LOG_TAG_JUZGADOS_DS = "JuzgadosDataSource"
 
+/**
+ * Representa una Comunidad Autónoma de España en la jerarquía de juzgados.
+ *
+ * @property id Identificador único de la CCAA en la base de datos.
+ * @property nombre Nombre de la comunidad autónoma (p. ej. "Madrid", "Cataluña").
+ */
 internal data class JuzgadoComunidadAutonoma(
     val id: Int,
     val nombre: String
 )
 
+/**
+ * Representa una provincia española, asociada a una comunidad autónoma.
+ *
+ * @property id Identificador único de la provincia.
+ * @property nombre Nombre de la provincia (p. ej. "Madrid", "Barcelona").
+ */
 internal data class JuzgadoProvincia(
     val id: Int,
     val nombre: String
 )
 
+/**
+ * Representa un municipio donde existen sedes de juzgado.
+ *
+ * @property nombre Nombre del municipio (p. ej. "Madrid", "Barcelona").
+ */
 internal data class JuzgadoMunicipio(
     val nombre: String
 )
 
+/**
+ * Representa una sede de juzgado con información de contacto completa.
+ *
+ * @property id Identificador único de la sede (id_juzgado en la BD).
+ * @property nombre Nombre de la sede del juzgado (p. ej. "Juzgado de Instrucción nº 1").
+ * @property direccion Dirección postal de la sede, puede ser null.
+ * @property telefono Número de teléfono de contacto, puede ser null.
+ * @property codigoPostal Código postal de la sede, puede ser null.
+ */
 internal data class JuzgadoSede(
     val id: Int,
     val nombre: String,
@@ -30,6 +56,13 @@ internal data class JuzgadoSede(
     val codigoPostal: String?
 )
 
+/**
+ * Carga todas las comunidades autónomas desde la base de datos juzgados.db.
+ *
+ * @param context Contexto de la aplicación.
+ * @return Lista de comunidades autónomas ordenadas por ID.
+ * @throws Exception Si hay error al acceder a la base de datos.
+ */
 internal fun loadJuzgadoCcaaFromDatabase(context: Context): List<JuzgadoComunidadAutonoma> {
     val dbFile = ensureJuzgadosDatabaseAvailable(context)
     val result = mutableListOf<JuzgadoComunidadAutonoma>()
@@ -50,6 +83,14 @@ internal fun loadJuzgadoCcaaFromDatabase(context: Context): List<JuzgadoComunida
     return result
 }
 
+/**
+ * Carga las provincias asociadas a una comunidad autónoma específica.
+ *
+ * @param context Contexto de la aplicación.
+ * @param ccaaId Identificador de la comunidad autónoma.
+ * @return Lista de provincias ordenadas alfabéticamente.
+ * @throws Exception Si hay error al acceder a la base de datos.
+ */
 internal fun loadJuzgadoProvinciasFromDatabase(
     context: Context,
     ccaaId: Int
@@ -83,6 +124,14 @@ internal fun loadJuzgadoProvinciasFromDatabase(
     return result
 }
 
+/**
+ * Carga los municipios con sedes de juzgado en una provincia específica.
+ *
+ * @param context Contexto de la aplicación.
+ * @param provinciaId Identificador de la provincia.
+ * @return Lista de municipios únicos ordenados alfabéticamente.
+ * @throws Exception Si hay error al acceder a la base de datos.
+ */
 internal fun loadJuzgadoMunicipiosFromDatabase(
     context: Context,
     provinciaId: Int
@@ -113,6 +162,14 @@ internal fun loadJuzgadoMunicipiosFromDatabase(
     return result
 }
 
+/**
+ * Carga todas las sedes de juzgado en un municipio específico.
+ *
+ * @param context Contexto de la aplicación.
+ * @param municipio Nombre del municipio.
+ * @return Lista de sedes con información completa.
+ * @throws Exception Si hay error al acceder a la base de datos.
+ */
 internal fun loadJuzgadoSedesFromDatabase(
     context: Context,
     municipio: String
@@ -155,12 +212,23 @@ internal fun loadJuzgadoSedesFromDatabase(
     return result
 }
 
+/**
+ * Proporciona una lista de vista previa de comunidades autónomas para Compose Preview.
+ *
+ * @return Lista de 3 CCAAs de ejemplo (Andalucía, Asturias, Madrid).
+ */
 internal fun loadPreviewJuzgadoCcaa(): List<JuzgadoComunidadAutonoma> = listOf(
     JuzgadoComunidadAutonoma(1, "Andalucia"),
     JuzgadoComunidadAutonoma(2, "Asturias"),
     JuzgadoComunidadAutonoma(3, "Madrid")
 )
 
+/**
+ * Proporciona provincias de vista previa para una CCAA específica.
+ *
+ * @param ccaaId Identificador de la CCAA.
+ * @return Lista de provincias de ejemplo para esa CCAA.
+ */
 internal fun loadPreviewJuzgadoProvincias(ccaaId: Int): List<JuzgadoProvincia> = when (ccaaId) {
     1 -> listOf(
         JuzgadoProvincia(1, "Almeria"),
@@ -173,6 +241,12 @@ internal fun loadPreviewJuzgadoProvincias(ccaaId: Int): List<JuzgadoProvincia> =
     else -> emptyList()
 }
 
+/**
+ * Proporciona municipios de vista previa para una provincia específica.
+ *
+ * @param provinciaId Identificador de la provincia.
+ * @return Lista de municipios de ejemplo para esa provincia.
+ */
 internal fun loadPreviewJuzgadoMunicipios(provinciaId: Int): List<JuzgadoMunicipio> = when (provinciaId) {
     1 -> listOf(JuzgadoMunicipio("Almeria"), JuzgadoMunicipio("El Ejido"))
     4 -> listOf(JuzgadoMunicipio("Cangas de Onis"), JuzgadoMunicipio("Oviedo"))
@@ -180,6 +254,12 @@ internal fun loadPreviewJuzgadoMunicipios(provinciaId: Int): List<JuzgadoMunicip
     else -> emptyList()
 }
 
+/**
+ * Proporciona sedes de vista previa para un municipio específico.
+ *
+ * @param municipio Nombre del municipio.
+ * @return Lista de sedes de ejemplo para ese municipio.
+ */
 internal fun loadPreviewJuzgadoSedes(municipio: String): List<JuzgadoSede> = when (municipio) {
     "Oviedo" -> listOf(
         JuzgadoSede(
@@ -277,4 +357,3 @@ private fun repairJuzgadosCcaaMappingIfNeeded(dbFile: File) {
         }
     }
 }
-

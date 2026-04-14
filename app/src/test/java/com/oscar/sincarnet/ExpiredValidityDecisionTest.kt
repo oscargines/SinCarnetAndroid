@@ -3,6 +3,12 @@ package com.oscar.sincarnet
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
+/**
+ * Pruebas unitarias para [resolveExpiredValidityDecision].
+ *
+ * Verifica los escenarios penales, administrativos y neutros del flujo
+ * de pérdida de vigencia.
+ */
 class ExpiredValidityDecisionTest {
 
     @Test

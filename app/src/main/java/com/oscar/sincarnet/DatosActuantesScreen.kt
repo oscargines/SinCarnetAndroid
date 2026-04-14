@@ -16,6 +16,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -37,6 +38,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.oscar.sincarnet.ui.theme.SinCarnetTheme
 
+/** Catálogo de empleos de Guardia Civil para selección guiada. */
 private val EMPLEOS_GC = listOf(
     "Guardia Civil",
     "Guardia de 1ª",
@@ -59,6 +61,18 @@ private const val TIP_MAX_LENGTH = 7
 private val TIP_REGEX = Regex("^[A-Z][0-9]{5}[A-Z]$")
 
 @OptIn(ExperimentalMaterial3Api::class)
+/**
+ * Pantalla de datos de actuantes (instructor y secretario).
+ *
+ * Permite editar empleo, TIP y unidad de ambos actuantes, reutilizar historial
+ * de entradas frecuentes y recuperar borrado reciente.
+ *
+ * @param modifier Modificador raíz
+ * @param onBackClick Vuelve a la pantalla anterior
+ * @param onSaveClick Guarda datos de actuantes
+ * @param onDeleteClick Borra datos actuales conservando backup recuperable
+ * @param onRecoverClick Recupera el último backup disponible
+ */
 @Composable
 fun DatosActuantesScreen(
     modifier: Modifier = Modifier,
@@ -264,7 +278,7 @@ private fun OfficerCard(
                     value = employment,
                     onValueChange = {},
                     modifier = Modifier
-                        .menuAnchor()
+                        .menuAnchor(MenuAnchorType.PrimaryNotEditable)
                         .fillMaxWidth(),
                     readOnly = true,
                     label = { Text(text = stringResource(R.string.atestado_acting_employment)) },
@@ -299,7 +313,7 @@ private fun OfficerCard(
                                 onTipChange(normalizeTipInput(it))
                                 tipDropdownExpanded = true
                             },
-                            modifier = Modifier.menuAnchor().fillMaxWidth(),
+                            modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable).fillMaxWidth(),
                             singleLine = true,
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Ascii),
                             isError = tip.isNotEmpty() && !isTipValid(tip),
@@ -339,7 +353,7 @@ private fun OfficerCard(
                                 onUnitChange(it)
                                 unitDropdownExpanded = true
                             },
-                            modifier = Modifier.menuAnchor().fillMaxWidth(),
+                            modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable).fillMaxWidth(),
                             singleLine = true,
                             enabled = unitEnabled,
                             label = { Text(text = stringResource(R.string.atestado_acting_unit)) },

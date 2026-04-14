@@ -2,15 +2,36 @@ package com.oscar.sincarnet
 
 import android.content.Context
 
+/**
+ * Modelo que almacena datos sobre la manifestación del investigado.
+ *
+ * Incluye su decisión de renunciar a asistencia letrada, desear declarar,
+ * y las respuestas a cada una de las 8 preguntas formuladas.
+ *
+ * @property renunciaAsistenciaLetrada true si renuncia a asistencia letrada, false si la acepta, null si no se responde.
+ * @property deseaDeclarar true si desea declarar, false si no, null si no se responde.
+ * @property respuestasPreguntas Mapa de ID de pregunta (1-8) a respuesta de texto.
+ */
 internal data class ManifestacionData(
     val renunciaAsistenciaLetrada: Boolean? = null,
     val deseaDeclarar: Boolean? = null,
     val respuestasPreguntas: Map<Int, String> = emptyMap()
 )
 
+/**
+ * Gestor de almacenamiento persistente para datos de manifestación del investigado.
+ *
+ * @constructor Crea un nuevo gestor de almacenamiento.
+ * @param context Contexto de la aplicación.
+ */
 internal class ManifestacionStorage(context: Context) {
     private val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
+    /**
+     * Carga los datos actuales de manifestación.
+     *
+     * @return Estructura [ManifestacionData] con datos almacenados o valores por defecto.
+     */
     fun loadCurrent(): ManifestacionData {
         val respuestas = buildMap {
             for (questionId in QUESTION_IDS) {
@@ -24,6 +45,11 @@ internal class ManifestacionStorage(context: Context) {
         )
     }
 
+    /**
+     * Guarda los datos actuales de manifestación.
+     *
+     * @param data Estructura [ManifestacionData] a guardar.
+     */
     fun saveCurrent(data: ManifestacionData) {
         prefs.edit()
             .putBooleanOrRemove(KEY_RENUNCIA_ASISTENCIA_LETRADA, data.renunciaAsistenciaLetrada)
@@ -36,6 +62,9 @@ internal class ManifestacionStorage(context: Context) {
             .apply()
     }
 
+    /**
+     * Limpia todos los datos de manifestación.
+     */
     fun clearCurrent() {
         prefs.edit()
             .remove(KEY_RENUNCIA_ASISTENCIA_LETRADA)

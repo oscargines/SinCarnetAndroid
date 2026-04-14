@@ -31,6 +31,15 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.oscar.sincarnet.ui.theme.SinCarnetTheme
 
+/**
+ * Pantalla de casuísticas especiales no encuadradas en los tres flujos base.
+ *
+ * Actualmente contempla pérdida psicofísica y carencia de requisitos,
+ * mostrando resultado administrativo con observaciones legales.
+ *
+ * @param modifier Modificador raíz
+ * @param onBackClick Vuelve a la pantalla anterior
+ */
 @Composable
 fun SpecialCasesScreen(
     modifier: Modifier = Modifier,
@@ -165,21 +174,30 @@ fun SpecialCasesScreen(
     }
 }
 
+/** Tipos de casuística especial gestionados por la pantalla. */
 internal enum class SpecialCaseType {
     PSYCHOPHYSICAL_LOSS,
     MISSING_REQUIREMENTS
 }
 
+/** Variantes de observación legal para el modal informativo. */
 private enum class SpecialCaseObservationCase {
     PSYCHOPHYSICAL_LOSS,
     MISSING_REQUIREMENTS
 }
 
+/** Resultado visual del motor de decisión de casos especiales. */
 internal data class SpecialCaseDecision(
     val messageRes: Int?,
     val hasOrangeBorder: Boolean
 )
 
+/**
+ * Resuelve el resultado visual/legal del bloque de casos especiales.
+ *
+ * Mantener esta lógica fuera de UI facilita pruebas unitarias y coherencia
+ * entre pantalla y capa de negocio.
+ */
 internal fun resolveSpecialCaseDecision(selectedSpecialCase: SpecialCaseType?): SpecialCaseDecision {
     return when (selectedSpecialCase) {
         SpecialCaseType.PSYCHOPHYSICAL_LOSS -> SpecialCaseDecision(

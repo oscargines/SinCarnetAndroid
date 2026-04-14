@@ -2,6 +2,20 @@ package com.oscar.sincarnet
 
 import android.content.Context
 
+/**
+ * Modelo de datos que almacena información de los actuantes en un atestado.
+ *
+ * Los actuantes son el instructor de policía y el secretario (si existe).
+ * Incluye su empleo, identificación/tip y unidad asignada.
+ *
+ * @property instructorEmployment Empleo/cargo del instructor (p. ej. "Agente de Policía").
+ * @property instructorTip Identificación del instructor (p. ej. nombre y número de placa).
+ * @property instructorUnit Unidad/destacamento donde trabaja el instructor.
+ * @property secretaryEmployment Empleo/cargo del secretario.
+ * @property secretaryTip Identificación del secretario.
+ * @property secretaryUnit Unidad/destacamento del secretario.
+ * @property sameUnit Indica si ambos trabajadores pertenecen a la misma unidad.
+ */
 internal data class ActuantesData(
     val instructorEmployment: String = "",
     val instructorTip: String = "",
@@ -12,22 +26,49 @@ internal data class ActuantesData(
     val sameUnit: Boolean = false
 )
 
+/**
+ * Gestor de almacenamiento persistente para datos de actuantes usando SharedPreferences.
+ *
+ * Mantiene historial de emple y unidades para autocompletar en futuras entradas,
+ * además de guardar/restaurar los datos actuales y respaldos.
+ *
+ * @constructor Crea un nuevo gestor de almacenamiento para actuantes.
+ * @param context Contexto de la aplicación.
+ */
 internal class ActuantesStorage(context: Context) {
     private val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
     private val delimiter = ","
 
+    /**
+     * Obtiene el historial combinado de identificaciones de actuantes (instructor + secretario).
+     *
+     * Se utilizan para proporcionar sugerencias de autocompletado en los campos de entrada.
+     *
+     * @return Lista de identificaciones únicas sin duplicados.
+     */
     fun getTipHistory(): List<String> {
         val instructorTips = prefs.getString(KEY_TIP_HISTORY_INSTRUCTOR, "")?.split(delimiter)?.filter { it.isNotBlank() } ?: emptyList()
         val secretaryTips = prefs.getString(KEY_TIP_HISTORY_SECRETARY, "")?.split(delimiter)?.filter { it.isNotBlank() } ?: emptyList()
         return (instructorTips + secretaryTips).distinct()
     }
 
+    /**
+     * Obtiene el historial combinado de unidades.
+     *
+     * @return Lista de unidades únicas sin duplicados.
+     */
     fun getUnitHistory(): List<String> {
         val instructorUnits = prefs.getString(KEY_UNIT_HISTORY_INSTRUCTOR, "")?.split(delimiter)?.filter { it.isNotBlank() } ?: emptyList()
         val secretaryUnits = prefs.getString(KEY_UNIT_HISTORY_SECRETARY, "")?.split(delimiter)?.filter { it.isNotBlank() } ?: emptyList()
         return (instructorUnits + secretaryUnits).distinct()
     }
 
+    /**
+     * Añade una identificación al historial si no existe ya.
+     *
+     * @param tip Identificación a añadir.
+     * @param isInstructor true si es del instructor, false si es del secretario.
+     */
     fun addTipToHistory(tip: String, isInstructor: Boolean) {
         if (tip.isBlank()) return
         val key = if (isInstructor) KEY_TIP_HISTORY_INSTRUCTOR else KEY_TIP_HISTORY_SECRETARY
@@ -38,6 +79,12 @@ internal class ActuantesStorage(context: Context) {
         }
     }
 
+    /**
+     * Añade una unidad al historial si no existe ya.
+     *
+     * @param unit Unidad a añadir.
+     * @param isInstructor true si es del instructor, false si es del secretario.
+     */
     fun addUnitToHistory(unit: String, isInstructor: Boolean) {
         if (unit.isBlank()) return
         val key = if (isInstructor) KEY_UNIT_HISTORY_INSTRUCTOR else KEY_UNIT_HISTORY_SECRETARY
@@ -48,6 +95,11 @@ internal class ActuantesStorage(context: Context) {
         }
     }
 
+    /**
+     * Carga los datos actuales de actuantes desde SharedPreferences.
+     *
+     * @return Estructura [ActuantesData] con los datos almacenados o valores por defecto.
+     */
     fun loadCurrent(): ActuantesData = ActuantesData(
         instructorEmployment = prefs.getString(KEY_INSTRUCTOR_EMPLOYMENT, "").orEmpty(),
         instructorTip = prefs.getString(KEY_INSTRUCTOR_TIP, "").orEmpty(),
@@ -58,6 +110,11 @@ internal class ActuantesStorage(context: Context) {
         sameUnit = prefs.getBoolean(KEY_SAME_UNIT, false)
     )
 
+    /**
+     * Guarda los datos actuales de actuantes en SharedPreferences.
+     *
+     * @param data Estructura [ActuantesData] a guardar.
+     */
     fun saveCurrent(data: ActuantesData) {
         prefs.edit()
             .putString(KEY_INSTRUCTOR_EMPLOYMENT, data.instructorEmployment)
@@ -70,6 +127,12 @@ internal class ActuantesStorage(context: Context) {
             .apply()
     }
 
+    /**
+     * Elimina los datos actuales y los respalda para poder recuperarlos después.
+     *
+     * Se usa típicamente cuando el usuario inicia un nuevo atestado y desea limpiar
+     * los datos anteriores, permitiendo después recuperarlos mediante [recoverDeleted].
+     */
     fun deleteCurrentWithBackup() {
         val current = loadCurrent()
         prefs.edit()
@@ -91,6 +154,14 @@ internal class ActuantesStorage(context: Context) {
             .apply()
     }
 
+    /**
+     * Recupera los datos eliminados anteriormente mediante [deleteCurrentWithBackup].
+     *
+     * @return Los datos recuperados y restaurados, o null si no hay respaldo disponible.
+     *
+     * @see hasRecoverableBackup
+     * @see deleteCurrentWithBackup
+     */
     fun recoverDeleted(): ActuantesData? {
         if (!prefs.getBoolean(KEY_HAS_BACKUP, false)) return null
 
@@ -108,6 +179,11 @@ internal class ActuantesStorage(context: Context) {
         return recovered
     }
 
+    /**
+     * Verifica si hay datos respaldados que puedan ser recuperados.
+     *
+     * @return true si existe un respaldo disponible, false en caso contrario.
+     */
     fun hasRecoverableBackup(): Boolean = prefs.getBoolean(KEY_HAS_BACKUP, false)
 
     private companion object {

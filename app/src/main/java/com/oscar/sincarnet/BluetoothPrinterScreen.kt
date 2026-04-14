@@ -39,6 +39,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -70,6 +71,7 @@ import kotlinx.coroutines.withContext
 
 private const val BT_TAG = "BluetoothPrinter"
 
+/** Dispositivo Bluetooth detectado durante escaneo activo. */
 private data class ScannedBluetoothPrinter(
     val nombre: String,
     val mac: String
@@ -77,6 +79,15 @@ private data class ScannedBluetoothPrinter(
 
 @SuppressLint("MissingPermission")
 @OptIn(ExperimentalMaterial3Api::class)
+/**
+ * Pantalla de gestión de impresoras Bluetooth.
+ *
+ * Permite escanear dispositivos, guardar impresoras compatibles, seleccionar
+ * impresora por defecto y validar conectividad con modelos Zebra admitidos.
+ *
+ * @param modifier Modificador raíz
+ * @param onBackClick Vuelve a la pantalla previa
+ */
 @Composable
 fun BluetoothPrinterScreen(
     modifier: Modifier = Modifier,
@@ -385,7 +396,7 @@ fun BluetoothPrinterScreen(
                             value = selectedSavedPrinterName,
                             onValueChange = {},
                             modifier = Modifier
-                                .menuAnchor()
+                                .menuAnchor(MenuAnchorType.PrimaryNotEditable)
                                 .fillMaxWidth(),
                             readOnly = true,
                             singleLine = true,

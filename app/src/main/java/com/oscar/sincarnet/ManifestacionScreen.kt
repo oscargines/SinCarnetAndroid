@@ -41,6 +41,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import com.oscar.sincarnet.ui.theme.SinCarnetTheme
 
+/** IDs estables para pruebas UI y trazabilidad semántica de la pantalla. */
 private object ManifestacionUiIds {
     const val ROOT = "manifestacion_root"
     const val CONTENT_CARD = "manifestacion_content_card"
@@ -66,6 +67,15 @@ private object ManifestacionUiIds {
     fun preguntaRespuesta(id: Int): String = "manifestacion_pregunta_respuesta_$id"
 }
 
+/**
+ * Pantalla de manifestación de la persona investigada.
+ *
+ * Renderiza documento base de manifestación, opciones principales y respuestas
+ * a preguntas anexas, con persistencia en [ManifestacionStorage].
+ *
+ * @param modifier Modificador raíz
+ * @param onBackClick Vuelve a la pantalla anterior
+ */
 @Composable
 fun ManifestacionScreen(
     modifier: Modifier = Modifier,

@@ -21,7 +21,13 @@ import java.io.IOException
 private const val TAG = "PrinterRW"
 
 // ============================================================
-// PAPEL — RW420 y ZQ521: 832 dots, 203 DPI
+// PAPER SPECIFICATION — Zebra RW420 y ZQ521 @ 203 DPI
+// ============================================================
+// Especificación técnica de papel térmico Zebra:
+// - Ancho físico: 832 dots @ 203 DPI (aprox 104 mm / 4.1")
+// - Altura: continua (rollo)
+// - Márgenes: 20 dots lado + 120 dots abajo
+// - Fuente: CPCL (Common Printer Command Language)
 // ============================================================
 private const val PAPER_W_DOTS  = 792
 private const val MARGIN        = 20
@@ -372,6 +378,11 @@ private fun StringBuilder.appendSignatureBlock(
 // API PÚBLICA
 // ============================================================
 
+/**
+ * Imprime una diligencia cargada desde un JSON de assets.
+ *
+ * Envoltorio no bloqueante sobre [printDocumentFromJsonSuspend].
+ */
 fun printDocumentFromJson(context: Context, mac: String?, jsonAssetPath: String,
                           sigs: PrintSignatures? = null) {
     if (mac.isNullOrBlank()) { showNoMac(context); return }
@@ -381,6 +392,9 @@ fun printDocumentFromJson(context: Context, mac: String?, jsonAssetPath: String,
     }
 }
 
+/**
+ * Imprime una diligencia a partir de un objeto JSON ya resuelto.
+ */
 fun printDocument(context: Context, mac: String?,
                   doc: JSONObject = JSONObject(), title: String = "",
                   qrUrl: String = "", sigs: PrintSignatures? = null) {
@@ -391,6 +405,9 @@ fun printDocument(context: Context, mac: String?,
     }
 }
 
+/**
+ * Imprime texto totalmente resuelto (sin parseo de JSON en esta capa).
+ */
 fun printDocumentResolved(context: Context, mac: String?, title: String, body: String,
                           sigs: PrintSignatures? = null) {
     if (mac.isNullOrBlank()) { showNoMac(context); return }
@@ -400,6 +417,7 @@ fun printDocumentResolved(context: Context, mac: String?, title: String, body: S
     }
 }
 
+/** Prueba rápida de impresión de imagen para validar conectividad BT. */
 fun printImageTest(context: Context, mac: String?) {
     if (mac.isNullOrBlank()) { showNoMac(context); return }
     CoroutineScope(Dispatchers.IO).launch {
@@ -417,6 +435,7 @@ fun printImageTest(context: Context, mac: String?) {
 // API SUSPEND
 // ============================================================
 
+/** Variante suspend: carga JSON desde assets e imprime en una sola operación. */
 suspend fun printDocumentFromJsonSuspend(context: Context, mac: String,
                                          jsonAssetPath: String,
                                          sigs: PrintSignatures? = null) {
@@ -426,6 +445,11 @@ suspend fun printDocumentFromJsonSuspend(context: Context, mac: String,
         doc.optString("titulo", ""), doc.optString("qr_url", ""), sigs)
 }
 
+/**
+ * Variante suspend para imprimir un documento ya resuelto.
+ *
+ * Soporta cajas de citación cuando detecta [DocumentPrinter.JUICIO_BOXES_MARKER].
+ */
 suspend fun printDocumentResolvedSuspend(
     context: Context, mac: String,
     title: String, body: String,
@@ -507,6 +531,9 @@ suspend fun printDocumentResolvedSuspend(
     Log.d(TAG, "printDocumentResolvedSuspend OK contentH=$contentH")
 }
 
+/**
+ * Variante suspend que compone CPCL completo desde `documento` JSON.
+ */
 suspend fun printDocumentSuspend(context: Context, mac: String,
                                  doc: JSONObject = JSONObject(),
                                  title: String = "", qrUrl: String = "",
@@ -694,6 +721,12 @@ internal suspend fun closeSharedBtConnection(conn: Connection) =
 // Si se pasa sharedConn (conexión ya abierta) se reutiliza;
 // si no, se abre y cierra una conexión propia (uso individual).
 // ============================================================
+/**
+ * Envía comandos CPCL a impresora Zebra.
+ *
+ * Si `sharedConn` es null, abre/cierra conexión individual.
+ * Si no es null, reutiliza conexión compartida para lote.
+ */
 private suspend fun sendToPrinter(
     context: Context, mac: String,
     contentH: Int, bodyCpcl: String, pw: Int,
@@ -743,6 +776,7 @@ private fun showError(context: Context, e: Exception) {
     }
 }
 
+/** Ajusta texto a un ancho máximo de caracteres por línea. */
 private fun wrapText(text: String, maxChars: Int): List<String> {
     if (text.isBlank() || maxChars <= 0) return emptyList()
     val result = mutableListOf<String>()

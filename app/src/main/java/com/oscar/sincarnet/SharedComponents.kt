@@ -22,6 +22,11 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 
+/**
+ * Botón de retroceso con icono cargado desde assets.
+ *
+ * Si el asset no está disponible, usa el icono launcher como fallback.
+ */
 @Composable
 internal fun BackIconButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
     val context = LocalContext.current
@@ -55,6 +60,9 @@ internal fun BackIconButton(onClick: () -> Unit, modifier: Modifier = Modifier) 
     }
 }
 
+/**
+ * Fila de opción con `RadioButton` y texto clicable en todo el ancho.
+ */
 @Composable
 internal fun OptionRadioRow(
     text: String,
@@ -72,6 +80,11 @@ internal fun OptionRadioRow(
     }
 }
 
+/**
+ * Bloque estándar de pregunta binaria Sí/No.
+ *
+ * Se usa en modales de decisión legal para mantener consistencia visual.
+ */
 @Composable
 internal fun YesNoQuestionBlock(
     questionText: String,
@@ -103,6 +116,13 @@ internal fun YesNoQuestionBlock(
     }
 }
 
+/**
+ * Renderiza una imagen desde assets con fallback a recurso local.
+ *
+ * @param assetPath Ruta dentro de `assets/`
+ * @param contentDescription Texto accesible de la imagen
+ * @param modifier Modificador del composable imagen
+ */
 @Composable
 internal fun AssetImage(
     assetPath: String,

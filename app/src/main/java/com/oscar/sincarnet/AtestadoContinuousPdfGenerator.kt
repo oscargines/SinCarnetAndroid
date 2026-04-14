@@ -28,22 +28,19 @@ private const val CONTENT_TOP_MM = 19f
 private const val BOTTOM_MARGIN_MM = 15f
 private const val MIN_SIGNATURE_SECTION_HEIGHT_PT = 170f
 
-data class AtestadoInicioModalData(
-    val motivo: String = "",
-    val norma: String = "",
-    val articulo: String = "",
-    val dgtNoRecord: Boolean = false,
-    val internationalNoRecord: Boolean = false,
-    val existsRecord: Boolean = false,
-    val vicisitudesOption: String = "",
-    val jefaturaProvincial: String = "",
-    val tiempoPrivacion: String = "",
-    val juzgadoDecreta: String = ""
-)
+// AtestadoInicioModalData se declara en AtestadoInicioStorage.kt para evitar duplicidad de modelo.
 
+/** Alineación de texto para render de contenido mixto. */
 private enum class TextAlignment { LEFT, CENTER }
+/** Línea de texto con alineación asociada. */
 private data class AlignedLine(val text: String, val alignment: TextAlignment)
 
+/**
+ * Genera el PDF continuo del atestado completo.
+ *
+ * Construye el lote de diligencias (inicio, derechos, letrado, manifestación,
+ * inmovilización y citación) en un único PDF multipágina.
+ */
 internal fun generateAtestadoContinuousPdf(
     context: Context,
     courtData: JuzgadoAtestadoData,
@@ -361,6 +358,7 @@ internal fun generateAtestadoContinuousPdf(
     return AtestadoPdfResult(file = file, createdAtMillis = now)
 }
 
+/** Recurso de imagen a incrustar en paquete ODT. */
 private data class OdtImageAsset(
     val path: String,
     val mediaType: String,
@@ -388,6 +386,9 @@ private data class OdtImageAsset(
     }
 }
 
+/**
+ * Genera una versión ODT editable del atestado.
+ */
 internal fun generateAtestadoOdt(
     context: Context,
     courtData: JuzgadoAtestadoData,
@@ -476,6 +477,7 @@ private fun buildAtestadoOdtFileName(numeroDiligencias: String): String {
     return if (safeNumber.isBlank()) "Atestado.odt" else "Atestado${safeNumber}.odt"
 }
 
+/** Construye `content.xml` del ODT con todas las diligencias resueltas. */
 private fun buildAtestadoOdtContentXml(
     orderedDocuments: List<CitacionDocument>,
     signatureAssets: Map<PdfSignatureSlot, OdtImageAsset>,
@@ -681,6 +683,7 @@ private fun createOdtImageAsset(slot: PdfSignatureSlot, bitmap: Bitmap): OdtImag
     )
 }
 
+/** Escribe el contenedor ZIP ODT (mimetype, XML y assets de firma). */
 private fun writeAtestadoOdtPackage(
     context: Context,
     outputFile: File,
@@ -810,6 +813,7 @@ private fun buildAtestadoPdfFileName(numeroDiligencias: String): String {
     return if (safeNumber.isBlank()) "Atestado.pdf" else "Atestado${safeNumber}.pdf"
 }
 
+/** Estado mutable de página durante render continuo de PDF. */
 private data class ContinuousPageState(
     val page: PdfDocument.Page,
     val canvas: android.graphics.Canvas,
@@ -818,6 +822,7 @@ private data class ContinuousPageState(
     var cursorY: Float
 )
 
+/** Inicia una nueva página de PDF continuo con cabecera estándar. */
 private fun startContinuousPage(
     pdfDocument: PdfDocument,
     context: Context,
@@ -862,6 +867,7 @@ private fun startContinuousPage(
 
 private fun mmToPt(mm: Float): Float = mm * 72f / 25.4f
 
+/** Dibuja encabezado institucional de citación (escudos + cajas superiores). */
 private fun drawCitacionHeader(
     canvas: android.graphics.Canvas,
     context: Context,
@@ -932,6 +938,7 @@ private fun drawCitacionHeader(
     }
 }
 
+/** Dibuja bloque de firmas de citación (incluye 2º conductor cuando aplica). */
 private fun drawCitacionSignatures(
     canvas: android.graphics.Canvas,
     signatures: Map<PdfSignatureSlot, PdfSignatureContent<ImageBitmap>>,

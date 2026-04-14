@@ -4,6 +4,9 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
+/**
+ * Pruebas de whitelist de modelos Zebra permitidos por la app.
+ */
 class BluetoothPrinterPolicyTest {
 
     @Test

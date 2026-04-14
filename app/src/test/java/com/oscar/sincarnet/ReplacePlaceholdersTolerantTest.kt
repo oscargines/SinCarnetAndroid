@@ -3,6 +3,12 @@ package com.oscar.sincarnet
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
+/**
+ * Pruebas de tolerancia de placeholders para [replaceCitacionPlaceholders].
+ *
+ * Verifica que placeholders con espacios, guiones y pequeños typos se
+ * resuelven vía normalización + distancia de Levenshtein.
+ */
 class ReplacePlaceholdersTolerantTest {
 
     @Test

@@ -5,6 +5,9 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
+/**
+ * Pruebas del mapeo de firmas de UI a slots de renderizado PDF.
+ */
 class AtestadoSignaturePdfAdapterTest {
 
     @Test

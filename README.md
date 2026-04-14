@@ -92,6 +92,37 @@ Archivo principal de configuración:
 
 - `app/build.gradle.kts`
 
+## Documentación API
+
+El proyecto incluye documentación KDoc generada con **Dokka V2** y publicada en una
+ruta versionable del repositorio:
+
+- [`docs/api/index.html`](docs/api/index.html)
+
+### Regenerar y publicar la documentación
+
+```powershell
+./gradlew :app:publishDokkaToDocs
+```
+
+Ese comando:
+
+1. genera la documentación HTML del módulo `app`,
+2. la copia a `docs/api/`,
+3. y deja el resultado listo para commit/push en Git.
+
+### Solo generar Dokka sin publicar
+
+```powershell
+./gradlew :app:dokkaGeneratePublicationHtml
+```
+
+Salida temporal local:
+
+```text
+app/build/dokka/html/index.html
+```
+
 ## Estructura relevante del proyecto
 
 ```text
@@ -132,6 +163,12 @@ SinCarnetAndroid/
 ./gradlew assembleDebug
 ```
 
+### Validación técnica recomendada
+
+```powershell
+./gradlew :app:assembleDebug :app:testDebugUnitTest :app:publishDokkaToDocs
+```
+
 ### Release firmada
 
 ```powershell
@@ -164,6 +201,7 @@ La configuración de firma se define en `app/build.gradle.kts`.
 - El repositorio contiene material de apoyo, recursos y documentación técnica adicional.
 - La app ha evolucionado para soportar exportación ODT con plantilla y maquetación conservada.
 - El APK firmado renombrado para distribución actual es `SinCarnet.V.1.30.apk`.
+- La documentación API publicada en Git vive en `docs/api/` y se regenera con Dokka V2.
 
 ## Licencia y uso
 

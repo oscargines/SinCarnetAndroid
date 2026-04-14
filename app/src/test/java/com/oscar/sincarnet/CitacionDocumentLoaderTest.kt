@@ -4,6 +4,12 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Test
 
+/**
+ * Pruebas de integración ligera para [replaceCitacionPlaceholders].
+ *
+ * Valida composición de `[[datosjuzgado]]` y resolución de campos
+ * individuales del juzgado.
+ */
 class CitacionDocumentLoaderTest {
 
     @Test

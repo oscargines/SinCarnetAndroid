@@ -39,12 +39,24 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.oscar.sincarnet.ui.theme.SinCarnetTheme
 
+/** Color de trazo para firma manuscrita en canvas. */
 private val SIGNATURE_COLOR = Color(0xFF474787)
 private const val SIGNATURE_STROKE_WIDTH_DP = 10f
 private const val SIGNATURE_DOT_RADIUS_DP = 3.5f
 private const val SIGNATURE_STROKE_WIDTH_PX = 12f
 private const val SIGNATURE_DOT_RADIUS_PX = 3.5f
 
+/**
+ * Pantalla de captura de firma manuscrita sobre canvas.
+ *
+ * Permite dibujar trazos libres con dedo/lápiz, limpiar y guardar la firma
+ * como [ImageBitmap] para posterior impresión o generación de PDF.
+ *
+ * @param modifier Modificador raíz
+ * @param signerName Nombre/rol que se muestra en el título de firma
+ * @param onSignatureSaved Retorna la firma capturada
+ * @param onCancel Cancela y vuelve sin guardar
+ */
 @Composable
 fun FirmaManuscritaScreen(
     modifier: Modifier = Modifier,

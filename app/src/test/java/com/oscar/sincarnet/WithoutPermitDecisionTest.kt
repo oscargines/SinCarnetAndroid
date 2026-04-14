@@ -3,6 +3,11 @@ package com.oscar.sincarnet
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
+/**
+ * Pruebas unitarias para [resolveWithoutPermitDecision].
+ *
+ * Verifica clasificación en delito, vía administrativa y estado neutro.
+ */
 class WithoutPermitDecisionTest {
 
     @Test

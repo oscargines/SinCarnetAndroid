@@ -28,6 +28,7 @@ import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
@@ -58,11 +59,23 @@ import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
+/** Nacionalidad por defecto cuando no se puede cargar catálogo de países. */
 private val NATIONALITY_FALLBACK = listOf("España")
 private val PERSON_DATE_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy")
 private const val PERSONA_NFC_LOG_TAG = "PersonaNfc"
 
 @OptIn(ExperimentalMaterial3Api::class)
+/**
+ * Pantalla de edición de datos de persona investigada.
+ *
+ * Incluye captura manual, lectura opcional por NFC (DNIe), validación de
+ * campos obligatorios y persistencia en [PersonaInvestigadaStorage].
+ *
+ * @param modifier Modificador raíz
+ * @param onBackClick Vuelve a la pantalla anterior
+ * @param onRightsClick Abre flujo de lectura de derechos
+ * @param onManifestacionClick Abre formulario de manifestación
+ */
 @Composable
 fun DatosPersonaInvestigadaScreen(
     modifier: Modifier = Modifier,
@@ -942,7 +955,7 @@ private fun DropdownField(label: String, value: String, options: List<String>, o
     ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = !expanded }, modifier = modifier) {
         OutlinedTextField(
             value = value, onValueChange = {},
-            modifier = Modifier.menuAnchor().fillMaxWidth(),
+            modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable).fillMaxWidth(),
             readOnly = true, singleLine = true,
             label = { Text(label) },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) }

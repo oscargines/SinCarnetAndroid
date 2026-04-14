@@ -5,6 +5,12 @@ import org.json.JSONObject
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
+/**
+ * Pruebas del colector de texto de manifestaciones de inmovilización.
+ *
+ * Usa reflexión para validar un helper interno de generación PDF sin
+ * exponerlo en la API pública.
+ */
 class CollectInmovilizacionManifestacionesTest {
 
     private fun invokeCollect(value: Any?, hasSecond: Boolean, person: String): String {

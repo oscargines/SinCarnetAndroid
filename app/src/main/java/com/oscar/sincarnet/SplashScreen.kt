@@ -30,6 +30,20 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.oscar.sincarnet.ui.theme.SinCarnetTheme
 
+/**
+ * Pantalla de splash que se muestra al iniciar la aplicación.
+ *
+ * Presenta:
+ * - El escudo de España (desde assets o ícono de la aplicación como fallback)
+ * - Título de la aplicación
+ * - Subtítulo descriptivo
+ * - Versión de la aplicación (desde BuildConfig)
+ *
+ * La pantalla se centra verticalmente y el escudo se escala responsivamente
+ * basado en el tamaño de la pantalla del dispositivo.
+ *
+ * @param modifier Modificador Compose opcional para personalizar el layout.
+ */
 @Composable
 fun SplashScreen(modifier: Modifier = Modifier) {
     val context = LocalContext.current
@@ -98,6 +112,11 @@ fun SplashScreen(modifier: Modifier = Modifier) {
     }
 }
 
+/**
+ * Vista previa de la pantalla de splash para Compose Preview.
+ *
+ * @see SplashScreen
+ */
 @Preview(showBackground = true)
 @Composable
 fun SplashScreenPreview() {

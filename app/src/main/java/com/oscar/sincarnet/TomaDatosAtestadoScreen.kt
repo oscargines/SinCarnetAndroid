@@ -34,6 +34,24 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 
 
+/**
+ * Pantalla hub para completar los bloques de datos del atestado.
+ *
+ * Centraliza accesos a: ocurrencia, persona investigada, vehículo,
+ * juzgado, actuantes, firmas y escaneo de documentos.
+ *
+ * @param modifier Modificador raíz
+ * @param onBackClick Vuelve a la pantalla previa
+ * @param onPrintClick Abre el flujo de selección de impresora
+ * @param onLocationTimeClick Abre datos de lugar y hora
+ * @param onPersonDataClick Abre datos de persona investigada
+ * @param onVehicleDataClick Abre datos de vehículo
+ * @param onCourtDataClick Abre datos de juzgado
+ * @param onActingDataClick Abre datos de actuantes
+ * @param onSignaturesClick Abre captura de firmas
+ * @param onScanDocumentClick Abre escáner de documentos
+ * @param printSignatures Estado elevado de firmas capturadas
+ */
 @Composable
 fun TomaDatosAtestadoScreen(
     modifier: Modifier = Modifier,
@@ -197,6 +215,13 @@ fun TomaDatosAtestadoScreen(
 // ============================================================
 // Composable interno
 // ============================================================
+/**
+ * Botón de acción homogéneo para las entradas del menú de atestado.
+ *
+ * @param text Texto del botón
+ * @param onClick Acción al pulsar
+ * @param containerColor Color de fondo (por defecto azul corporativo)
+ */
 @Composable
 private fun AtestadoActionButton(
     text: String,

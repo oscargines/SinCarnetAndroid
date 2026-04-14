@@ -23,6 +23,14 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 
+/**
+ * Diálogo "Acerca de" de la aplicación.
+ *
+ * Muestra escudo institucional y texto informativo general del proyecto.
+ * El escudo se carga desde assets y cae a un recurso local si falla.
+ *
+ * @param onDismissRequest Callback de cierre del diálogo
+ */
 @Composable
 fun AboutDialog(onDismissRequest: () -> Unit) {
     val context = LocalContext.current

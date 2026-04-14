@@ -35,6 +35,16 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.oscar.sincarnet.ui.theme.SinCarnetTheme
 
+/**
+ * Flujo de decisión para conducción durante/tras suspensión judicial.
+ *
+ * Solicita tipo de sentencia y momento de conducción para clasificar el
+ * resultado en delito, infracción o situación regular.
+ *
+ * @param modifier Modificador raíz
+ * @param onBackClick Vuelve a la pantalla anterior
+ * @param onStartAtestadoClick Inicia atestado cuando el caso es penal
+ */
 @Composable
 fun JudicialSuspensionScreen(
     modifier: Modifier = Modifier,
@@ -404,16 +414,19 @@ fun JudicialSuspensionScreen(
     }
 }
 
+/** Tramo de condena asociado a la suspensión judicial. */
 internal enum class SentenceType {
     UP_TO_TWO_YEARS,
     OVER_TWO_YEARS
 }
 
+/** Momento en el que se detecta la conducción respecto a la condena. */
 internal enum class DrivingMoment {
     WITHIN_PERIOD,
     AFTER_PERIOD
 }
 
+/** Variantes de observaciones legales mostradas en modal. */
 private enum class JudicialObservationCase {
     LOWER_SENTENCE_WITHIN_PERIOD,
     LOWER_SENTENCE_AFTER_PERIOD_WITHOUT_COURSE,
@@ -421,6 +434,7 @@ private enum class JudicialObservationCase {
     HIGHER_SENTENCE_AFTER_PERIOD_WITHOUT_COURSE_AND_EXAM
 }
 
+/** Estado visual del panel de resultado para suspensión judicial. */
 internal enum class JudicialBorderBehavior {
     NONE,
     RED_BLINK,
@@ -428,12 +442,18 @@ internal enum class JudicialBorderBehavior {
     GREEN_SOLID
 }
 
+/** Resultado de negocio para el flujo de suspensión judicial. */
 internal data class JudicialSuspensionDecision(
     val messageRes: Int?,
     val borderBehavior: JudicialBorderBehavior,
     val isCrimeCase: Boolean = false
 )
 
+/**
+ * Evalúa la combinación de respuestas y determina el resultado legal.
+ *
+ * Se mantiene fuera de la UI para facilitar testing unitario.
+ */
 internal fun resolveJudicialSuspensionDecision(
     sentenceType: SentenceType?,
     drivingMoment: DrivingMoment?,

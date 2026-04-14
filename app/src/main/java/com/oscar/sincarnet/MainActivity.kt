@@ -32,6 +32,16 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 
+// ═══════════════════════════════════════════════════════════════════════════
+// CONSTANTES DE NAVEGACIÓN
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * Constantes de rutas para la navegación en Compose.
+ *
+ * Estas rutas definen todas las pantallas disponibles en la aplicación
+ * y se usan en el NavController simulado (via currentRoute state).
+ */
 private const val CASES_ROUTE = "cases"
 private const val EXPIRED_VALIDITY_ROUTE = "expired_validity"
 private const val JUDICIAL_SUSPENSION_ROUTE = "judicial_suspension"
@@ -50,12 +60,62 @@ private const val FIRMA_SCREEN_ROUTE = "firma_screen"
 private const val BLUETOOTH_PRINTER_ROUTE = "bluetooth_printer"
 private const val DOCUMENT_SCANNER_ROUTE = "document_scanner"
 
+/**
+ * Activity principal de SinCarnet - Single-Activity Architecture.
+ *
+ * Responsabilidades principales:
+ * 1. **Orquestación de Navegación**: Maneja todas las 18 rutas/pantallas
+ * 2. **Configuración NFC**: Establece ReaderMode para lectura de DNI electrónico
+ * 3. **Coordinación de Impresión**: Integración con Bluetooth y DocumentPrinter
+ * 4. **Generación de Documentos**: PDF/ODT desde datos capturados
+ * 5. **Gestión de Estado**: Almacenamiento temporal de datos de atestados
+ *
+ * **Patrón Arquitectónico**:
+ * - Jetpack Compose 100%
+ * - Estados con rememberSaveable para persistencia en configuración
+ * - Coroutines para operaciones asincrónicas (lectura NFC, generación PDF)
+ * - Storage managers para persistencia entre sesiones
+ *
+ * **Flujo Típico de Atestado**:
+ * 1. Usuario selecciona tipo en CasesScreen → ATESTADO_DATA_ROUTE
+ * 2. Llena datos: persona, vehículo, juzgado, actuantes
+ * 3. Captura firmas → FIRMA_SCREEN_ROUTE (canvas)
+ * 4. Genera PDF → DocumentPrinter.imprimirAtestadoCompleto
+ * 5. Vuelve a CasesScreen o descarga PDF
+ *
+ * @see NfcTagRepository Para lectura de DNI
+ * @see DocumentPrinter Para generación de PDF
+ * @see BluetoothPrinterStorage Para gestión de impresoras
+ */
 class MainActivity : ComponentActivity() {
     private companion object {
         const val NFC_LOG_TAG = "MainActivityNfc"
     }
 
+    // ─────────────────────────────────────────────────────────────────────────
+    // CONFIGURACIÓN NFC
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Adaptador NFC del dispositivo.
+     *
+     * Se inicializa en onCreate y se usa para activar/desactivar ReaderMode.
+     * Permite detectar automáticamente etiquetas NFC sin necesidad de Intent dispatch.
+     */
     private var nfcAdapter: NfcAdapter? = null
+
+    /**
+     * Callback que se ejecuta cuando se detecta una etiqueta NFC en ReaderMode.
+     *
+     * - Valida que la etiqueta no sea nula
+     * - Extrae el UID y tecnologías soportadas
+     * - Actualiza el repositorio singleton NfcTagRepository
+     * - Registra en log con información de debug
+     *
+     * Usado por pantallas que necesitan leer DNI electrónico:
+     * - DatosPersonaInvestigadaScreen (auto-llenar datos DNI)
+     * - Cualquier pantalla que tenga botón "Leer desde NFC"
+     */
     private val readerCallback = NfcAdapter.ReaderCallback { tag ->
         if (tag == null) {
             Log.w(NFC_LOG_TAG, "ReaderMode callback con tag=null")
@@ -66,6 +126,22 @@ class MainActivity : ComponentActivity() {
         NfcTagRepository.update(tag)
     }
 
+    // ─────────────────────────────────────────────────────────────────────────
+    // CICLO DE VIDA - onCreate
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Inicializa la Activity.
+     *
+     * Pasos:
+     * 1. Obtiene adaptador NFC
+     * 2. Registra estado NFC para debug
+     * 3. Procesa intents NFC si la app se abrió desde uno
+     * 4. Habilita edge-to-edge display
+     * 5. Construye toda la interfaz con Compose (18 pantallas)
+     *
+     * @param savedInstanceState Estado guardado por el sistema (usado por rememberSaveable)
+     */
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         nfcAdapter = NfcAdapter.getDefaultAdapter(this)
@@ -796,6 +872,20 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    // ─────────────────────────────────────────────────────────────────────────
+    // CICLO DE VIDA - onNewIntent
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Maneja nuevos intents mientras la Activity está en primer plano.
+     *
+     * Se usa para recibir intents NFC cuando la app ya está abierta.
+     *
+     * - Registra el nuevo intent
+     * - Procesa el intent NFC recibido
+     *
+     * @param intent El intent que activa esta llamada
+     */
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         Log.d(NFC_LOG_TAG, "onNewIntent() action=${intent.action}")
@@ -803,17 +893,49 @@ class MainActivity : ComponentActivity() {
         processNfcIntent(intent)
     }
 
+    // ─────────────────────────────────────────────────────────────────────────
+    // CICLO DE VIDA - onResume
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Se llama cuando la Activity pasa a primer plano.
+     *
+     * - Reactiva el ReaderMode NFC para seguir recibiendo lecturas de etiquetas
+     */
     override fun onResume() {
         super.onResume()
         logNfcAdapterState("onResume")
         enableNfcReaderMode()
     }
 
+    // ─────────────────────────────────────────────────────────────────────────
+    // CICLO DE VIDA - onPause
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Se llama cuando la Activity pasa a segundo plano.
+     *
+     * - Desactiva el ReaderMode NFC para evitar lecturas innecesarias
+     */
     override fun onPause() {
         super.onPause()
         disableNfcReaderMode()
     }
 
+    // ─────────────────────────────────────────────────────────────────────────
+    // PROCESAMIENTO DE INTENTS NFC
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Procesa el intent recibido por la Activity para detectar etiquetas NFC.
+     *
+     * - Valida que el intent no sea nulo
+     * - Extrae la acción del intent
+     * - Si es una acción NFC válida, obtiene la etiqueta y actualiza el repositorio
+     * - Registra en log la información de la etiqueta detectada
+     *
+     * @param intent El intent a procesar
+     */
     private fun processNfcIntent(intent: Intent?) {
         if (intent == null) {
             Log.d(NFC_LOG_TAG, "processNfcIntent intent=null")
@@ -839,6 +961,17 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    // ─────────────────────────────────────────────────────────────────────────
+    // ESTADO Y CONFIGURACIÓN NFC
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Registra el estado del adaptador NFC en el log para depuración.
+     *
+     * Muestra si el adaptador está presente, habilitado y la acción del intent actual.
+     *
+     * @param origin El origen de la llamada (usado para identificar el ciclo de vida)
+     */
     private fun logNfcAdapterState(origin: String) {
         val adapter = nfcAdapter ?: NfcAdapter.getDefaultAdapter(this)
         nfcAdapter = adapter
@@ -846,6 +979,15 @@ class MainActivity : ComponentActivity() {
         Log.d(NFC_LOG_TAG, "$origin nfcAdapterPresent=${adapter != null} nfcEnabled=$enabled currentIntentAction=${intent?.action}")
     }
 
+    /**
+     * Habilita el modo lector NFC para detectar etiquetas automáticamente.
+     *
+     * - Configura flags para leer diferentes tipos de etiquetas NFC
+     * - Establece un delay para la detección de presencia
+     * - Activa el ReaderMode del adaptador NFC
+     *
+     * @see NfcAdapter.enableReaderMode
+     */
     private fun enableNfcReaderMode() {
         val adapter = nfcAdapter ?: return
         if (!adapter.isEnabled) {
@@ -863,13 +1005,40 @@ class MainActivity : ComponentActivity() {
         adapter.enableReaderMode(this, readerCallback, flags, options)
     }
 
-    private fun disableNfcReaderMode() {
-        val adapter = nfcAdapter ?: return
-        Log.d(NFC_LOG_TAG, "disableReaderMode")
-        adapter.disableReaderMode(this)
-    }
+     /**
+      * Desactiva el modo lector NFC.
+      *
+      * Se llama en onPause() para dejar de procesar etiquetas NFC cuando la Activity
+      * está en segundo plano, evitando lecturas innecesarias y economizando batería.
+      *
+      * @see NfcAdapter.disableReaderMode
+      */
+     private fun disableNfcReaderMode() {
+         val adapter = nfcAdapter ?: return
+         Log.d(NFC_LOG_TAG, "disableReaderMode")
+         adapter.disableReaderMode(this)
+     }
 
-    private fun openGeneratedPdf(pdfFile: File): Boolean {
+     // ─────────────────────────────────────────────────────────────────────────
+     // MANEJO DE DOCUMENTOS GENERADOS
+     // ─────────────────────────────────────────────────────────────────────────
+
+     /**
+      * Abre un archivo PDF generado para su visualización.
+      *
+      * Flujo:
+      * 1. Valida que el archivo PDF existe
+      * 2. Crea un URI seguro usando FileProvider (requerido en Android 7+)
+      * 3. Crea un Intent ACTION_VIEW con tipo MIME "application/pdf"
+      * 4. Inicia la actividad del visor PDF instalado en el dispositivo
+      * 5. Captura ActivityNotFoundException si no hay visor disponible
+      *
+      * Se usa tras generar un atestado para mostrar el resultado al usuario.
+      *
+      * @param pdfFile El archivo PDF a abrir
+      * @return true si se pudo abrir el PDF sin errores, false si hubo una excepción
+      */
+     private fun openGeneratedPdf(pdfFile: File): Boolean {
         return runCatching {
             val uri = FileProvider.getUriForFile(
                 this,
@@ -891,7 +1060,25 @@ class MainActivity : ComponentActivity() {
         }.getOrDefault(false)
     }
 
-    private fun shareGeneratedPdf(pdfFile: File): Boolean {
+     /**
+      * Comparte un archivo PDF generado usando un Intent ACTION_SEND.
+      *
+      * Flujo:
+      * 1. Crea un URI seguro usando FileProvider
+      * 2. Construye un Intent ACTION_SEND con el tipo MIME "application/pdf"
+      * 3. Crea un chooser para que el usuario seleccione la aplicación
+      * 4. Agrega permisos READ_URI_PERMISSION al intent
+      * 5. Inicia el chooser
+      * 6. Captura ActivityNotFoundException si no hay aplicaciones para compartir
+      *
+      * Usado desde:
+      * - FirmasAtestadoScreen → botón "Compartir PDF"
+      * - DocumentScannerScreen → compartir PDF escaneado
+      *
+      * @param pdfFile El archivo PDF a compartir
+      * @return true si se abrió el chooser, false si hubo un error
+      */
+     private fun shareGeneratedPdf(pdfFile: File): Boolean {
         return runCatching {
             val uri = FileProvider.getUriForFile(
                 this,
@@ -917,8 +1104,26 @@ class MainActivity : ComponentActivity() {
         }.getOrDefault(false)
     }
 
-
-    private fun shareGeneratedOdt(odtFile: File): Boolean {
+     /**
+      * Comparte un archivo ODT (OpenDocument Text) generado.
+      *
+      * Similar a [shareGeneratedPdf], pero para archivos ODT.
+      * Se usa para compartir atestados en formato editable (LibreOffice/Writer).
+      *
+      * Flujo:
+      * 1. Crea un URI seguro usando FileProvider
+      * 2. Construye un Intent ACTION_SEND con tipo MIME "application/vnd.oasis.opendocument.text"
+      * 3. Crea un chooser para que el usuario seleccione la aplicación
+      * 4. Agrega permisos READ_URI_PERMISSION
+      * 5. Inicia el chooser
+      *
+      * Llamado desde:
+      * - FirmasAtestadoScreen → botón "Compartir ODT"
+      *
+      * @param odtFile El archivo ODT a compartir
+      * @return true si se abrió el chooser, false si hubo un error
+      */
+     private fun shareGeneratedOdt(odtFile: File): Boolean {
         return runCatching {
             val uri = FileProvider.getUriForFile(
                 this,

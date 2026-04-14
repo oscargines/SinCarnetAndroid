@@ -11,38 +11,123 @@ import org.json.JSONObject
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
-// ============================================================
-// DocumentPrinter
-//
-// Centraliza la preparación e impresión de todas las diligencias.
-// Cada función:
-//   1. Lee los datos de los Storage necesarios
-//   2. Construye el mapa de placeholders [[clave]] → valor real
-//   3. Lee el JSON de assets/docs/
-//   4. Llama a printDiligencia() que resuelve los placeholders
-//      y renderiza el documento con el layout estándar de BluetoothPrinterUtils
-//
-// Uso (desde el botón de impresión de cada pantalla):
-//   DocumentPrinter.imprimirDerechos(context, mac)
-//   DocumentPrinter.imprimirCitacionJuicioRapido(context, mac)
-//   DocumentPrinter.imprimirCitacionJuicio(context, mac)
-//   DocumentPrinter.imprimirManifestacion(context, mac)
-// ============================================================
+// ═══════════════════════════════════════════════════════════════════════════════
+// DOCUMENTPRINTER - ORQUESTADOR CENTRAL DE IMPRESIÓN
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Orquestador central para la impresión de todas las diligencias legales de SinCarnet.
+ *
+ * **Responsabilidades Principales**:
+ * 1. **Lectura de datos**: Obtiene datos desde Storage managers (OcurrenciaDelitStorage, etc.)
+ * 2. **Construcción de placeholders**: Mapea datos reales a [[clave]] para plantillas JSON
+ * 3. **Carga de plantillas**: Lee documentos JSON desde assets/docs/
+ * 4. **Renderizado de documentos**: Resuelve placeholders y renderiza con BluetoothPrinterUtils
+ * 5. **Gestión de Bluetooth**: Coordina con SDK de Zebra para impresión
+ *
+ * **Flujo General**:
+ * ```
+ * Usuario toca "Imprimir" → imprimirDerechos/Citacion/Manifestacion()
+ *   → Lee datos de Storage
+ *   → Construye mapa de placeholders
+ *   → Carga JSON de plantilla
+ *   → printDiligencia() → resuelve placeholders
+ *   → BluetoothPrinterUtils.printDocumentSuspend() → envía a Zebra
+ * ```
+ *
+ * **Diligencias Soportadas**:
+ * - `imprimirDerechos()` → docs/02derechos.json (Información de derechos)
+ * - `imprimirCitacionJuicioRapido()` → docs/citacionjuiciorapido.json
+ * - `imprimirCitacionJuicio()` → docs/citacionjuicio.json
+ * - `imprimirManifestacion()` → docs/04manifestacion.json
+ *
+ * **Características Especiales**:
+ * - **QR dinámico**: Algunos documentos incluyen códigos QR
+ * - **Placeholders tolerantes**: Sistema robusto de resolución de [[clave]]
+ * - **JSON anidado**: Soporta estructuras complejas (articulos, subapartados, opciones)
+ * - **Conexión compartida**: Reutiliza conexión Bluetooth en flujos de múltiples documentos
+ * - **Manejo de errores**: Reintentos automáticos y mensajes descriptivos
+ *
+ * **Patrones de Uso**:
+ * ```kotlin
+ * // Desde pantalla de impresión (botón individual)
+ * DocumentPrinter.imprimirDerechos(context, mac)
+ *
+ * // Desde flujo de atestado (múltiples documentos)
+ * DocumentPrinter.imprimirAtestadoCompleto(context, mac, sigs, ...)
+ * ```
+ *
+ * **Dependencias**:
+ * - BluetoothPrinterUtils → Conversión a CPCL y envío
+ * - Storage managers → Lectura de datos persistentes
+ * - SDK Zebra → Protocolo Bluetooth de impresión
+ *
+ * @see BluetoothPrinterUtils Para detalles de conversión CPCL
+ * @see OcurrenciaDelitStorage Para datos de delito
+ * @see PersonaInvestigadaStorage Para datos del investigado
+ * @see ManifestacionStorage Para respuestas de manifestación
+ */
 object DocumentPrinter {
+    // ─────────────────────────────────────────────────────────────────────────
+    // CONSTANTES DE CONFIGURACIÓN
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Delay entre impresiones de documentos cuando se imprimen múltiples.
+     * Permite que la impresora procese completamente cada documento antes del siguiente.
+     */
     private const val DELAY_BETWEEN_DOCS_MS: Long = 5000L
-    private const val FINAL_DRAIN_BEFORE_CLOSE_MS: Long = 15000L  // Aumentado a 15s para asegurar impresión del último doc
+
+    /**
+     * Tiempo de espera final antes de cerrar la conexión Bluetooth.
+     * Asegura que el último documento se imprima completamente antes de desconectar.
+     */
+    private const val FINAL_DRAIN_BEFORE_CLOSE_MS: Long = 15000L
+
     private const val BATCH_LOG_TAG = "AtestadoPrintBatch"
+
+    /**
+     * Mensaje de validación para manifestación obligatoria.
+     * Se muestra si el usuario intenta imprimir sin completar renuncia letrada y desea declarar.
+     */
     internal const val MANIFESTACION_REQUIRED_MSG =
         "Debe completar la manifestación (renuncia letrada y desea declarar) antes de imprimir"
 
-    // Marcador especial que BluetoothPrinterUtils detecta en el body para
-    // pintar las cajas CPCL de citación a juicio en ese punto exacto.
+    /**
+     * Marcador especial que BluetoothPrinterUtils detecta en el body.
+     * Cuando está presente, dibuja las cajas CPCL de citación a juicio en ese punto exacto del documento.
+     *
+     * Se inserta automáticamente en buildDiligenciaBody() cuando hay datos de juicio.
+     */
     const val JUICIO_BOXES_MARKER = "\u0000JUICIO_BOXES\u0000"
 
-    // ----------------------------------------------------------
-    // 02derechos.json
-    // Diligencia de investigación e información de derechos
-    // ----------------------------------------------------------
+    // ─────────────────────────────────────────────────────────────────────────
+    // 02derechos.json - DILIGENCIA DE INVESTIGACIÓN E INFORMACIÓN DE DERECHOS
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Imprime la diligencia de investigación e información de derechos.
+     *
+     * Documento legal que informa al investigado de sus derechos constitucionales
+     * (derecho a guardar silencio, asistencia letrada, etc.)
+     *
+     * **Datos leídos desde**:
+     * - OcurrenciaDelitStorage: lugar, fecha, hora del hecho
+     * - JuzgadoAtestadoStorage: juzgado competente
+     * - ActuantesStorage: instructor y secretario
+     * - PersonaInvestigadaStorage: datos del investigado
+     *
+     * **Placeholders construidos**:
+     * - lugar, hora, fecha, instructor, secretario
+     * - nombrecompletoinvestigado, documentoidentificacion
+     * - lugarfechahoralecturaderechos, lugarfechahoracomisióndelito
+     *
+     * @param context Contexto para acceso a Storage y Bluetooth
+     * @param mac Dirección MAC de la impresora Bluetooth (null = no imprime)
+     *
+     * @see OcurrenciaDelitStorage
+     * @see PersonaInvestigadaStorage
+     */
     fun imprimirDerechos(context: Context, mac: String?) {
         val ocurrencia = OcurrenciaDelitStorage(context).loadCurrent()
         val juzgado = JuzgadoAtestadoStorage(context).loadCurrent()
@@ -80,10 +165,28 @@ object DocumentPrinter {
         printDiligencia(context, mac, "docs/02derechos.json", placeholders, investigado)
     }
 
-    // ----------------------------------------------------------
-    // citacionjuiciorapido.json
-    // Diligencia de citación para juicio rápido
-    // ----------------------------------------------------------
+    // ─────────────────────────────────────────────────────────────────────────
+    // citacionjuiciorapido.json - CITACIÓN PARA JUICIO RÁPIDO
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Imprime la citación para juicio rápido.
+     *
+     * Documento que cita al investigado para comparecer en juicio en procedimiento rápido
+     * (máximo 6 meses). Se usa cuando se espera sentencia condena inmediata.
+     *
+     * **Datos leídos desde**:
+     * - JuzgadoAtestadoStorage: hora y fecha del juicio rápido
+     * - Otros: igual que imprimirDerechos()
+     *
+     * **Placeholders adicionales**:
+     * - horajuicio, fechajuicio, datosjuzgado
+     *
+     * @param context Contexto para acceso a Storage y Bluetooth
+     * @param mac Dirección MAC de la impresora (null = no imprime)
+     *
+     * @see JuzgadoAtestadoStorage.isJuicioRapido
+     */
     fun imprimirCitacionJuicioRapido(context: Context, mac: String?) {
         android.util.Log.d("CITACION_PRINT", "imprimirCitacionJuicioRapido: usando plantilla docs/citacionjuiciorapido.json")
         val ocurrencia = OcurrenciaDelitStorage(context).loadCurrent()
@@ -111,10 +214,23 @@ object DocumentPrinter {
         printDiligencia(context, mac, "docs/citacionjuiciorapido.json", placeholders, investigado)
     }
 
-    // ----------------------------------------------------------
-    // citacionjuicio.json
-    // Diligencia de citación para juicio ordinario
-    // ----------------------------------------------------------
+    // ─────────────────────────────────────────────────────────────────────────
+    // citacionjuicio.json - CITACIÓN PARA JUICIO ORDINARIO
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Imprime la citación para juicio ordinario.
+     *
+     * Documento que cita al investigado para comparecer en juicio en procedimiento ordinario
+     * (sin límite temporal). Se usa para casos más complejos que requieren mayor investigación.
+     *
+     * **Diferencia con juicio rápido**: No incluye hora y fecha del juicio (se determina después)
+     *
+     * @param context Contexto para acceso a Storage y Bluetooth
+     * @param mac Dirección MAC de la impresora (null = no imprime)
+     *
+     * @see imprimirCitacionJuicioRapido Para citación de juicio rápido
+     */
     fun imprimirCitacionJuicio(context: Context, mac: String?) {
         android.util.Log.d("CITACION_PRINT", "imprimirCitacionJuicio: usando plantilla docs/citacionjuicio.json")
         val ocurrencia = OcurrenciaDelitStorage(context).loadCurrent()
@@ -140,10 +256,34 @@ object DocumentPrinter {
         printDiligencia(context, mac, "docs/citacionjuicio.json", placeholders, investigado)
     }
 
-    // ----------------------------------------------------------
-// 04manifestacion.json
-// Diligencia de manifestación del investigado no detenido
-// ----------------------------------------------------------
+    // ─────────────────────────────────────────────────────────────────────────
+    // 04manifestacion.json - MANIFESTACIÓN DEL INVESTIGADO NO DETENIDO
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Imprime la manifestación del investigado no detenido.
+     *
+     * Documento legal que registra:
+     * - Si renuncia a asistencia letrada
+     * - Si desea declarar
+     * - Respuestas a preguntas de la Guardia Civil (8 preguntas)
+     *
+     * **Validaciones**:
+     * - Requiere que renunciaAsistenciaLetrada y deseaDeclarar estén completas
+     * - Si alguno es null, se imprime "NO" como valor por defecto
+     *
+     * **Datos leídos desde**:
+     * - ManifestacionStorage: respuestas SI/NO y respuestas a preguntas
+     * - OcurrenciaDelitStorage, JuzgadoAtestadoStorage, etc.
+     *
+     * @param context Contexto para acceso a Storage y Bluetooth
+     * @param mac Dirección MAC de la impresora (null = no imprime)
+     *
+     * @throws IllegalStateException Si manifestación no está completa (pero imprime con valores por defecto)
+     *
+     * @see ManifestacionStorage
+     * @see validateManifestacionForPrint
+     */
     fun imprimirManifestacion(context: Context, mac: String?) {
         val ocurrencia = OcurrenciaDelitStorage(context).loadCurrent()
         val juzgado = JuzgadoAtestadoStorage(context).loadCurrent()
@@ -157,7 +297,7 @@ object DocumentPrinter {
 
         val respuestas = manifestacion.respuestasPreguntas
 
-        // === CAMBIO: placeholders con el texto final "SI" / "NO" ===
+        // === Placeholders con el texto final "SI" / "NO" ===
         val renunciaStr = manifestacionSiNo(
             manifestacion.renunciaAsistenciaLetrada,
             "renunciaAsistenciaLetrada"
@@ -186,7 +326,7 @@ object DocumentPrinter {
             "segundafechahora" to horaFechaAhora,
             "renunciaAsistenciaLetrada" to renunciaStr,
             "deseaDeclarar" to deseaStr,
-            // Claves alternativas para mantener compatibilidad entre flujos de impresión.
+            // Claves alternativas para mantener compatibilidad entre flujos
             "respuesta_manifestacion_1" to renunciaStr,
             "respuesta_manifestacion_2" to deseaStr
         )
@@ -194,26 +334,63 @@ object DocumentPrinter {
         printDiligencia(context, mac, "docs/04manifestacion.json", placeholders, investigado)
     }
 
-    // ----------------------------------------------------------
-    // Helpers de construcción de strings
-    // ----------------------------------------------------------
+    // ─────────────────────────────────────────────────────────────────────────
+    // HELPERS DE CONSTRUCCIÓN DE STRINGS
+    // ─────────────────────────────────────────────────────────────────────────
 
+    /**
+     * Construye el nombre completo del investigado.
+     *
+     * Combina nombre, primer apellido y segundo apellido, filtrando valores vacíos.
+     *
+     * Ejemplo: "Juan García López"
+     *
+     * @param p Datos de persona investigada
+     * @return Nombre completo con espacios entre componentes
+     */
     private fun buildNombreCompleto(p: PersonaInvestigadaData): String =
         listOf(p.firstName, p.lastName1, p.lastName2)
             .filter { it.isNotBlank() }
             .joinToString(" ")
 
+    /**
+     * Construye la ubicación del hecho combinando carretera, PK y localidad.
+     *
+     * Ejemplo: "N-I, PK 23.5, Alcalá de Henares"
+     *
+     * @param o Datos de ocurrencia del delito
+     * @return Ubicación formateada
+     */
     private fun buildLugar(o: OcurrenciaDelitData): String {
         val parts = listOf(o.carretera, o.pk, o.localidad).filter { it.isNotBlank() }
         return parts.joinToString(", ")
     }
 
+    /**
+     * Construye datos completos del juzgado para el documento.
+     *
+     * Combina nombre de la sede, dirección y municipio.
+     *
+     * @param j Datos del juzgado
+     * @return Datos formateados
+     */
     private fun buildDatosJuzgado(j: JuzgadoAtestadoData): String {
         val parts = listOf(j.sedeNombre, j.sedeDireccion, j.municipioNombre)
             .filter { it.isNotBlank() }
         return parts.joinToString(", ")
     }
 
+    /**
+     * Convierte un valor booleano nullable a "SI" o "NO" para impresión.
+     *
+     * - null → "NO" (con advertencia en log)
+     * - true → "SI"
+     * - false → "NO"
+     *
+     * @param value Valor booleano de manifestación
+     * @param fieldName Nombre del campo (para logging)
+     * @return "SI" o "NO"
+     */
     private fun manifestacionSiNo(value: Boolean?, fieldName: String): String = when (value) {
         true -> "SI"
         false -> "NO"
@@ -226,6 +403,16 @@ object DocumentPrinter {
         }
     }
 
+    /**
+     * Valida que los campos críticos de manifestación estén completos.
+     *
+     * Si renunciaAsistenciaLetrada o deseaDeclarar son null, registra advertencia
+     * pero permite continuar (se usan valores por defecto "NO").
+     *
+     * @param data Datos de manifestación a validar
+     *
+     * @see manifestacionSiNo
+     */
     private fun validateManifestacionForPrint(data: ManifestacionData) {
         if (data.renunciaAsistenciaLetrada == null || data.deseaDeclarar == null) {
             android.util.Log.w(
@@ -238,6 +425,15 @@ object DocumentPrinter {
         }
     }
 
+    /**
+     * Busca una opción en un JSONArray por su ID.
+     *
+     * Útil para encontrar subopciones dinámicamente en manifiestos y documentos.
+     *
+     * @param array Array de opciones (puede ser null)
+     * @param id ID a buscar (se convierte a string para comparación)
+     * @return JSONObject con la opción encontrada, o null
+     */
     private fun findJsonOptionById(array: JSONArray?, id: Any): JSONObject? {
         if (array == null) return null
         val target = id.toString()
@@ -248,6 +444,24 @@ object DocumentPrinter {
         return null
     }
 
+    /**
+     * Construye el body del documento "inicio" para atestados complejos.
+     *
+     * Maneja:
+     * - Secciones de cuerpo y vehículo
+     * - Selección de motivo (Siniestro, Control, Infracción)
+     * - Constancia de carencia de autorización
+     * - Vicisitudes especiales (pérdida de vigencia, condena, etc.)
+     *
+     * @param doc JSONObject del documento
+     * @param inicioData Datos iniciales/modales del atestado
+     * @param ocurrencia Datos de ocurrencia
+     * @param juzgado Datos del juzgado
+     * @param actuantes Datos de actuantes
+     * @param investigado Datos del investigado
+     * @param vehiculo Datos del vehículo
+     * @return Body completo con todas las secciones resueltas
+     */
     private fun buildInicioBody(
         doc: JSONObject,
         inicioData: AtestadoInicioModalData,
@@ -343,9 +557,36 @@ object DocumentPrinter {
         return sb.toString().trimEnd()
     }
 
-    // ----------------------------------------------------------
-    // Motor de renderizado de diligencias (versión suspend)
-    // ----------------------------------------------------------
+    // ─────────────────────────────────────────────────────────────────────────
+    // MOTOR DE RENDERIZADO DE DILIGENCIAS (VERSIÓN SUSPEND)
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Renderiza e imprime una diligencia de forma asincrónica.
+     *
+     * Proceso:
+     * 1. Lee el JSON de plantilla desde assets
+     * 2. Resuelve todos los [[placeholder]] con datos reales
+     * 3. Construye el body completo de la diligencia
+     * 4. Envía a BluetoothPrinterUtils para conversión CPCL
+     * 5. Imprime en la impresora Zebra
+     *
+     * **Manejo de QR**: Si el documento incluye sección "qr", se usa printDocumentSuspend()
+     * que renderiza el código. Si no, se usa printDocumentResolvedSuspend().
+     *
+     * @param context Contexto para Storage y Bluetooth
+     * @param mac Dirección MAC de la impresora
+     * @param jsonAssetPath Ruta en assets del JSON de plantilla (p. ej. "docs/02derechos.json")
+     * @param placeholders Mapa de [[clave]] → valor para reemplazar en la plantilla
+     * @param investigado Datos del investigado (para construcción de body)
+     * @param sigs Firmas capturadas (opcional, para atestados)
+     * @param sharedConn Conexión compartida Bluetooth (opcional, reutiliza de flujo anterior)
+     *
+     * @throws Exception Si hay error al leer JSON, renderizar o imprimir
+     *
+     * @see BluetoothPrinterUtils.printDocumentSuspend
+     * @see printDocumentResolvedSuspend
+     */
     private suspend fun printDiligenciaSuspend(
         context: Context,
         mac: String,
@@ -415,7 +656,20 @@ object DocumentPrinter {
         }
     }
 
-    // Versión no-suspend para llamadas individuales desde botones
+    /**
+     * Versión NO asincrónica para impresión desde botones individuales.
+     *
+     * Crea una coroutine en IO dispatcher para no bloquear la UI.
+     * Muestra Toast con error si la impresión falla.
+     *
+     * @param context Contexto
+     * @param mac Dirección MAC de impresora (null = no hace nada)
+     * @param jsonAssetPath Ruta de plantilla
+     * @param placeholders Mapa de placeholders
+     * @param investigado Datos investigado
+     *
+     * @see printDiligenciaSuspend Para versión asincrónica
+     */
     private fun printDiligencia(
         context: Context,
         mac: String?,
@@ -439,7 +693,16 @@ object DocumentPrinter {
         }
     }
 
-    // Resuelve todos los [[placeholder]] en un string
+    /**
+     * Resuelve todos los [[placeholder]] en un texto usando un mapa.
+     *
+     * Búsqueda simple case-sensitive. Útil para reemplazar placeholders en títulos
+     * sin necesidad de lógica compleja.
+     *
+     * @param text Texto con placeholders [[clave]]
+     * @param placeholders Mapa de [[clave]] → valor
+     * @return Texto con placeholders resueltos
+     */
     private fun resolve(text: String, placeholders: Map<String, String>): String {
         var result = text
         for ((key, value) in placeholders) {
@@ -448,7 +711,23 @@ object DocumentPrinter {
         return result
     }
 
-    // Construye el body completo de la diligencia recorriendo todas las secciones
+    /**
+     * Construye el body completo de una diligencia.
+     *
+     * Recorre todas las secciones del documento JSON:
+     * - cuerpo, articulos, derechos_articulo_520
+     * - manifestacion_investigado, opciones_investigado
+     * - hechos_investigacion, etc.
+     *
+     * Resuelve placeholders en cada sección y respeta la estructura.
+     *
+     * @param doc JSONObject de "documento" del JSON
+     * @param ph Mapa de placeholders
+     * @param investigado Datos del investigado (para manifestación)
+     * @return Body completo de la diligencia
+     *
+     * @see resolve
+     */
     private fun buildDiligenciaBody(
         doc: JSONObject,
         ph: Map<String, String>,

@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html class="no-js">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
+    <title>replaceCitacionPlaceholders</title>
+    <link href="../../images/logo-icon.svg" rel="icon" type="image/svg">
+    <script>var pathToRoot = "../../";</script>
+    <script>document.documentElement.classList.replace("no-js","js");</script>
+    <script>const storage = localStorage.getItem("dokka-dark-mode")
+    if (storage == null) {
+        const osDarkSchemePreferred = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+        if (osDarkSchemePreferred === true) {
+            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+    } else {
+        const savedDarkMode = JSON.parse(storage)
+        if(savedDarkMode === true) {
+            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+    }
+    </script>
+<script type="text/javascript" src="https://unpkg.com/kotlin-playground@1/dist/playground.min.js" async="async"></script>
+<script type="text/javascript" src="../../scripts/sourceset_dependencies.js" async="async"></script>
+<link href="../../styles/style.css" rel="Stylesheet">
+<link href="../../styles/main.css" rel="Stylesheet">
+<link href="../../styles/prism.css" rel="Stylesheet">
+<link href="../../styles/logo-styles.css" rel="Stylesheet">
+<link href="../../styles/font-jb-sans-auto.css" rel="Stylesheet">
+<link href="../../ui-kit/ui-kit.min.css" rel="Stylesheet">
+<script type="text/javascript" src="../../scripts/clipboard.js" async="async"></script>
+<script type="text/javascript" src="../../scripts/navigation-loader.js" async="async"></script>
+<script type="text/javascript" src="../../scripts/platform-content-handler.js" async="async"></script>
+<script type="text/javascript" src="../../scripts/main.js" defer="defer"></script>
+<script type="text/javascript" src="../../scripts/prism.js" async="async"></script>
+<script type="text/javascript" src="../../ui-kit/ui-kit.min.js" defer="defer"></script>
+<script type="text/javascript" src="../../scripts/symbol-parameters-wrapper_deferred.js" defer="defer"></script>
+</head>
+<body>
+    <div class="root">
+    <nav class="navigation theme-dark" id="navigation-wrapper">
+            <a class="library-name--link" href="../../index.html">
+                    app
+            </a>
+        <button class="navigation-controls--btn navigation-controls--btn_toc ui-kit_mobile-only" id="toc-toggle"
+                type="button">Toggle table of contents
+        </button>
+        <div class="navigation-controls--break ui-kit_mobile-only"></div>
+        <div class="library-version" id="library-version">
+        </div>
+        <div class="navigation-controls">
+        <div class="filter-section filter-section_loading" id="filter-section">
+                <button class="platform-tag platform-selector jvm-like" data-active=""
+                        data-filter=":app/main">appMain</button>
+            <div class="dropdown filter-section--dropdown" data-role="dropdown" id="filter-section-dropdown">
+                <button class="button button_dropdown filter-section--dropdown-toggle" role="combobox"
+                        data-role="dropdown-toggle"
+                        aria-controls="platform-tags-listbox"
+                        aria-haspopup="listbox"
+                        aria-expanded="false"
+                        aria-label="Toggle source sets"
+                ></button>
+                <ul role="listbox" id="platform-tags-listbox" class="dropdown--list" data-role="dropdown-listbox">
+                    <div class="dropdown--header"><span>Platform filter</span>
+                        <button class="button" data-role="dropdown-toggle" aria-label="Close platform filter">
+                            <i class="ui-kit-icon ui-kit-icon_cross"></i>
+                        </button>
+                    </div>
+                        <li role="option" class="dropdown--option platform-selector-option jvm-like" tabindex="0">
+                            <label class="checkbox">
+                                <input type="checkbox" class="checkbox--input" id=":app/main"
+                                       data-filter=":app/main"/>
+                                <span class="checkbox--icon"></span>
+                                appMain
+                            </label>
+                        </li>
+                </ul>
+                <div class="dropdown--overlay"></div>
+            </div>
+        </div>
+            <button class="navigation-controls--btn navigation-controls--btn_theme" id="theme-toggle-button"
+                    type="button">Switch theme
+            </button>
+            <div class="navigation-controls--btn navigation-controls--btn_search" id="searchBar" role="button">Search in
+                API
+            </div>
+        </div>
+    </nav>
+        <div id="container">
+            <div class="sidebar" id="leftColumn">
+                <div class="dropdown theme-dark_mobile" data-role="dropdown" id="toc-dropdown">
+                    <ul role="listbox" id="toc-listbox" class="dropdown--list dropdown--list_toc-list"
+                        data-role="dropdown-listbox">
+                        <div class="dropdown--header">
+                            <span>
+                                    app
+                            </span>
+                            <button class="button" data-role="dropdown-toggle" aria-label="Close table of contents">
+                                <i class="ui-kit-icon ui-kit-icon_cross"></i>
+                            </button>
+                        </div>
+                        <div class="sidebar--inner" id="sideMenu"></div>
+                    </ul>
+                    <div class="dropdown--overlay"></div>
+                </div>
+            </div>
+            <div id="main">
+<div class="main-content" data-page-type="member" id="content" pageIds="app::com.oscar.sincarnet//replaceCitacionPlaceholders/#kotlin.String#com.oscar.sincarnet.JuzgadoAtestadoData#com.oscar.sincarnet.PersonaInvestigadaData#com.oscar.sincarnet.OcurrenciaDelitData#kotlin.String#kotlin.String#kotlin.String#com.oscar.sincarnet.VehiculoData#com.oscar.sincarnet.ManifestacionData?#com.oscar.sincarnet.AtestadoInicioModalData#kotlin.String?#kotlin.String?#kotlin.Int/PointingToDeclaration//-936671018">
+  <div class="breadcrumbs"><a href="../../index.html">app</a><span class="delimiter">/</span><a href="index.html">com.oscar.sincarnet</a><span class="delimiter">/</span><span class="current">replaceCitacionPlaceholders</span></div>
+  <div class="cover ">
+    <h1 class="cover"><span>replace</span><wbr></wbr><span>Citacion</span><wbr></wbr><span><span>Placeholders</span></span></h1>
+  </div>
+  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":app/main"><div class="symbol monospace"><span class="token keyword">internal </span><span class="token keyword">fun </span><a href="replace-citacion-placeholders.html"><span class="token function">replaceCitacionPlaceholders</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">text<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter ">courtData<span class="token operator">: </span><a href="-juzgado-atestado-data/index.html">JuzgadoAtestadoData</a><span class="token punctuation">, </span></span><span class="parameter ">personData<span class="token operator">: </span><a href="-persona-investigada-data/index.html">PersonaInvestigadaData</a><span class="token punctuation">, </span></span><span class="parameter ">ocurrenciaData<span class="token operator">: </span><a href="-ocurrencia-delit-data/index.html">OcurrenciaDelitData</a><span class="token punctuation">, </span></span><span class="parameter ">instructorTip<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter ">secretaryTip<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter ">instructorUnit<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter ">vehicleData<span class="token operator">: </span><a href="-vehiculo-data/index.html">VehiculoData</a><span class="token operator"> = </span>VehiculoData()<span class="token punctuation">, </span></span><span class="parameter ">manifestacionData<span class="token operator">: </span><a href="-manifestacion-data/index.html">ManifestacionData</a><span class="token operator">?</span><span class="token operator"> = </span>null<span class="token punctuation">, </span></span><span class="parameter ">inicioModalData<span class="token operator">: </span><a href="-atestado-inicio-modal-data/index.html">AtestadoInicioModalData</a><span class="token operator"> = </span>AtestadoInicioModalData()<span class="token punctuation">, </span></span><span class="parameter ">segundoConductorNombre<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token operator">?</span><span class="token operator"> = </span>null<span class="token punctuation">, </span></span><span class="parameter ">segundoConductorDocumento<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token operator">?</span><span class="token operator"> = </span>null<span class="token punctuation">, </span></span><span class="parameter ">documentSequenceIndex<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a><span class="token operator"> = </span><span class="token constant">0</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-string/index.html">String</a></div><p class="paragraph">Reemplaza los placeholders [...] en un documento de citación con datos específicos del caso.</p><p class="paragraph"><strong>Funcionamiento</strong>:</p><ol><li><p class="paragraph">Calcula la fecha/hora ajustada según <code class="lang-kotlin">documentSequenceIndex</code> (suma 5min por cada documento)</p></li><li><p class="paragraph">Reemplaza ~40 placeholders predefinidos</p></li><li><p class="paragraph">Si no encuentra exacta coincidencia, usa Levenshtein distance para correcciones tolerantes</p></li><li><p class="paragraph">Mantiene el placeholder original si no encuentra reemplazo y distancia 2</p></li></ol><p class="paragraph"><strong>Placeholders soportados</strong> (ejemplos):</p><p class="paragraph"><i>Ubicación y tiempo</i>:</p><ul><li><p class="paragraph"><code class="lang-kotlin">[[lugar]]</code>, <code class="lang-kotlin">[[lugarhechos]]</code>, <code class="lang-kotlin">[[terminomunicipal]]</code></p></li><li><p class="paragraph"><code class="lang-kotlin">[[hora]]</code>, <code class="lang-kotlin">[[fechacompleta]]</code>, <code class="lang-kotlin">[[horafecha]]</code></p></li></ul><p class="paragraph"><i>Personas</i>:</p><ul><li><p class="paragraph"><code class="lang-kotlin">[[nombrecompletoinvestigado]]</code>, <code class="lang-kotlin">[[documentoidentificacion]]</code></p></li><li><p class="paragraph"><code class="lang-kotlin">[[datosconductorydocumento]]</code>, <code class="lang-kotlin">[[datosconductorhabilitado]]</code></p></li><li><p class="paragraph"><code class="lang-kotlin">[[instructor]]</code>, <code class="lang-kotlin">[[secretario]]</code></p></li></ul><p class="paragraph"><i>Vehículo</i>:</p><ul><li><p class="paragraph"><code class="lang-kotlin">[[tipovehiculo]]</code>, <code class="lang-kotlin">[[marcavehiculo]]</code>, <code class="lang-kotlin">[[modelovehiculo]]</code>, <code class="lang-kotlin">[[matricula]]</code></p></li></ul><p class="paragraph"><i>Juzgado</i>:</p><ul><li><p class="paragraph"><code class="lang-kotlin">[[nombrejuzgado]]</code>, <code class="lang-kotlin">[[direccionjuzgado]]</code>, <code class="lang-kotlin">[[datosjuzgado]]</code></p></li><li><p class="paragraph"><code class="lang-kotlin">[[horajuicio]]</code>, <code class="lang-kotlin">[[fechajuicio]]</code></p></li></ul><p class="paragraph"><i>Derechos (SI/NO)</i>:</p><ul><li><p class="paragraph"><code class="lang-kotlin">[[right_declaracion]]</code>, <code class="lang-kotlin">[[right_renuncia_letrada]]</code>, <code class="lang-kotlin">[[right_letrado_particular]]</code></p></li><li><p class="paragraph"><code class="lang-kotlin">[[right_letrado_oficio]]</code>, <code class="lang-kotlin">[[right_acceso_elementos]]</code>, <code class="lang-kotlin">[[right_interprete]]</code></p></li></ul><p class="paragraph"><i>Manifestación (preguntas)</i>:</p><ul><li><p class="paragraph"><code class="lang-kotlin">[[primerapregunta]]</code>, <code class="lang-kotlin">[[segundapregunta]]</code>, ... <code class="lang-kotlin">[[octavapregunta]]</code></p></li></ul><p class="paragraph"><strong>Tolerancia a typos</strong>:</p><ul><li><p class="paragraph">Si no encuentra <code class="lang-kotlin">[[fecha nacimiento]]</code> exactamente, busca la clave normalizada más cercana</p></li><li><p class="paragraph">Usa Levenshtein distance: tolera hasta 2 caracteres de diferencia</p></li><li><p class="paragraph">Ejemplos: <code class="lang-kotlin">[[fecha_nacimiento]]</code> → <code class="lang-kotlin">[[fechanacimiento]]</code>, <code class="lang-kotlin">[[fechanacimiento]]</code></p></li></ul><p class="paragraph"><strong>Desplazamiento de hora</strong> (documentSequenceIndex):</p><ul><li><p class="paragraph">Documento 0: sin cambios</p></li><li><p class="paragraph">Documento 1: +5 minutos</p></li><li><p class="paragraph">Documento 2: +10 minutos</p></li><li><p class="paragraph">Usado para que cada documento de la secuencia tenga hora levemente diferente</p></li></ul><span class="kdoc-tag"><h4 class="">Return</h4><p class="paragraph">Texto con placeholders reemplazados</p></span><h4 class="">Parameters</h4><div class="table"><div class="table-row" data-filterable-current=":app/main" data-filterable-set=":app/main"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><u><span><span>text</span></span></u></div></span></div><div><div class="title"><p class="paragraph">Texto con placeholders a reemplazar</p></div></div></div></div><div class="table-row" data-filterable-current=":app/main" data-filterable-set=":app/main"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><u><span>court</span><wbr></wbr><span><span>Data</span></span></u></div></span></div><div><div class="title"><p class="paragraph">Datos del juzgado</p></div></div></div></div><div class="table-row" data-filterable-current=":app/main" data-filterable-set=":app/main"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><u><span>person</span><wbr></wbr><span><span>Data</span></span></u></div></span></div><div><div class="title"><p class="paragraph">Datos de la persona investigada</p></div></div></div></div><div class="table-row" data-filterable-current=":app/main" data-filterable-set=":app/main"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><u><span>ocurrencia</span><wbr></wbr><span><span>Data</span></span></u></div></span></div><div><div class="title"><p class="paragraph">Lugar y hora de los hechos</p></div></div></div></div><div class="table-row" data-filterable-current=":app/main" data-filterable-set=":app/main"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><u><span>instructor</span><wbr></wbr><span><span>Tip</span></span></u></div></span></div><div><div class="title"><p class="paragraph">Titulo/cargo del instructor (p.ej. &quot;Juzgado de Instrucción nº 1&quot;)</p></div></div></div></div><div class="table-row" data-filterable-current=":app/main" data-filterable-set=":app/main"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><u><span>secretary</span><wbr></wbr><span><span>Tip</span></span></u></div></span></div><div><div class="title"><p class="paragraph">Titulo/cargo del secretario</p></div></div></div></div><div class="table-row" data-filterable-current=":app/main" data-filterable-set=":app/main"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><u><span>instructor</span><wbr></wbr><span><span>Unit</span></span></u></div></span></div><div><div class="title"><p class="paragraph">Unidad del instructor (p.ej. &quot;Policía Local de Madrid&quot;)</p></div></div></div></div><div class="table-row" data-filterable-current=":app/main" data-filterable-set=":app/main"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><u><span>vehicle</span><wbr></wbr><span><span>Data</span></span></u></div></span></div><div><div class="title"><p class="paragraph">Datos del vehículo (opcional)</p></div></div></div></div><div class="table-row" data-filterable-current=":app/main" data-filterable-set=":app/main"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><u><span>manifestacion</span><wbr></wbr><span><span>Data</span></span></u></div></span></div><div><div class="title"><p class="paragraph">Respuestas a preguntas de manifestación (opcional)</p></div></div></div></div><div class="table-row" data-filterable-current=":app/main" data-filterable-set=":app/main"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><u><span>inicio</span><wbr></wbr><span>Modal</span><wbr></wbr><span><span>Data</span></span></u></div></span></div><div><div class="title"><p class="paragraph">Datos del modal de inicio (artículo, norma, etc.)</p></div></div></div></div><div class="table-row" data-filterable-current=":app/main" data-filterable-set=":app/main"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><u><span>segundo</span><wbr></wbr><span>Conductor</span><wbr></wbr><span><span>Nombre</span></span></u></div></span></div><div><div class="title"><p class="paragraph">Nombre del segundo conductor habilitado (opcional)</p></div></div></div></div><div class="table-row" data-filterable-current=":app/main" data-filterable-set=":app/main"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><u><span>segundo</span><wbr></wbr><span>Conductor</span><wbr></wbr><span><span>Documento</span></span></u></div></span></div><div><div class="title"><p class="paragraph">Documento del segundo conductor (opcional)</p></div></div></div></div><div class="table-row" data-filterable-current=":app/main" data-filterable-set=":app/main"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><u><span>document</span><wbr></wbr><span>Sequence</span><wbr></wbr><span><span>Index</span></span></u></div></span></div><div><div class="title"><p class="paragraph">Índice del documento en la secuencia (0-based) para desplazar hora</p></div></div></div></div></div><h4 class="">See also</h4><div class="table"><div class="table-row" data-filterable-current=":app/main" data-filterable-set=":app/main"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><a href="load-citacion-document.html"><span>load</span><wbr></wbr><span>Citacion</span><wbr></wbr><span><span>Document</span></span></a></div></span></div><div><div class="title"><p class="paragraph">Para cargar el documento plantilla</p></div></div></div></div><div class="table-row" data-filterable-current=":app/main" data-filterable-set=":app/main"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><span>Atestado</span><wbr></wbr><span>Continuous</span><wbr></wbr><span>Pdf</span><wbr></wbr><span><span>Generator</span></span></div></span></div><div><div class="title"><p class="paragraph">Llamador principal en PDF continuo</p></div></div></div></div></div></div></div>
+</div>
+    <div class="footer">
+        <a href="#content" id="go-to-top-link" class="footer--button footer--button_go-to-top"></a>
+        <span>© 2026 Copyright</span>
+        <span class="pull-right">
+            <span>Generated by </span>
+            <a class="footer--link footer--link_external" href="https://github.com/Kotlin/dokka">
+                <span>dokka</span>
+            </a>
+        </span>
+    </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

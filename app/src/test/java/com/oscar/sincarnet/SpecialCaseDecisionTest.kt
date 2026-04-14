@@ -3,6 +3,9 @@ package com.oscar.sincarnet
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
+/**
+ * Pruebas unitarias para [resolveSpecialCaseDecision].
+ */
 class SpecialCaseDecisionTest {
 
     @Test

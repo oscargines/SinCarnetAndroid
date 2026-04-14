@@ -3,6 +3,11 @@ package com.oscar.sincarnet
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
+/**
+ * Pruebas unitarias para [resolveJudicialSuspensionDecision].
+ *
+ * Cubre conducción dentro/fuera de periodo y validación de curso/examen.
+ */
 class JudicialSuspensionDecisionTest {
 
     @Test

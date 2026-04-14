@@ -25,6 +25,7 @@ import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -56,11 +57,25 @@ import androidx.compose.material3.CircularProgressIndicator
 import kotlinx.coroutines.launch
 
 private val JUZGADO_DATE_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy")
+/** Valor interno para juicio rápido. */
 private const val TIPO_JUICIO_RAPIDO = "rapido"
+/** Valor interno para juicio ordinario. */
 private const val TIPO_JUICIO_ORDINARIO = "ordinario"
+/** Valor interno para juicio abreviado. */
 private const val TIPO_JUICIO_ABREVIADO = "abreviado"
 
 @OptIn(ExperimentalMaterial3Api::class)
+/**
+ * Pantalla de captura de datos de juzgado para el atestado.
+ *
+ * Permite seleccionar CCAA, provincia, municipio y sede judicial; además,
+ * define diligencias y datos de citación (tipo de juicio, fecha y hora).
+ *
+ * @param modifier Modificador raíz
+ * @param onBackClick Vuelve a la pantalla anterior
+ * @param onPrintClick Abre selección de impresora
+ * @param onPrintSummons Lanza impresión de citación judicial
+ */
 @Composable
 fun DatosJuzgadoAtestadoScreen(
     modifier: Modifier = Modifier,
@@ -936,7 +951,7 @@ private fun CourtDropdownField(
             value = value,
             onValueChange = {},
             modifier = Modifier
-                .menuAnchor()
+                .menuAnchor(MenuAnchorType.PrimaryNotEditable)
                 .fillMaxWidth(),
             readOnly = true,
             singleLine = true,

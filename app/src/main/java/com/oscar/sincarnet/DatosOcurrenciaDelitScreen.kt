@@ -73,6 +73,16 @@ private val OCURRENCIA_DATE_FORMATTER: DateTimeFormatter =
 private const val GEO_TAG = "OcurrenciaGeo"
 
 @OptIn(ExperimentalMaterial3Api::class)
+/**
+ * Pantalla de captura de ocurrencia delictiva.
+ *
+ * Recoge carretera/PK, localidad, término municipal, fecha y hora de hechos;
+ * además permite autocompletar ubicación con GPS cuando existe permiso.
+ *
+ * @param modifier Modificador raíz
+ * @param onBackClick Vuelve a la pantalla anterior
+ * @param onPrintClick Abre flujo de impresión
+ */
 @Composable
 fun DatosOcurrenciaDelitScreen(
     modifier: Modifier = Modifier,

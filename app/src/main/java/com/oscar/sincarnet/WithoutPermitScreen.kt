@@ -31,6 +31,16 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.oscar.sincarnet.ui.theme.SinCarnetTheme
 
+/**
+ * Flujo de decisión para conducción sin permiso habilitante.
+ *
+ * Pregunta si el conductor obtuvo permiso alguna vez y, si aplica,
+ * si dicho permiso es válido para conducir en España.
+ *
+ * @param modifier Modificador raíz
+ * @param onBackClick Vuelve a la pantalla anterior
+ * @param onStartAtestadoClick Inicia atestado si el resultado es penal
+ */
 @Composable
 fun WithoutPermitScreen(
     modifier: Modifier = Modifier,
@@ -198,10 +208,12 @@ fun WithoutPermitScreen(
     }
 }
 
+/** Casuísticas de observación mostradas en modal de apoyo legal. */
 private enum class WithoutPermitObservationCase {
     NEVER_OBTAINED_PERMIT
 }
 
+/** Comportamiento visual del panel de resultado en esta casuística. */
 internal enum class WithoutPermitBorderBehavior {
     NONE,
     RED_BLINK,
@@ -209,12 +221,18 @@ internal enum class WithoutPermitBorderBehavior {
     ORANGE_SOLID
 }
 
+/** Resultado de negocio para el flujo de conducción sin permiso. */
 internal data class WithoutPermitDecision(
     val messageRes: Int?,
     val borderBehavior: WithoutPermitBorderBehavior,
     val isCrimeCase: Boolean = false
 )
 
+/**
+ * Resuelve el resultado legal según antecedentes y validez del permiso.
+ *
+ * Devuelve un modelo agnóstico de UI consumible por pantalla y tests.
+ */
 internal fun resolveWithoutPermitDecision(
     hasEverObtainedPermit: Boolean?,
     isValidForDrivingInSpain: Boolean?

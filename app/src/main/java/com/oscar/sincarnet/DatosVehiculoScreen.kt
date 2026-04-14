@@ -23,6 +23,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -50,6 +51,17 @@ import java.time.format.DateTimeFormatter
 private val VEHICLE_DATE_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy")
 
 @OptIn(ExperimentalMaterial3Api::class)
+/**
+ * Pantalla de datos de vehículo y titular.
+ *
+ * Incluye identificación del vehículo, fechas relevantes (matriculación/ITV),
+ * compañía aseguradora y, opcionalmente, datos de titular distinto al conductor.
+ *
+ * @param modifier Modificador raíz
+ * @param onBackClick Vuelve a la pantalla previa
+ * @param onSaveClick Persiste la información del vehículo
+ * @param onDeleteClick Elimina el registro actual de vehículo
+ */
 @Composable
 fun DatosVehiculoScreen(
     modifier: Modifier = Modifier,
@@ -538,7 +550,7 @@ private fun VehicleDropdownField(
             value = value,
             onValueChange = {},
             modifier = Modifier
-                .menuAnchor()
+                .menuAnchor(MenuAnchorType.PrimaryNotEditable)
                 .fillMaxWidth(),
             readOnly = true,
             singleLine = true,

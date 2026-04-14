@@ -34,6 +34,20 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.oscar.sincarnet.ui.theme.SinCarnetTheme
 
+/**
+ * Pantalla inicial de selección de casuística.
+ *
+ * Muestra las 4 entradas principales del flujo policial y dos acciones
+ * auxiliares (consulta de juzgados y diálogo "Acerca de").
+ *
+ * @param modifier Modificador raíz de la pantalla
+ * @param onExpiredValidityClick Navega al caso "Pérdida de vigencia"
+ * @param onJudicialSuspensionClick Navega al caso "Suspensión judicial"
+ * @param onWithoutPermitClick Navega al caso "Conducir sin permiso"
+ * @param onSpecialCasesClick Navega al listado de casos especiales
+ * @param onCourtsClick Abre la consulta de juzgados
+ * @param onAboutClick Abre el diálogo de información de la app
+ */
 @Composable
 fun CasesScreen(
     modifier: Modifier = Modifier,
@@ -107,6 +121,12 @@ fun CasesScreen(
     }
 }
 
+/**
+ * Botón de acceso al diálogo "Acerca de" con icono cargado desde assets.
+ *
+ * En modo preview usa un fallback a `ic_launcher_foreground` para evitar
+ * dependencias de assets en tiempo de diseño.
+ */
 @Composable
 private fun AboutIconButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
     val context = LocalContext.current
@@ -145,6 +165,14 @@ private fun AboutIconButton(onClick: () -> Unit, modifier: Modifier = Modifier) 
     }
 }
 
+/**
+ * Tarjeta clicable para representar una entrada de casuística.
+ *
+ * @param title Texto principal de la tarjeta
+ * @param backgroundColor Color de fondo asociado al tipo de caso
+ * @param modifier Modificador de layout
+ * @param onClick Acción al pulsar la tarjeta
+ */
 @Composable
 private fun CaseCard(
     title: String,
@@ -173,12 +201,14 @@ private fun CaseCard(
     }
 }
 
+/** Item de UI para mapear tipo de caso con título y color. */
 private data class CaseItem(
     val type: CaseType,
     val titleRes: Int,
     val backgroundColor: Color
 )
 
+/** Tipos de caso soportados por la pantalla principal. */
 private enum class CaseType {
     EXPIRED_VALIDITY,
     JUDICIAL_SUSPENSION,

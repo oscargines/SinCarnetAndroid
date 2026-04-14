@@ -38,6 +38,17 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.oscar.sincarnet.ui.theme.SinCarnetTheme
 
+/**
+ * Flujo de decisión para conducción con pérdida de vigencia del permiso.
+ *
+ * Presenta preguntas guiadas y deriva en tres salidas visuales:
+ * delito (rojo), infracción administrativa (amarillo) o continuación
+ * del viaje (verde). Cuando procede delito, habilita iniciar atestado.
+ *
+ * @param modifier Modificador raíz
+ * @param onBackClick Vuelve a la pantalla anterior
+ * @param onStartAtestadoClick Inicia flujo de atestado para casos penales
+ */
 @Composable
 fun ExpiredValidityScreen(
     modifier: Modifier = Modifier,
@@ -359,11 +370,13 @@ fun ExpiredValidityScreen(
     }
 }
 
+/** Variantes de contenido para el modal de observaciones. */
 private enum class ObservationCase {
     LOSS_OF_VALIDITY_PERIOD,
     EDICTAL_APPEAL_PERIOD
 }
 
+/** Estados visuales del borde de resultado en `PerdidaVigenciaFuntionCard`. */
 internal enum class BorderBehavior {
     NONE,
     RED_BLINK,
@@ -371,12 +384,19 @@ internal enum class BorderBehavior {
     GREEN_SOLID
 }
 
+/** Resultado de negocio para el caso de pérdida de vigencia. */
 internal data class ExpiredValidityDecision(
     val messageRes: Int?,
     val borderBehavior: BorderBehavior,
     val isCrimeCase: Boolean = false
 )
 
+/**
+ * Resuelve el resultado normativo del caso de pérdida de vigencia.
+ *
+ * Encapsula la lógica para que la UI y los tests compartan el mismo
+ * comportamiento.
+ */
 internal fun resolveExpiredValidityDecision(
     selectedOption: Int,
     hasAnyNegativeAnswer: Boolean,

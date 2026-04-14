@@ -14,6 +14,7 @@ import androidx.compose.ui.graphics.asAndroidBitmap
 import java.io.File
 import java.io.FileOutputStream
 
+/** Resultado de generación PDF con archivo y timestamp de creación. */
 internal data class AtestadoPdfResult(
     val file: File,
     val createdAtMillis: Long
@@ -35,8 +36,14 @@ private const val HEADER_HEIGHT_MM = 22f
 private const val TITLE_TOP_MM = 15f
 private const val TITLE_BODY_GAP_PT = 18f
 
+/** Convierte milímetros a puntos tipográficos (PDF). */
 private fun mmToPt(mm: Float): Float = mm * 72f / 25.4f
 
+/**
+ * Genera PDF de atestado con contenido principal y bloque de firmas.
+ *
+ * Se usa como variante de salida PDF compacta frente al generador continuo.
+ */
 internal fun generateAtestadoSignaturesPdf(
     context: Context,
     signatures: Map<PdfSignatureSlot, PdfSignatureContent<ImageBitmap>>,
@@ -453,12 +460,15 @@ internal fun generateAtestadoSignaturesPdf(
 
 private const val GENERATED_ATESTADO_PDF_NAME = "citaciónindividual.pdf"
 
+/** Carga tipografía desde assets (retorna null si falla). */
 private fun loadTypefaceFromAssets(context: Context, path: String): Typeface? =
     runCatching { Typeface.createFromAsset(context.assets, path) }.getOrNull()
 
+/** Carga bitmap desde assets (retorna null si falla). */
 private fun loadBitmapFromAssets(context: Context, path: String): Bitmap? =
     runCatching { context.assets.open(path).use { BitmapFactory.decodeStream(it) } }.getOrNull()
 
+/** Dibuja bitmap escalado alineado arriba-izquierda en coordenada base. */
 private fun drawBitmapAlignedTopLeft(
     canvas: android.graphics.Canvas,
     bitmap: Bitmap,
@@ -471,6 +481,7 @@ private fun drawBitmapAlignedTopLeft(
     canvas.drawBitmap(bitmap, null, dst, null)
 }
 
+/** Dibuja bitmap escalado alineado arriba-derecha en coordenada base. */
 private fun drawBitmapAlignedTopRight(
     canvas: android.graphics.Canvas,
     bitmap: Bitmap,
@@ -483,6 +494,7 @@ private fun drawBitmapAlignedTopRight(
     canvas.drawBitmap(bitmap, null, dst, null)
 }
 
+/** Renderiza una caja de firma con etiqueta y contenido (imagen o texto). */
 private fun drawSignatureBlock(
     canvas: android.graphics.Canvas,
     rect: RectF,
@@ -535,6 +547,7 @@ private fun drawSignatureBlock(
     }
 }
 
+/** Dibuja texto multilínea con ajuste por ancho máximo. */
 private fun drawMultilineText(
     canvas: android.graphics.Canvas,
     text: String,
@@ -562,6 +575,7 @@ private fun drawMultilineText(
     return cy
 }
 
+/** Dibuja texto embebido respetando codificación/normalización usada en PDF. */
 private fun drawTextEmbedded(
     canvas: android.graphics.Canvas,
     text: String,

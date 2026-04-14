@@ -45,6 +45,24 @@ import com.oscar.sincarnet.ui.theme.SinCarnetTheme
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.rememberCoroutineScope
 
+/**
+ * Pantalla de firmas y generación final de documentos del atestado.
+ *
+ * Gestiona captura/estado visual de firmas, configuración de motivo/norma,
+ * condiciones adicionales (segundo conductor, voluntad de firma), y acciones
+ * de generación/compartición de PDF y ODT.
+ *
+ * @param modifier Modificador raíz
+ * @param onBackClick Vuelve a la pantalla anterior
+ * @param onPrintClick Abre flujo de impresión
+ * @param instructorSignature Firma del instructor
+ * @param secretarySignature Firma del secretario
+ * @param investigatedSignature Firma de la persona investigada
+ * @param secondDriverSignature Firma de segundo conductor (si aplica)
+ * @param onGenerateAtestadoClick Callback de generación de atestado
+ * @param onSharePdfClick Callback para compartir PDF generado
+ * @param onShareOdtClick Callback para compartir ODT generado
+ */
 @Composable
 fun FirmasAtestadoScreen(
     modifier: Modifier = Modifier,

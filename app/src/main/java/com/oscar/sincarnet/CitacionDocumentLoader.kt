@@ -2,7 +2,6 @@ package com.oscar.sincarnet
 
 import android.content.Context
 import android.util.Log
-import org.json.JSONArray
 import org.json.JSONObject
 import java.io.InputStreamReader
 import java.time.LocalDate
@@ -11,6 +10,35 @@ import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
+/**
+ * Documento de citación a juicio completo cargado desde JSON.
+ *
+ * Estructura que representa una citación completa con secciones y elementos.
+ * Se carga desde assets (`docs/citacionjuicio.json` o `docs/citacionjuiciorapido.json`)
+ * y puede ser renderizado en PDF o impreso vía Bluetooth.
+ *
+ * **Flujo de uso**:
+ * 1. [loadCitacionDocument] carga el JSON según tipoJuicio
+ * 2. Se llena la estructura con secciones, items, opciones
+ * 3. Se pasan al renderizador (PDF o impresora)
+ * 4. Se aplican placeholders específicos del caso con [replaceCitacionPlaceholders]
+ *
+ * **Notas especiales**:
+ * - `onlyEnterado=true`: Solo incluir sección "Enterado" (p.ej. en 03letradogratis.json)
+ * - `allowSecondDriver=true`: Permitir entrada de segundo conductor habilitado
+ *
+ * @property titulo Título principal de la citación (p.ej. "CITACIÓN A JUICIO RÁPIDO")
+ * @property cuerpoDescripcion Párrafo introductorio del documento
+ * @property secciones Lista de [CitacionSeccion] que componen el cuerpo del documento
+ * @property cierre Texto de cierre (firma, fecha, etc.)
+ * @property enteradoTitulo Título de la sección "Enterado" (si aplica)
+ * @property enteradoTexto Texto de la sección "Enterado"
+ * @property onlyEnterado Si true, solo renderizar sección "Enterado" (omitir resto)
+ * @property allowSecondDriver Si true, permitir especificar segundo conductor habilitado
+ *
+ * @see loadCitacionDocument Para cargar desde JSON
+ * @see replaceCitacionPlaceholders Para completar los datos específicos del caso
+ */
 data class CitacionDocument(
     val titulo: String = "",
     val cuerpoDescripcion: String = "",
@@ -22,6 +50,33 @@ data class CitacionDocument(
     val allowSecondDriver: Boolean = false
 )
 
+/**
+ * Una sección dentro de un documento de citación.
+ *
+ * Las secciones son bloques de contenido que pueden contener:
+ * - Título y contenido textual
+ * - Lista de items (bullets)
+ * - Lista de opciones alternativas
+ * - Información adicional (notas, observaciones)
+ *
+ * Ejemplo de sección (juicio rápido):
+ * ```
+ * Sección "Derechos":
+ *   - Título: "Derechos del acusado"
+ *   - Contenido: "Usted tiene derecho a..."
+ *   - Items: [
+ *       "Derecho a guardar silencio",
+ *       "Derecho a asistencia letrada",
+ *       ...
+ *     ]
+ * ```
+ *
+ * @property titulo Encabezado de la sección (p.ej. "Derechos del acusado")
+ * @property contenido Párrafo de descripción general
+ * @property items Lista de puntos/bullets (generalmente con prefijo "•")
+ * @property opciones Lista de alternativas para elegir (p.ej. "Designa letrado de oficio" vs "No designa")
+ * @property informacionAdicional Texto adicional, notas o advertencias
+ */
 data class CitacionSeccion(
     val titulo: String = "",
     val contenido: String = "",
@@ -30,14 +85,64 @@ data class CitacionSeccion(
     val informacionAdicional: String = ""
 )
 
+/**
+ * Un item/punto dentro de una lista de una [CitacionSeccion].
+ *
+ * Cada item representa un bullet point o elemento de lista que aparecerá
+ * con prefijo "•" o similar en el documento impreso.
+ *
+ * @property descripcion Texto del item (p.ej. "Derecho a guardar silencio")
+ */
 data class CitacionItem(
     val descripcion: String = ""
 )
 
+/**
+ * Una opción alternativa dentro de una [CitacionSeccion].
+ *
+ * Las opciones representan decisiones que el usuario puede tomar.
+ * Por ejemplo, en el documento de letrado gratuito:
+ * - Opción 1: "Designa letrado de oficio"
+ * - Opción 2: "No designa letrado de oficio"
+ *
+ * En el renderizado, aparecen con casillas de selección o indicadores.
+ *
+ * @property descripcion Texto de la opción (p.ej. "Designa letrado de oficio")
+ */
 data class CitacionOpcion(
     val descripcion: String = ""
 )
 
+/**
+ * Carga un documento de citación desde los assets JSON según el tipo de juicio.
+ *
+ * **Proceso**:
+ * 1. Normaliza el tipoJuicio (minúsculas, elimina acentos y espacios)
+ * 2. Decide qué archivo cargar:
+ *    - Si contiene "rápido" → `citacionjuiciorapido.json`
+ *    - Si no → `citacionjuicio.json`
+ * 3. Abre el JSON desde `assets/docs/[archivo]`
+ * 4. Parsea la estructura documento→secciones→items→opciones
+ * 5. Retorna [CitacionDocument] poblado o documento vacío si falla
+ *
+ * **Normalización de tipoJuicio**:
+ * - Elimina acentos: "Juicio Rápido" → "juicio rapido"
+ * - Elimina espacios: "juicio rapido" → "juiciorapido"
+ * - Convierte a minúsculas
+ *
+ * **Archivos soportados**:
+ * - `docs/citacionjuicio.json` - Juicio ordinario
+ * - `docs/citacionjuiciorapido.json` - Juicio rápido
+ *
+ * **Fallback a BD**: Si el JSON no tiene "secciones", retorna [CitacionDocument] vacío
+ * y la BD debería proporcionar los datos dinámicamente.
+ *
+ * @param context Contexto de aplicación para acceso a assets
+ * @param tipoJuicio Tipo de juicio ("Juicio Rápido", "juicio ordinario", etc.)
+ * @return [CitacionDocument] cargado o documento vacío si error
+ *
+ * @see replaceCitacionPlaceholders Para completar los placeholders del documento
+ */
 fun loadCitacionDocument(context: Context, tipoJuicio: String): CitacionDocument {
     // Normalizar tipoJuicio: pasar a minúsculas, eliminar acentos y espacios redundantes
     val tipoNormalized = java.text.Normalizer.normalize(tipoJuicio ?: "", java.text.Normalizer.Form.NFD)
@@ -116,6 +221,69 @@ fun loadCitacionDocument(context: Context, tipoJuicio: String): CitacionDocument
     }.getOrNull() ?: CitacionDocument()
 }
 
+/**
+ * Reemplaza los placeholders [[...]] en un documento de citación con datos específicos del caso.
+ *
+ * **Funcionamiento**:
+ * 1. Calcula la fecha/hora ajustada según `documentSequenceIndex` (suma 5min por cada documento)
+ * 2. Reemplaza ~40 placeholders predefinidos
+ * 3. Si no encuentra exacta coincidencia, usa Levenshtein distance para correcciones tolerantes
+ * 4. Mantiene el placeholder original si no encuentra reemplazo y distancia > 2
+ *
+ * **Placeholders soportados** (ejemplos):
+ *
+ * *Ubicación y tiempo*:
+ * - `[[lugar]]`, `[[lugarhechos]]`, `[[terminomunicipal]]`
+ * - `[[hora]]`, `[[fechacompleta]]`, `[[horafecha]]`
+ *
+ * *Personas*:
+ * - `[[nombrecompletoinvestigado]]`, `[[documentoidentificacion]]`
+ * - `[[datosconductorydocumento]]`, `[[datosconductorhabilitado]]`
+ * - `[[instructor]]`, `[[secretario]]`
+ *
+ * *Vehículo*:
+ * - `[[tipovehiculo]]`, `[[marcavehiculo]]`, `[[modelovehiculo]]`, `[[matricula]]`
+ *
+ * *Juzgado*:
+ * - `[[nombrejuzgado]]`, `[[direccionjuzgado]]`, `[[datosjuzgado]]`
+ * - `[[horajuicio]]`, `[[fechajuicio]]`
+ *
+ * *Derechos (SI/NO)*:
+ * - `[[right_declaracion]]`, `[[right_renuncia_letrada]]`, `[[right_letrado_particular]]`
+ * - `[[right_letrado_oficio]]`, `[[right_acceso_elementos]]`, `[[right_interprete]]`
+ *
+ * *Manifestación (preguntas)*:
+ * - `[[primerapregunta]]`, `[[segundapregunta]]`, ... `[[octavapregunta]]`
+ *
+ * **Tolerancia a typos**:
+ * - Si no encuentra `[[fecha nacimiento]]` exactamente, busca la clave normalizada más cercana
+ * - Usa Levenshtein distance: tolera hasta 2 caracteres de diferencia
+ * - Ejemplos: `[[fecha_nacimiento]]` → `[[fechanacimiento]]`, `[[fechanacimiento]]`
+ *
+ * **Desplazamiento de hora** (documentSequenceIndex):
+ * - Documento 0: sin cambios
+ * - Documento 1: +5 minutos
+ * - Documento 2: +10 minutos
+ * - Usado para que cada documento de la secuencia tenga hora levemente diferente
+ *
+ * @param text Texto con placeholders a reemplazar
+ * @param courtData Datos del juzgado
+ * @param personData Datos de la persona investigada
+ * @param ocurrenciaData Lugar y hora de los hechos
+ * @param instructorTip Titulo/cargo del instructor (p.ej. "Juzgado de Instrucción nº 1")
+ * @param secretaryTip Titulo/cargo del secretario
+ * @param instructorUnit Unidad del instructor (p.ej. "Policía Local de Madrid")
+ * @param vehicleData Datos del vehículo (opcional)
+ * @param manifestacionData Respuestas a preguntas de manifestación (opcional)
+ * @param inicioModalData Datos del modal de inicio (artículo, norma, etc.)
+ * @param segundoConductorNombre Nombre del segundo conductor habilitado (opcional)
+ * @param segundoConductorDocumento Documento del segundo conductor (opcional)
+ * @param documentSequenceIndex Índice del documento en la secuencia (0-based) para desplazar hora
+ * @return Texto con placeholders reemplazados
+ *
+ * @see loadCitacionDocument Para cargar el documento plantilla
+ * @see AtestadoContinuousPdfGenerator Llamador principal en PDF continuo
+ */
 internal fun replaceCitacionPlaceholders(
     text: String,
     courtData: JuzgadoAtestadoData,
@@ -281,6 +449,16 @@ internal fun replaceCitacionPlaceholders(
     // Ejemplos corregidos: [[fecha nacimiento]] -> [[fechanacimiento]], [[fecha_nacimiento]] -> [[fechanacimiento]]
     // Normalizamos el nombre del placeholder (eliminando espacios, guiones bajos y no alfanuméricos)
     // y lo mapeamos a los valores ya calculados.
+    /**
+     * Normalizador de placeholders para corrección tolerante.
+     *
+     * Elimina espacios, guiones bajos, y caracteres no alfanuméricos de los nombres de placeholders.
+     * Esto permite que `[[fecha nacimiento]]`, `[[fecha_nacimiento]]` y `[[fechanacimiento]]`
+     * se reconozcan como equivalentes.
+     *
+     * @param key Nombre del placeholder (p.ej. "fecha nacimiento")
+     * @param value Valor a asignar
+     */
     val normalizedMap = mutableMapOf<String, String>()
     fun putNorm(key: String, value: String?) {
         val norm = key.replace("[^A-Za-z0-9]".toRegex(), "").lowercase()
@@ -321,11 +499,25 @@ internal fun replaceCitacionPlaceholders(
     putNorm("datosjuzgado", datosJuzgado)
     putNorm("municipiojuzgado", courtData.municipioNombre)
     putNorm("provinciajuzgado", courtData.provinciaNombre)
-    putNorm("horajuicio", courtData.horaJuicioRapido)
-    putNorm("fechajuicio", courtData.fechaJuicioRapido)
+     putNorm("horajuicio", courtData.horaJuicioRapido)
+     putNorm("fechajuicio", courtData.fechaJuicioRapido)
 
-    // Levenshtein para tolerar typos leves en el nombre del placeholder
-    fun levenshtein(a: String, b: String): Int {
+     /**
+      * Calcula distancia de Levenshtein entre dos cadenas.
+      *
+      * Distancia mínima de ediciones (inserciones, deleciones, sustituciones)
+      * necesarias para transformar una cadena en otra.
+      *
+      * Usado para encontrar el placeholder más cercano cuando no hay coincidencia exacta.
+      * Por ejemplo, "fechanacimeinto" (typo) coincidiría con "fechanacimiento" (distancia=1).
+      *
+      * Complejidad: O(|a| × |b|)
+      *
+      * @param a Primera cadena
+      * @param b Segunda cadena
+      * @return Distancia mínima de edición (0 = iguales, > 2 = muy diferentes)
+      */
+     fun levenshtein(a: String, b: String): Int {
         val dp = Array(a.length + 1) { IntArray(b.length + 1) }
         for (i in 0..a.length) dp[i][0] = i
         for (j in 0..b.length) dp[0][j] = j
@@ -335,10 +527,22 @@ internal fun replaceCitacionPlaceholders(
                 dp[i][j] = minOf(dp[i - 1][j] + 1, dp[i][j - 1] + 1, dp[i - 1][j - 1] + cost)
             }
         }
-        return dp[a.length][b.length]
-    }
+         return dp[a.length][b.length]
+     }
 
-    val placeholderRegex = Regex("\\[\\[\\s*([^\\]]+?)\\s*\\]\\]")
+     /**
+      * Reemplaza todos los placeholders con búsqueda tolerante.
+      *
+      * Flujo:
+      * 1. Busca patrón `[[...]]` en el texto
+      * 2. Normaliza el nombre del placeholder (elimina espacios, guiones)
+      * 3. Si está en el mapa exacto, usa el valor
+      * 4. Si no, busca la clave normalizada más cercana con Levenshtein
+      * 5. Si distancia ≤ 2, usa ese valor; si no, deja el placeholder original
+      *
+      * Esto permite que errores tipográficos leves se corrijan automáticamente.
+      */
+     val placeholderRegex = Regex("\\[\\[\\s*([^\\]]+?)\\s*\\]\\]")
     result = placeholderRegex.replace(result) { m ->
         val raw = m.groupValues[1]
         val normalized = raw.replace("[^A-Za-z0-9]".toRegex(), "").lowercase()

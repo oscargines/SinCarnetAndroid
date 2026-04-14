@@ -3,6 +3,7 @@ import java.util.Properties
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+    id("org.jetbrains.dokka")
 }
 
 val keystoreProperties = Properties()
@@ -126,3 +127,32 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.0")
 
 }
+
+// Configuración Dokka V2 (plugin mode V2EnabledWithHelpers en gradle.properties)
+dokka {
+    dokkaSourceSets.register("main") {
+        displayName.set("appMain")
+        sourceRoots.from(file("src/main/java"))
+        sourceRoots.from(file("src/main/kotlin"))
+        suppress.set(false)
+        documentedVisibilities.set(
+            setOf(
+                org.jetbrains.dokka.gradle.engine.parameters.VisibilityModifier.Public,
+                org.jetbrains.dokka.gradle.engine.parameters.VisibilityModifier.Internal,
+                org.jetbrains.dokka.gradle.engine.parameters.VisibilityModifier.Protected,
+                org.jetbrains.dokka.gradle.engine.parameters.VisibilityModifier.Private
+            )
+        )
+        skipDeprecated.set(false)
+        reportUndocumented.set(false)
+    }
+}
+
+tasks.register<Sync>("publishDokkaToDocs") {
+    group = "documentation"
+    description = "Genera Dokka HTML y publica la salida versionable en docs/api"
+    dependsOn("dokkaGeneratePublicationHtml")
+    from(layout.buildDirectory.dir("dokka/html"))
+    into(rootProject.layout.projectDirectory.dir("docs/api"))
+}
+

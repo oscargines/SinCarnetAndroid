@@ -2,6 +2,21 @@ package com.oscar.sincarnet
 
 import android.content.Context
 
+/**
+ * Modelo que almacena datos sobre la ocurrencia del delito/infracción registrada en el atestado.
+ *
+ * Incluye información de ubicación (carretera, localidad, provincia), fecha y hora,
+ * así como el momento en que se informó de derechos al investigado.
+ *
+ * @property carretera Identificación de la carretera donde ocurrió el hecho (p. ej. "N-I", "A-2").
+ * @property pk Punto kilométrico de la ocurrencia.
+ * @property localidad Localidad o municipio donde ocurrió el hecho.
+ * @property provincia Provincia donde se produjo el hecho.
+ * @property terminoMunicipal Término municipal específico.
+ * @property fecha Fecha del hecho en formato "dd-MM-yyyy".
+ * @property hora Hora del hecho en formato "HH:mm".
+ * @property derechosInformacionMomento Campo persistente para el momento en que se informó de derechos.
+ */
 internal data class OcurrenciaDelitData(
     val carretera: String = "",
     val pk: String = "",
@@ -10,13 +25,23 @@ internal data class OcurrenciaDelitData(
     val terminoMunicipal: String = "",
     val fecha: String = "",
     val hora: String = "",
-
     val derechosInformacionMomento: String = ""
 )
 
+/**
+ * Gestor de almacenamiento persistente para datos de ocurrencia del delito.
+ *
+ * @constructor Crea un nuevo gestor de almacenamiento.
+ * @param context Contexto de la aplicación.
+ */
 internal class OcurrenciaDelitStorage(context: Context) {
     private val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
+    /**
+     * Carga los datos actuales de ocurrencia del delito.
+     *
+     * @return Estructura [OcurrenciaDelitData] con datos almacenados o valores por defecto.
+     */
     fun loadCurrent(): OcurrenciaDelitData = OcurrenciaDelitData(
         carretera = prefs.getString(KEY_CARRETERA, "").orEmpty(),
         pk = prefs.getString(KEY_PK, "").orEmpty(),
@@ -25,10 +50,14 @@ internal class OcurrenciaDelitStorage(context: Context) {
         terminoMunicipal = prefs.getString(KEY_TERMINO_MUNICIPAL, "").orEmpty(),
         fecha = prefs.getString(KEY_FECHA, "").orEmpty(),
         hora = prefs.getString(KEY_HORA, "").orEmpty(),
-        // ✅ Nuevo campo persistente
         derechosInformacionMomento = prefs.getString(KEY_DERECHOS_INFORMACION_MOMENTO, "").orEmpty()
     )
 
+    /**
+     * Guarda los datos de ocurrencia del delito.
+     *
+     * @param data Estructura [OcurrenciaDelitData] a guardar.
+     */
     fun saveCurrent(data: OcurrenciaDelitData) {
         prefs.edit()
             .putString(KEY_CARRETERA, data.carretera)
@@ -42,6 +71,9 @@ internal class OcurrenciaDelitStorage(context: Context) {
             .apply()
     }
 
+    /**
+     * Limpia todos los datos de ocurrencia del delito.
+     */
     fun clearCurrent() {
         prefs.edit()
             .remove(KEY_CARRETERA)

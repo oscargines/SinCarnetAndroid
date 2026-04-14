@@ -24,6 +24,20 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 
+/**
+ * Tarjeta de resultado legal con borde dinámico y acción opcional de atestado.
+ *
+ * Se reutiliza en flujos de decisión (pérdida de vigencia, suspensión judicial,
+ * sin permiso, casos especiales) para mostrar el resultado normativo.
+ *
+ * @param modifier Modificador raíz
+ * @param messageText Mensaje legal a mostrar (null oculta texto)
+ * @param isAlertBlinking Activa animación de parpadeo del borde
+ * @param blinkingColor Color base cuando hay parpadeo
+ * @param borderColor Color fijo del borde cuando no parpadea
+ * @param showAtestadoButton Si true, muestra botón para iniciar atestado
+ * @param onAtestadoClick Acción del botón de atestado
+ */
 @Composable
 fun PerdidaVigenciaFuntionCard(
     modifier: Modifier = Modifier,

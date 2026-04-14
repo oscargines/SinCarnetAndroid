@@ -80,7 +80,9 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import kotlin.math.roundToInt
 
+/** Etapas del flujo de captura: previsualizar, ajustar recorte y guardar. */
 private enum class ScanPhase { PREVIEW, ADJUST, SAVING }
+/** Tipos documentales que pueden incluirse en el PDF escaneado. */
 private enum class ScannableDocument {
     IDENTITY,
     DRIVING_LICENSE,
@@ -88,6 +90,7 @@ private enum class ScannableDocument {
     ITV_CARD
 }
 
+/** Cara concreta de documento a capturar en cada paso del asistente. */
 private enum class CaptureTarget {
     IDENTITY_FRONT,
     IDENTITY_BACK,
@@ -103,6 +106,17 @@ private val ScanAccent = Color(0xFFFFD600)
 private val ScanButtonSave = Color(0xFF4A148C)
 private const val SCAN_LOG_TAG = "DocumentScannerFlow"
 
+/**
+ * Pantalla de escaneado documental con CameraX y generación de PDF.
+ *
+ * Permite seleccionar qué documentos incluir, capturar caras requeridas,
+ * ajustar recorte, generar PDF y abrir/compartir el resultado.
+ *
+ * @param modifier Modificador raíz
+ * @param onBackClick Vuelve a la pantalla anterior
+ * @param onOpenPdf Abre un PDF generado
+ * @param onSharePdf Comparte un PDF generado
+ */
 @Composable
 internal fun DocumentScannerScreen(
     modifier: Modifier = Modifier,
