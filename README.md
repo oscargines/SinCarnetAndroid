@@ -7,11 +7,19 @@
 [![Platform](https://img.shields.io/badge/Platform-Android%2012%2B-3DDC84?logo=android&logoColor=white)](https://developer.android.com)
 [![Kotlin](https://img.shields.io/badge/Language-Kotlin-7F52FF?logo=kotlin&logoColor=white)](https://kotlinlang.org)
 [![Compose](https://img.shields.io/badge/UI-Jetpack%20Compose-4285F4?logo=jetpackcompose&logoColor=white)](https://developer.android.com/jetpack/compose)
-[![Version](https://img.shields.io/badge/Version-1.30.00-blue)](app/build.gradle.kts)
+[![Version](https://img.shields.io/badge/Version-1.31.00-blue)](app/build.gradle.kts)
 [![Docs](https://img.shields.io/badge/API%20Docs-Dokka%20V2-orange)](docs/api/index.html)
 [![License](https://img.shields.io/badge/License-Uso%20interno-lightgrey)](#licencia-y-uso)
 
 </div>
+
+---
+
+## 📦 Descarga directa
+
+- [⬇️ Descargar APK firmado v1.31.0](https://raw.githubusercontent.com/oscargines/SinCarnetAndroid/main/SinCarnet_V.1.31.0.apk)
+
+> El binario distribuible publicado en el repositorio corresponde al artefacto firmado de la versión actual.
 
 ---
 
@@ -194,6 +202,7 @@ SinCarnetAndroid/
 │       └── index.html
 ├── keystore/
 │   └── sincarnet-release.jks     # Keystore de firma release
+├── SinCarnet_V.1.31.0.apk        # APK firmado publicado para descarga directa
 ├── build.gradle.kts              # Configuración raíz
 ├── settings.gradle.kts
 ├── gradle/
@@ -227,10 +236,16 @@ Ejecuta compilación, tests unitarios y publicación de documentación en un ún
 ./gradlew assembleRelease
 ```
 
-El APK firmado se genera en:
+El APK firmado se genera inicialmente en:
 
 ```text
-app/build/outputs/apk/release/SinCarnet.V.1.30.apk
+app/build/outputs/apk/release/app-release.apk
+```
+
+Para distribución directa desde GitHub, el artefacto versionado publicado en la raíz del repositorio es:
+
+```text
+SinCarnet_V.1.31.0.apk
 ```
 
 > Es necesario que `keystore.properties` esté correctamente configurado con la ruta y credenciales del keystore antes de ejecutar el build de release.
@@ -316,6 +331,6 @@ Proyecto de **uso interno / operativo**. Cualquier reutilización, adaptación o
 
 <div align="center">
 
-**SinCarnet Android** · v1.30.00 · API 31–35 · Kotlin · Jetpack Compose
+**SinCarnet Android** · v1.31.00 · API 31–35 · Kotlin · Jetpack Compose
 
 </div>
