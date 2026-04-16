@@ -63,6 +63,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.oscar.sincarnet.ui.theme.SinCarnetTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -94,6 +97,7 @@ fun BluetoothPrinterScreen(
     onBackClick: () -> Unit = {}
 ) {
     val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
     val isInPreview = LocalInspectionMode.current
     val storage = remember(context) { BluetoothPrinterStorage(context) }
     val bluetoothAdapter = remember(context) {
@@ -149,6 +153,16 @@ fun BluetoothPrinterScreen(
                 addDiscoveredPrinter(printer)
             }
         }.onFailure { Log.e(BT_TAG, "addBondedDevicesAsFallback error", it) }
+    }
+
+    fun refreshAfterPairing() {
+        refreshSavedPrinters()
+        if (!isScanning) {
+            addBondedDevicesAsFallback()
+            if (selectedDiscoveredPrinterMac.isNotBlank() && discoveredPrinters.none { it.mac == selectedDiscoveredPrinterMac }) {
+                selectedDiscoveredPrinterMac = ""
+            }
+        }
     }
 
     @SuppressLint("MissingPermission")
@@ -285,6 +299,18 @@ fun BluetoothPrinterScreen(
                             context?.getString(R.string.bluetooth_printer_scan_finished).orEmpty()
                         }
                     }
+
+                    BluetoothDevice.ACTION_BOND_STATE_CHANGED -> {
+                        val device = intent.extractBluetoothDevice()
+                        val state = intent.getIntExtra(BluetoothDevice.EXTRA_BOND_STATE, BluetoothDevice.BOND_NONE)
+                        val previous = intent.getIntExtra(BluetoothDevice.EXTRA_PREVIOUS_BOND_STATE, BluetoothDevice.BOND_NONE)
+                        Log.d(BT_TAG, "ACTION_BOND_STATE_CHANGED device=${device?.address} prev=$previous state=$state")
+
+                        if (state == BluetoothDevice.BOND_BONDED) {
+                            refreshAfterPairing()
+                            statusMessage = context?.getString(R.string.bluetooth_printer_ready).orEmpty()
+                        }
+                    }
                 }
             }
         }
@@ -294,6 +320,7 @@ fun BluetoothPrinterScreen(
         val filter = IntentFilter().apply {
             addAction(BluetoothDevice.ACTION_FOUND)
             addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED)
+            addAction(BluetoothDevice.ACTION_BOND_STATE_CHANGED)
         }
         Log.d(BT_TAG, "DisposableEffect: registering BroadcastReceiver with filter=$filter (RECEIVER_EXPORTED)")
         ContextCompat.registerReceiver(
@@ -307,6 +334,16 @@ fun BluetoothPrinterScreen(
             runCatching { context.unregisterReceiver(receiver) }
             bluetoothAdapter.cancelDiscoverySafely(context)
         }
+    }
+
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                refreshAfterPairing()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
     LaunchedEffect(Unit) {
@@ -567,6 +604,7 @@ fun BluetoothPrinterScreen(
             }
 
             Button(
+                // Guardar se mantiene como acción explícita para dar seguridad al usuario antes de persistir cambios.
                 onClick = {
                     val scannedSelection = discoveredPrinters.firstOrNull { it.mac == selectedDiscoveredPrinterMac }
                     when {

@@ -1,9 +1,25 @@
 🎯 RESUMEN EJECUTIVO - DOCUMENTACIÓN SINCARNET
 ============================================
 
-**Fecha**: 2026-04-14  
+**Fecha**: 2026-04-16  
 **Estado**: ✅ Fase 4 cerrada (build/tests + Dokka)  
 **Cobertura**: Tier 1 (100%) + Tier 2 (en progreso) + Tier 3 (completada)
+
+---
+
+## 🧩 CAMBIOS TÉCNICOS RECIENTES (BLUETOOTH)
+
+```
+Impresión Zebra (BluetoothPrinterUtils.kt)
+├─ Se introduce configurePrinterSession(...) para aplicar SGD por modelo
+├─ ZQ521: media.type=continuous + perfil anti-corte por marca
+└─ RW420: comportamiento previo conservado (solo CPCL)
+
+Pantalla de impresoras (BluetoothPrinterScreen.kt)
+├─ Refresco automático al completar bonding (ACTION_BOND_STATE_CHANGED)
+├─ Refresco adicional en ON_RESUME tras volver del diálogo de PIN
+└─ Comentario UX: botón Guardar como confirmación explícita para dar seguridad al usuario
+```
 
 ---
 
@@ -244,5 +260,5 @@ TIER 3:      ██████████████████████�
 **Generador**: Dokka  
 
 **Estado**: ✅ CIERRE TÉCNICO COMPLETADO - Fases 2, 3 y 4 cerradas
-**Fecha**: 2026-04-14
+**Fecha**: 2026-04-16
 

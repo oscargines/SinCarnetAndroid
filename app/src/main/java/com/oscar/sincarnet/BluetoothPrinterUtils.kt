@@ -694,6 +694,36 @@ suspend fun printDocumentSuspend(context: Context, mac: String,
 // documentos sin provocar nuevos diálogos de emparejamiento.
 // ============================================================
 
+private fun safeSetSgd(connection: Connection, key: String, value: String) {
+    try {
+        SGD.SET(key, value, connection)
+    } catch (e: Exception) {
+        Log.w(TAG, "No se pudo aplicar SGD $key=$value: ${e.message}")
+    }
+}
+
+private fun configurePrinterSession(connection: Connection) {
+    safeSetSgd(connection, "device.languages", "cpcl")
+
+    val model = try {
+        SGD.GET("device.product_name", connection).orEmpty()
+    } catch (e: Exception) {
+        Log.w(TAG, "No se pudo leer device.product_name: ${e.message}")
+        ""
+    }
+
+    if (model.contains("ZQ521", ignoreCase = true)) {
+        // En ZQ521 forzamos papel continuo para evitar paradas por black mark/gap.
+        safeSetSgd(connection, "media.type", "continuous")
+        safeSetSgd(connection, "ezpl.print_mode", "tear_off")
+        safeSetSgd(connection, "power.up_action", "no-motion")
+        safeSetSgd(connection, "head.close_action", "no-motion")
+        Log.d(TAG, "Perfil ZQ521 aplicado (media continuo)")
+    } else {
+        Log.d(TAG, "Perfil por defecto aplicado para modelo='$model'")
+    }
+}
+
 /**
  * Abre una conexión Bluetooth y configura el lenguaje CPCL.
  * Llamar UNA VEZ antes de imprimir una serie de documentos.
@@ -704,7 +734,7 @@ internal suspend fun openSharedBtConnection(mac: String): Connection =
         val conn = BluetoothConnection(mac, 5_000, 2_000)
         conn.open()
         Log.d(TAG, "BT compartido abierto mac=$mac")
-        SGD.SET("device.languages", "cpcl", conn)
+        configurePrinterSession(conn)
         Thread.sleep(500)
         conn
     }
@@ -749,7 +779,7 @@ private suspend fun sendToPrinter(
                 connection = BluetoothConnection(mac, 5_000, 2_000)
                 connection.open()
                 Log.d(TAG, "BT abierto")
-                SGD.SET("device.languages", "cpcl", connection)
+                configurePrinterSession(connection)
                 Thread.sleep(500)
                 connection.write(
                     "! 0 200 200 $contentH 1\r\nPAGE-WIDTH $pw\r\n"
@@ -1459,7 +1489,7 @@ object BluetoothPrinterUtils {
                     connection = BluetoothConnection(mac, 5_000, 2_000)
                     connection.open()
                     Log.d(TAG, "BT abierto")
-                    SGD.SET("device.languages", "cpcl", connection)
+                    configurePrinterSession(connection)
                     Thread.sleep(500)
                     connection.write(
                         "! 0 200 200 $contentH 1\r\nPAGE-WIDTH $pw\r\n"

@@ -1,9 +1,22 @@
 📋 DOCUMENTACIÓN PROYECTO SINCARNET - ESTADO ACTUAL
 ================================================
 
-**Fecha de Actualización**: 2026-04-14  
+**Fecha de Actualización**: 2026-04-16  
 **Versión de la App**: SinCarnet Android v1.3  
 **Cobertura Total**: Tier 1 + Tier 2 + Tier 3 completados · Dokka V2 activo
+
+---
+
+## 🔄 Actualizaciones Técnicas Recientes (Bluetooth)
+
+### 2026-04-16 · Estabilidad Zebra ZQ521 + refresco de emparejamiento
+
+- `BluetoothPrinterUtils.kt`: se añade configuración de sesión por modelo con `configurePrinterSession(...)`.
+- En ZQ521 se fuerza `media.type=continuous` y ajustes de sesión (`ezpl.print_mode=tear_off`, `power.up_action=no-motion`, `head.close_action=no-motion`) para evitar interrupciones por marca de corte.
+- En RW420 se mantiene comportamiento conservador (solo `device.languages=cpcl`) para evitar regresiones.
+- `BluetoothPrinterScreen.kt`: la UI ahora se refresca automáticamente al finalizar emparejamiento con PIN mediante `BluetoothDevice.ACTION_BOND_STATE_CHANGED` cuando el estado pasa a `BOND_BONDED`.
+- `BluetoothPrinterScreen.kt`: se añade refresco adicional en `ON_RESUME` para cubrir el retorno desde diálogos del sistema.
+- Se documenta en código la decisión UX de mantener el botón `Guardar` como acción explícita para dar seguridad al usuario antes de persistir cambios.
 
 ---
 
@@ -237,7 +250,7 @@ start app/build/dokka/html/index.html
 **Documentado por**: GitHub Copilot  
 **Proyecto**: SinCarnet Android v1.3  
 **Lenguaje**: Kotlin 100%  
-**Último commit**: 2026-04-14
+**Último commit**: 2026-04-16
 
 **Estado General**: ✅ COMPLETADO – Tier 1, 2 y 3 cerrados · Dokka V2 activo
 
