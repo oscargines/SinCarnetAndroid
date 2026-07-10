@@ -24,3 +24,6 @@ dependencyResolutionManagement {
 
 rootProject.name = "SinCarnet"
 include(":app")
+include(":domain")
+include(":data")
+include(":presentation")

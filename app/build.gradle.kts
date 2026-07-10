@@ -2,6 +2,7 @@ import java.util.Properties
 
 plugins {
     alias(libs.plugins.android.application)
+    kotlin("android")
     alias(libs.plugins.kotlin.compose)
     id("org.jetbrains.dokka")
 }
@@ -23,6 +24,13 @@ android {
         targetSdk = 35
         versionCode = 1
         versionName = "1.31.00 "
+
+        // Mitigacion temporal Android 16KB page size:
+        // evitamos empaquetar binarios x86/x86_64 (los que estan reportando
+        // falta de alineacion) en APKs para dispositivos ARM reales.
+        ndk {
+            abiFilters += listOf("arm64-v8a", "armeabi-v7a")
+        }
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -73,30 +81,30 @@ android {
     }
 }
 
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11)
+    }
+}
+
 dependencies {
-    // Excluir JARs de BouncyCastle "plataforma Android" (versiones recortadas 1.5x.0.0).
-    // Estos no contienen DERObjectIdentifier y colisionan con el Maven Central BC completo.
-    // También se excluye jmulticard-2.0.jar (su contenido ya está en dniedroid-release.aar).
-    implementation(fileTree("libs") {
-        include("*.jar")
-        exclude(
-            "jmulticard-2.0.jar",
-            "prov-1.58.0.0.jar",
-            "pkix-1.54.0.0.jar",
-            "core-1.58.0.0.jar"
-        )
-    })
-    implementation(files("libs/dniedroid-release.aar"))
+    implementation(project(":domain"))
+    implementation(project(":data"))
+    implementation(project(":presentation"))
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.activity.compose)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
+    implementation(libs.koin.android)
+    implementation(libs.koin.compose)
+    implementation(libs.androidx.navigation.compose)
     // Fused Location Provider
-    implementation("com.google.android.gms:play-services-location:21.0.1")
     testImplementation(libs.junit)
     // Añadido para disponer de org.json en tests JVM (evita errores de métodos "not mocked" en JSONObject/JSONArray)
     testImplementation("org.json:json:20230227")
@@ -106,23 +114,7 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
-    implementation("org.jetbrains.kotlin:kotlin-reflect")
-
-    // BouncyCastle: proveedor de criptografía requerido por dniedroid/jmulticard (org.bouncycastle.*)
-    // Android 12+ (API 31) ya no incluye BouncyCastle en la plataforma; hay que empaquetar
-    // las dos dependencias: proveedor + módulo PKIX/CMS.
-    // IMPORTANTE: usar 1.50 (jdk15on). El AAR dniedroid usa clases ASN.1 antiguas (p.ej.
-    // DERObjectIdentifier) que fueron eliminadas a partir de BC 1.70. Los JARs locales
-    // prov/pkix/core-1.5x.0.0 son versiones Android recortadas y están excluidos del fileTree.
-    implementation("org.bouncycastle:bcprov-jdk15on:1.50")
-    implementation("org.bouncycastle:bcpkix-jdk15on:1.50")
-
-    // CameraX – escáner de documentos (gratuito, Apache 2.0)
-    implementation("androidx.camera:camera-core:1.3.4")
-    implementation("androidx.camera:camera-camera2:1.3.4")
-    implementation("androidx.camera:camera-lifecycle:1.3.4")
-    implementation("androidx.camera:camera-view:1.3.4")
-    implementation("androidx.exifinterface:exifinterface:1.3.7")
+    implementation("org.jetbrains.kotlin:kotlin-reflect:2.2.10")
     // lifecycle-runtime-compose: LocalLifecycleOwner actualizado (no deprecado)
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.0")
 
@@ -130,7 +122,7 @@ dependencies {
 
 // Configuración Dokka V2 (plugin mode V2EnabledWithHelpers en gradle.properties)
 dokka {
-    dokkaSourceSets.register("main") {
+    dokkaSourceSets.configureEach {
         displayName.set("appMain")
         sourceRoots.from(file("src/main/java"))
         sourceRoots.from(file("src/main/kotlin"))
