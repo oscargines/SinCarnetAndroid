@@ -23,7 +23,7 @@ android {
         minSdk = 31
         targetSdk = 35
         versionCode = 1
-        versionName = "1.31.00 "
+        versionName = "1.50.1"
 
         // Mitigacion temporal Android 16KB page size:
         // evitamos empaquetar binarios x86/x86_64 (los que estan reportando
@@ -147,4 +147,3 @@ tasks.register<Sync>("publishDokkaToDocs") {
     from(layout.buildDirectory.dir("dokka/html"))
     into(rootProject.layout.projectDirectory.dir("docs/api"))
 }
-
