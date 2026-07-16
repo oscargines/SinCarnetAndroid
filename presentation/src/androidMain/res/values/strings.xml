@@ -476,6 +476,7 @@
     <string name="documentos_complementarios_title">Documentos Complementarios</string>
     <string name="colaboracion_alcohol_action">Acta Colaboración Otros Cuerpos</string>
     <string name="acta_traslado_action">Acta Traslado Vehículo</string>
+    <string name="acta_traslado_sanitario_action">Acta Traslado a C. Sanitario</string>
     <string name="acta_traslado_title">Acta Autorización Traslado Vehículo</string>
     <string name="acta_traslado_unidad_title">Unidad actuante</string>
     <string name="acta_traslado_sector">Sector</string>
@@ -518,6 +519,8 @@
     <string name="acta_traslado_unidad_telefono">Teléfono unidad</string>
     <string name="acta_traslado_agente_tip">Agente T.I.P.</string>
     <string name="acta_traslado_agente_unidad">Unidad agente</string>
+    <string name="acta_traslado_select_date">Seleccionar fecha</string>
+    <string name="acta_traslado_select_time">Seleccionar hora</string>
     <string name="acta_traslado_continue">Continuar a firmas</string>
     <string name="acta_traslado_clear">Borrar datos</string>
     <string name="acta_traslado_firmas_title">Firmas y cierre del acta de traslado</string>
@@ -534,6 +537,10 @@
     <string name="acta_traslado_firma_titular_done">Firma titular/conductor ✓</string>
     <string name="acta_traslado_firmas_required">Deben firmar el agente que traslada y el titular/conductor</string>
     <string name="acta_traslado_generate">Generar Acta Traslado</string>
+    <string name="acta_traslado_print_zebra">Imprimir acta</string>
+    <string name="acta_traslado_connecting">Conectando con la impresora…</string>
+    <string name="acta_traslado_printing">Imprimiendo acta de traslado…</string>
+    <string name="acta_traslado_no_printer">No hay impresora configurada. Configure una impresora Zebra desde el menú de Bluetooth.</string>
     <string name="colaboracion_alcohol_title">Acta de Requerimiento\nPruebas de Alcohol o Drogas</string>
     <string name="colaboracion_alcohol_fecha">Fecha</string>
     <string name="colaboracion_alcohol_hora">Hora</string>
@@ -689,5 +696,116 @@
     <string name="drogas_select_tipo">Seleccione al menos un tipo de droga</string>
     <string name="drogas_select_contraste">Seleccione una opción de contraste</string>
     <string name="drogas_continue">Continuar a firmas</string>
+
+    <!-- Acta Traslado Centro Sanitario -->
+    <string name="centro_sanitario_title">Acta Traslado a C. Sanitario</string>
+    <string name="centro_sanitario_subtitle">Pruebas de detección de alcohol y/o drogas mediante reconocimiento médico o análisis clínicos</string>
+    <string name="centro_sanitario_cabecera_title">CABECERA</string>
+    <string name="centro_sanitario_subsector">Subsector</string>
+    <string name="centro_sanitario_unidad_interviniente">Unidad interviniente</string>
+    <string name="centro_sanitario_numero_expediente">Nº Expediente / Diligencias</string>
+    <string name="centro_sanitario_lugar_title">DATOS DEL LUGAR DE LA INTERVENCIÓN POLICIAL</string>
+    <string name="centro_sanitario_lugar">Lugar de la intervención</string>
+    <string name="centro_sanitario_motivo">Motivo</string>
+    <string name="centro_sanitario_fecha_hora">Fecha y hora</string>
+    <string name="centro_sanitario_persona_title">DATOS DEL INTERESADO</string>
+    <string name="centro_sanitario_nombre_apellidos">Nombre y apellidos</string>
+    <string name="centro_sanitario_dni_nie">DNI, NIE o Nº Pasaporte</string>
+    <string name="centro_sanitario_facultativo_title">FACULTATIVO</string>
+    <string name="centro_sanitario_colegiado">Colegiado nº</string>
+    <string name="centro_sanitario_pruebas_title">PRUEBAS O ANÁLISIS</string>
+    <string name="centro_sanitario_prueba_sangre">La extracción para análisis de muestras de sangre</string>
+    <string name="centro_sanitario_prueba_otro">Otro tipo de extracción</string>
+    <string name="centro_sanitario_prueba_otro_detalle">Detalle del otro tipo de extracción</string>
+    <string name="centro_sanitario_centro_title">CENTRO SANITARIO</string>
+    <string name="centro_sanitario_centro_sanitario">Centro sanitario donde se realiza la toma de muestras</string>
+    <string name="centro_sanitario_extraccion_colegiado">Extracción realizada por colegiado nº</string>
+    <string name="centro_sanitario_fecha_hora_extraccion">Fecha y hora extracción</string>
+    <string name="centro_sanitario_muestras_title">MUESTRAS</string>
+    <string name="centro_sanitario_precintos">Precintos de seguridad</string>
+    <string name="centro_sanitario_dato_muestra">Dato/s dado/s a la muestra</string>
+    <string name="centro_sanitario_juzgado_title">JUZGADO U ORGANISMO COMPETENTE</string>
+    <string name="centro_sanitario_juzgado">Juzgado u organismo competente para la investigación de los hechos</string>
+    <string name="centro_sanitario_otras_observaciones">OTRAS OBSERVACIONES</string>
+    <string name="centro_sanitario_num_tip">N.º TIP</string>
+    <string name="centro_sanitario_continue">Continuar a firmas</string>
+    <string name="centro_sanitario_clear">Limpiar formulario</string>
+
+    <!-- Acta Traslado Centro Sanitario - Firmas -->
+    <string name="centro_sanitario_firmas_title">FIRMAS</string>
+    <string name="centro_sanitario_firmas_required">Se requieren todas las firmas para generar el PDF</string>
+    <string name="centro_sanitario_firma_interesado">Firmar como Interesado</string>
+    <string name="centro_sanitario_firma_interesado_done">Interesado: Firmado</string>
+    <string name="centro_sanitario_firma_facultativo">Firmar como Facultativo</string>
+    <string name="centro_sanitario_firma_facultativo_done">Facultativo: Firmado</string>
+    <string name="centro_sanitario_firma_sanitario">Firmar como Sanitario (extracción)</string>
+    <string name="centro_sanitario_firma_sanitario_done">Sanitario: Firmado</string>
+    <string name="centro_sanitario_firma_agente">Firmar como Agente</string>
+    <string name="centro_sanitario_firma_agente_done">Agente: Firmado</string>
+    <string name="centro_sanitario_firma_section_title">FIRMAS DE LOS INTERVINIENTES</string>
+    <string name="centro_sanitario_generate">Generar PDF</string>
+    <string name="centro_sanitario_print_zebra">Imprimir</string>
+    <string name="centro_sanitario_printing">Imprimiendo…</string>
+    <string name="centro_sanitario_connecting">Conectando con impresora…</string>
+    <string name="centro_sanitario_no_printer">No hay impresora configurada</string>
+
+    <!-- Oficio Custodia Sangre -->
+    <string name="oficio_custodia_sangre_action">Oficio Custodia Sangre</string>
+    <string name="oficio_custodia_sangre_title">Oficio Solicitud Custodia de Sangre</string>
+    <string name="ocs_unidad">Unidad actuante</string>
+    <string name="ocs_centro_destinatario">Centro sanitario destinatario</string>
+    <string name="ocs_fecha_hora_solicitud">Fecha y hora de solicitud</string>
+    <string name="ocs_tip_solicitante">TIP del solicitante</string>
+    <string name="ocs_empleo">Empleo / Rango</string>
+    <string name="ocs_continue">Continuar</string>
+    <string name="ocs_clear">Borrar datos</string>
+    <string name="ocs_doc_title">Datos del siniestro</string>
+    <string name="ocs_nombre_apellidos">Nombre y apellidos</string>
+    <string name="ocs_numero_documento">Número de documento</string>
+    <string name="ocs_fecha_hora_siniestro">Fecha y hora del siniestro</string>
+    <string name="ocs_carretera">Carretera</string>
+    <string name="ocs_punto_kilometrico">Punto kilométrico</string>
+    <string name="ocs_municipio">Término municipal</string>
+    <string name="ocs_partido_judicial">Partido judicial</string>
+    <string name="ocs_catalogacion_hecho">Catalogación del hecho</string>
+    <string name="ocs_juzgado_competente">Juzgado competente</string>
+    <string name="ocs_numero_diligencia">Número de diligencia</string>
+    <string name="ocs_firmas_title">Firma del agente instructor</string>
+    <string name="ocs_firma_agente">Firmar como Agente Instructor</string>
+    <string name="ocs_firma_agente_done">Agente Instructor: Firmado</string>
+    <string name="ocs_firmas_required">Debe firmar el agente instructor</string>
+    <string name="ocs_generate">Generar Oficio</string>
+
+    <!-- Solicitud Custodia Juzgado -->
+    <string name="scj_action">Solicitud Custodia a Juzgado</string>
+    <string name="scj_title">Solicitud Custodia a Juzgado</string>
+    <string name="scj_unidad">Unidad actuante</string>
+    <string name="scj_fecha_hora_solicitud">Fecha y hora de solicitud</string>
+    <string name="scj_tip_solicitante">TIP del solicitante</string>
+    <string name="scj_empleo">Empleo / Rango</string>
+    <string name="scj_numero_diligencia">Número de diligencia</string>
+    <string name="scj_juzgado_numero">Nº del Juzgado de Instrucción</string>
+    <string name="scj_continue">Continuar</string>
+    <string name="scj_clear">Borrar datos</string>
+    <string name="scj_doc_title">Datos del siniestro</string>
+    <string name="scj_nombre_apellidos">Nombre y apellidos</string>
+    <string name="scj_numero_documento">Número de documento</string>
+    <string name="scj_matricula">Matrícula</string>
+    <string name="scj_fecha_hora_siniestro">Fecha y hora del siniestro</string>
+    <string name="scj_carretera">Carretera</string>
+    <string name="scj_punto_kilometrico">Punto kilométrico</string>
+    <string name="scj_municipio">Término municipal</string>
+    <string name="scj_partido_judicial">Partido judicial</string>
+    <string name="scj_catalogacion_hecho">Sustancias (consistentes en)</string>
+    <string name="scj_centro_sanitario">Centro Sanitario (mandamiento)</string>
+    <string name="scj_fecha_entrega_oficio">Fecha entrega oficio al centro sanitario</string>
+    <string name="scj_firmas_title">Firma del agente instructor</string>
+    <string name="scj_firma_agente">Firmar como Agente Instructor</string>
+    <string name="scj_firma_agente_done">Agente Instructor: Firmado</string>
+    <string name="scj_firmas_required">Debe firmar el agente instructor</string>
+    <string name="scj_generate">Generar Oficio</string>
+
+    <!-- Documentos Complementarios -->
+    <string name="dc_info_text">Actas realizadas conforme a las que figuran en el Título 11. Procedimiento de Control de Alcoholemia y el Consumo de otras Drogas en la Seguridad Vial.</string>
 
 </resources>

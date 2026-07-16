@@ -7,7 +7,7 @@
 [![Platform](https://img.shields.io/badge/Platform-Android%2012%2B-3DDC84?logo=android&logoColor=white)](https://developer.android.com)
 [![Kotlin](https://img.shields.io/badge/Language-Kotlin-7F52FF?logo=kotlin&logoColor=white)](https://kotlinlang.org)
 [![Compose](https://img.shields.io/badge/UI-Jetpack%20Compose-4285F4?logo=jetpackcompose&logoColor=white)](https://developer.android.com/jetpack/compose)
-[![Version](https://img.shields.io/badge/Version-1.50.1-blue)](app/build.gradle.kts)
+[![Version](https://img.shields.io/badge/Version-1.51.0-blue)](app/build.gradle.kts)
 [![Docs](https://img.shields.io/badge/API%20Docs-Dokka%20V2-orange)](docs/api/index.html)
 [![License](https://img.shields.io/badge/License-Uso%20interno-lightgrey)](#licencia-y-uso)
 
@@ -17,20 +17,26 @@
 
 ## 📦 Descarga directa
 
-- [⬇️ Descargar APK firmado (release actual)](https://raw.githubusercontent.com/oscargines/SinCarnetAndroid/main/SinCarnet_V.1.50.1.apk)
+- [⬇️ Descargar APK firmado (release actual)](https://raw.githubusercontent.com/oscargines/SinCarnetAndroid/main/SinCarnet_V.1.51.0.apk)
 
 > El binario distribuible publicado en el repositorio corresponde al artefacto firmado de la versión actual.
 
 ## 🛠️ Cambios implementados (última actualización)
 
-- Versión de app actualizada a **1.50.1**.
-- Rediseño completo de `AlcoholPdfGenerator` para replicar el acta de colaboración en **una sola hoja A4**.
-- Ajustes finos de maquetación PDF: cabeceras, márgenes, celdas, sombreado de campos clave y legibilidad de resultados.
-- Generación del acta PDF fijada a nombre único y sobreescritura: **`ActaColaboracion.pdf`**.
-- Añadido campo de **fecha de nacimiento** en `ColaboracionAlcoholScreen`.
-- `DrogasScreen` actualizado para **selección múltiple** de tipos de droga (THC, OPI, COC, AMP, MAMP).
-- Bloque de firmas del PDF corregido para evitar solapes y residuos visuales.
-- Preparada exportación de framework iOS en `:presentation` (`SinCarnetShared`) para integración con host SwiftUI.
+- Versión de app actualizada a **1.51.0**.
+- **Oficio Custodia Sangre**: nuevo documento completo de solicitud de custodia y conservación de muestras de sangre con flujo de 3 pantallas (formulario, datos siniestro con NFC, firma + generación PDF).
+  - Firma del agente instructor con firma manuscrita integrada en el PDF.
+  - Maquetación PDF institucional: cabecera Guardia Civil, escudos, bracket decorativo, referencias S/REF y N/REF, tabla de conductor, párrafos del oficio.
+  - Fechas en formato español (ej. "04 de septiembre de 2026").
+  - Campo de número de diligencia (Atestado Núm.).
+- **Solicitud Custodia a Juzgado**: nuevo documento de solicitud de mandamiento judicial de requerimiento a centro sanitario con flujo de 3 pantallas.
+  - Destinatario: Ilmo. Señor Magistrado - Juez del Juzgado de Instrucción.
+  - Tabla de 3 columnas: Nombre y Apellidos | D.N.I. | Matrícula.
+  - Párrafo con fecha de entrega del oficio al centro sanitario.
+  - Generación PDF con maquetación completa replicando el modelo oficial.
+- **Documentos Complementarios**: añadido botón de información con modal explicativo sobre el Título 11 (Control de Alcoholemia y Drogas).
+- Corregido el botón de generación de PDF para que abra el documento directamente (FileProvider + ACTION_VIEW).
+- Corregido typo en `ActaTrasladoVehiculoFirmasScreen`.
 
 ---
 
@@ -258,7 +264,7 @@ app/build/outputs/apk/release/app-release.apk
 Para distribución directa desde GitHub, el artefacto versionado publicado en la raíz del repositorio es:
 
 ```text
-SinCarnet_V.1.50.1.apk
+SinCarnet_V.1.51.0.apk
 ```
 
 > Es necesario que `keystore.properties` esté correctamente configurado con la ruta y credenciales del keystore antes de ejecutar el build de release.
@@ -344,6 +350,6 @@ Proyecto de **uso interno / operativo**. Cualquier reutilización, adaptación o
 
 <div align="center">
 
-**SinCarnet Android** · v1.50.1 · API 31–35 · Kotlin · Jetpack Compose
+**SinCarnet Android** · v1.51.0 · API 31–35 · Kotlin · Jetpack Compose
 
 </div>
