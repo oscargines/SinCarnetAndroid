@@ -7,7 +7,7 @@
 [![Platform](https://img.shields.io/badge/Platform-Android%2012%2B-3DDC84?logo=android&logoColor=white)](https://developer.android.com)
 [![Kotlin](https://img.shields.io/badge/Language-Kotlin-7F52FF?logo=kotlin&logoColor=white)](https://kotlinlang.org)
 [![Compose](https://img.shields.io/badge/UI-Jetpack%20Compose-4285F4?logo=jetpackcompose&logoColor=white)](https://developer.android.com/jetpack/compose)
-[![Version](https://img.shields.io/badge/Version-1.51.0-blue)](app/build.gradle.kts)
+[![Version](https://img.shields.io/badge/Version-1.50.2-blue)](app/build.gradle.kts)
 [![Docs](https://img.shields.io/badge/API%20Docs-Dokka%20V2-orange)](docs/api/index.html)
 [![License](https://img.shields.io/badge/License-Uso%20interno-lightgrey)](#licencia-y-uso)
 
@@ -17,13 +17,17 @@
 
 ## 📦 Descarga directa
 
-- [⬇️ Descargar APK firmado (release actual)](https://raw.githubusercontent.com/oscargines/SinCarnetAndroid/main/SinCarnet_V.1.51.0.apk)
+- [⬇️ Descargar APK firmado (release actual)](https://raw.githubusercontent.com/oscargines/SinCarnetAndroid/main/SinCarnet_V.1.50.2.apk)
 
 > El binario distribuible publicado en el repositorio corresponde al artefacto firmado de la versión actual.
 
 ## 🛠️ Cambios implementados (última actualización)
 
-- Versión de app actualizada a **1.51.0**.
+- Versión de app actualizada a **1.50.2**.
+- **Colaboración Alcoholemia - Selección de pruebas**: cambiado RadioGroup por CheckBoxs para las pruebas de alcoholemia y drogas.
+  - Permite seleccionar ambas pruebas simultáneamente.
+  - Validación: al menos una prueba debe estar seleccionada para continuar.
+  - Flujo de navegación encadenado cuando se seleccionan ambas: ColaboraciónAlcohol → Etilómetro → Drogas → Firmas.
 - **Oficio Custodia Sangre**: nuevo documento completo de solicitud de custodia y conservación de muestras de sangre con flujo de 3 pantallas (formulario, datos siniestro con NFC, firma + generación PDF).
   - Firma del agente instructor con firma manuscrita integrada en el PDF.
   - Maquetación PDF institucional: cabecera Guardia Civil, escudos, bracket decorativo, referencias S/REF y N/REF, tabla de conductor, párrafos del oficio.
@@ -221,7 +225,7 @@ SinCarnetAndroid/
 │       └── index.html
 ├── keystore/
 │   └── sincarnet-release.jks     # Keystore de firma release
-├── SinCarnet_V.1.31.0.apk        # APK firmado publicado para descarga directa
+├── SinCarnet_V.1.50.2.apk        # APK firmado publicado para descarga directa
 ├── build.gradle.kts              # Configuración raíz
 ├── settings.gradle.kts
 ├── gradle/
@@ -264,7 +268,7 @@ app/build/outputs/apk/release/app-release.apk
 Para distribución directa desde GitHub, el artefacto versionado publicado en la raíz del repositorio es:
 
 ```text
-SinCarnet_V.1.51.0.apk
+SinCarnet_V.1.50.2.apk
 ```
 
 > Es necesario que `keystore.properties` esté correctamente configurado con la ruta y credenciales del keystore antes de ejecutar el build de release.
@@ -350,6 +354,6 @@ Proyecto de **uso interno / operativo**. Cualquier reutilización, adaptación o
 
 <div align="center">
 
-**SinCarnet Android** · v1.51.0 · API 31–35 · Kotlin · Jetpack Compose
+**SinCarnet Android** · v1.50.2 · API 31–35 · Kotlin · Jetpack Compose
 
 </div>
