@@ -591,6 +591,7 @@
     <string name="colaboracion_alcohol_motivo_required">Debe seleccionar al menos un motivo</string>
     <string name="colaboracion_alcohol_tipo_conductor_required">Debe seleccionar un tipo de conductor</string>
     <string name="colaboracion_caso_required">Debe seleccionar un caso</string>
+    <string name="colaboracion_pruebas_required">Debe seleccionar al menos una prueba</string>
 
     <!-- Etilómetro Screen -->
     <string name="etilometro_title">Datos del etilómetro</string>

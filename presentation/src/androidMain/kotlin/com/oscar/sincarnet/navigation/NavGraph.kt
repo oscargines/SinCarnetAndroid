@@ -488,6 +488,7 @@ fun NavGraph(
                     )
                     val data = storage.loadCurrent()
                     when {
+                        data.pruebasAlcohol && data.pruebasDrogas -> navController.navigate("${Route.Etilometro.route}?fromBoth=true")
                         data.pruebasAlcohol -> navController.navigate(Route.Etilometro.route)
                         data.pruebasDrogas -> navController.navigate(Route.Drogas.route)
                         else -> navController.navigate(Route.ColaboracionAlcoholFirmas.route)
@@ -496,11 +497,26 @@ fun NavGraph(
             )
         }
 
-        composable(Route.Etilometro.route) {
+        composable(
+            "${Route.Etilometro.route}?fromBoth={fromBoth}",
+            arguments = listOf(
+                androidx.navigation.navArgument("fromBoth") {
+                    defaultValue = "false"
+                    type = androidx.navigation.NavType.StringType
+                }
+            )
+        ) { backStackEntry ->
+            val fromBoth = backStackEntry.arguments?.getString("fromBoth") == "true"
             EtilometroScreen(
                 modifier = Modifier.fillMaxSize(),
                 onBackClick = { navController.popBackStack() },
-                onContinueClick = { navController.navigate(Route.ColaboracionAlcoholFirmas.route) }
+                onContinueClick = {
+                    if (fromBoth) {
+                        navController.navigate(Route.Drogas.route)
+                    } else {
+                        navController.navigate(Route.ColaboracionAlcoholFirmas.route)
+                    }
+                }
             )
         }
 

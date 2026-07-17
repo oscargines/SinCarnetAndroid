@@ -405,6 +405,10 @@ fun ColaboracionAlcoholScreen(
     }
 
     fun saveAndContinue() {
+        if (!pruebasAlcohol && !pruebasDrogas) {
+            Toast.makeText(context, context.getString(R.string.colaboracion_pruebas_required), Toast.LENGTH_SHORT).show()
+            return
+        }
         storage?.saveCurrent(buildCurrentData())
         showMotivoDialog = true
     }
@@ -610,15 +614,15 @@ fun ColaboracionAlcoholScreen(
                 )
 
                 SectionTitle(text = stringResource(R.string.colaboracion_pruebas_realizadas))
-                OptionRadioRow(
+                CheckboxOptionRow(
                     text = stringResource(R.string.colaboracion_pruebas_alcohol),
-                    selected = pruebasAlcohol,
-                    onSelect = { pruebasAlcohol = true; pruebasDrogas = false }
+                    checked = pruebasAlcohol,
+                    onCheckedChange = { pruebasAlcohol = it }
                 )
-                OptionRadioRow(
+                CheckboxOptionRow(
                     text = stringResource(R.string.colaboracion_pruebas_drogas),
-                    selected = pruebasDrogas,
-                    onSelect = { pruebasDrogas = true; pruebasAlcohol = false }
+                    checked = pruebasDrogas,
+                    onCheckedChange = { pruebasDrogas = it }
                 )
 
                 SectionTitle(text = stringResource(R.string.colaboracion_unidad_que_presta_apoyo))
