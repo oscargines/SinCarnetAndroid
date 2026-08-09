@@ -2,7 +2,7 @@
   "documento": {
     "titulo": "DILIGENCIA DE CITACIÓN PARA JUICIO POR DELITO",
     "cuerpo": {
-      "descripcion": "En [[lugar]], término municipal de [[terminomunicipal]] y Partido Judicial de [[partidojudicial]], siendo las [[hora]] horas del día [[fechacompleta]], por los componentes del Cuerpo de la Guardia Civil con las Tarjetas de Identidad Profesional [[instructor]] y [[secretario]], se procede a comunicar por escrito a D./Dña. [[nombrecompletoinvestigado]], con documento nacional de identidad [[documentoidentificacion]], en calidad de INVESTIGADO en el atestado de la referencia instruido por el personal del [[unidadinferior]], LA OBLIGACIÓN DE PERSONARSE a la hora del día que sea citado/a en el Juzgado de Instrucción [[datosjuzgado]].",
+      "descripcion": "En [[lugar]], término municipal de [[terminomunicipal]] y Partido Judicial de [[partidojudicial]], siendo las [[hora]] horas del día [[fechacompleta]], por los componentes del Cuerpo de la Guardia Civil con las Tarjetas de Identidad Profesional [[instructor]] y [[secretario]], se procede a comunicar por escrito a D./Dña. [[nombrecompletoinvestigado]], con documento nacional de identidad [[documentoidentificacion]], en calidad de INVESTIGADO en el atestado de la referencia instruido por el personal del [[unidadinferior]], LA OBLIGACIÓN DE PERSONARSE a la hora del día que sea citado/a en la Sección de Instrucción del Tribunal de Instancia [[datosjuzgado]].",
       "campos_variables": {
         "lugar": "[[lugar]]",
         "termino_municipal": "[[terminomunicipal]]",
@@ -20,7 +20,7 @@
     "secciones": [
       {
         "titulo": "DERECHOS",
-        "contenido": "Se le informa de su derecho de comparecer en dicho Juzgado asistido de Abogado.",
+        "contenido": "Se le informa de su derecho de comparecer en dicho órgano judicial asistido de Abogado.",
         "opciones": [
           {
             "afectado": "Denunciado",

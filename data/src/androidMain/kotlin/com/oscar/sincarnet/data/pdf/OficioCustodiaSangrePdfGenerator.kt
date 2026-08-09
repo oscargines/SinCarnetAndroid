@@ -369,7 +369,7 @@ object OficioCustodiaSangrePdfGenerator {
         y = drawWrappedText(paragraph2, contentLeft, contentRight, y)
         y += mmToPt(3f)
 
-        val paragraph3 = "por lo que se va a solicitar mandamiento judicial al Ilmo. Sr. Magistrado-Juez del Juzgado de ${data.juzgadoCompetente.ifBlank { "________" }} ," +
+        val paragraph3 = "por lo que se va a solicitar mandamiento judicial al Ilmo. Sr. Magistrado-Juez de la Sección de Instrucción del Tribunal de Instancia ${data.juzgadoCompetente.ifBlank { "________" }} ," +
             " para que ordene la práctica de pruebas analíticas sobre dichas muestras, al objeto de la determinación de la tasa" +
             " de alcohol en sangre y la cantidad de drogas tóxicas, estupefacientes y psicotrópicos presentes en su organismo," +
             " lo cual podría ser determinante como fuente de prueba para demostrar una posible imprudencia grave constitutiva" +

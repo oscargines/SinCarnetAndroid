@@ -264,7 +264,7 @@ object SolicitudCustodiaJuzgadoPdfGenerator {
         // ═══════════════════════════════════════════════════════════════════
         canvas.drawText("DESTINATARIO:", contentLeft, y + boldPaint.textSize, boldPaint)
         y += mmToPt(5f)
-        val destinatarioLine = "ILMO. SEÑOR MAGISTRADO - JUEZ DEL JUZGADO DE INSTRUCCIÓN Nº ${data.juzgadoNumero.ifBlank { "_______" }}"
+        val destinatarioLine = "ILMO. SEÑOR MAGISTRADO - JUEZ DE LA SECCIÓN DE INSTRUCCIÓN DEL TRIBUNAL DE INSTANCIA Nº ${data.juzgadoNumero.ifBlank { "_______" }}"
         y = drawWrappedText(destinatarioLine, contentLeft, contentRight, y + boldPaint.textSize, boldPaint)
         y += mmToPt(10f)
 

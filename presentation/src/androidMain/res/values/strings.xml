@@ -725,8 +725,8 @@
     <string name="centro_sanitario_muestras_title">MUESTRAS</string>
     <string name="centro_sanitario_precintos">Precintos de seguridad</string>
     <string name="centro_sanitario_dato_muestra">Dato/s dado/s a la muestra</string>
-    <string name="centro_sanitario_juzgado_title">JUZGADO U ORGANISMO COMPETENTE</string>
-    <string name="centro_sanitario_juzgado">Juzgado u organismo competente para la investigación de los hechos</string>
+    <string name="centro_sanitario_juzgado_title">ÓRGANO JUDICIAL U ORGANISMO COMPETENTE</string>
+    <string name="centro_sanitario_juzgado">Órgano judicial u organismo competente para la investigación de los hechos</string>
     <string name="centro_sanitario_otras_observaciones">OTRAS OBSERVACIONES</string>
     <string name="centro_sanitario_num_tip">N.º TIP</string>
     <string name="centro_sanitario_continue">Continuar a firmas</string>
@@ -785,7 +785,7 @@
     <string name="scj_tip_solicitante">TIP del solicitante</string>
     <string name="scj_empleo">Empleo / Rango</string>
     <string name="scj_numero_diligencia">Número de diligencia</string>
-    <string name="scj_juzgado_numero">Nº del Juzgado de Instrucción</string>
+    <string name="scj_juzgado_numero">Nº de la Sección de Instrucción del Tribunal de Instancia</string>
     <string name="scj_continue">Continuar</string>
     <string name="scj_clear">Borrar datos</string>
     <string name="scj_doc_title">Datos del siniestro</string>
