@@ -164,7 +164,8 @@ class MainActivity : ComponentActivity() {
                                     Toast.LENGTH_LONG
                                 ).show()
                             }
-                        }
+                        },
+                        versionName = BuildConfig.VERSION_NAME
                     )
                 }
             }

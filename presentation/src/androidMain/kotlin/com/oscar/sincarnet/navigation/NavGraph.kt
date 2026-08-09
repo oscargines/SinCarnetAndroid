@@ -93,7 +93,8 @@ fun NavGraph(
     uiState: MainUiState,
     modifier: Modifier = Modifier,
     onOpenPdf: (File) -> Unit = {},
-    onSharePdf: (File) -> Unit = {}
+    onSharePdf: (File) -> Unit = {},
+    versionName: String = ""
 ) {
     NavHost(
         navController = navController,
@@ -1023,6 +1024,6 @@ fun NavGraph(
     }
 
     if (uiState.showAboutDialog) {
-        AboutDialog(onDismissRequest = { viewModel.onShowAboutDialogChange(false) })
+        AboutDialog(onDismissRequest = { viewModel.onShowAboutDialogChange(false) }, versionName = versionName)
     }
 }
