@@ -7,7 +7,7 @@
 [![Platform](https://img.shields.io/badge/Platform-Android%2012%2B-3DDC84?logo=android&logoColor=white)](https://developer.android.com)
 [![Kotlin](https://img.shields.io/badge/Language-Kotlin-7F52FF?logo=kotlin&logoColor=white)](https://kotlinlang.org)
 [![Compose](https://img.shields.io/badge/UI-Jetpack%20Compose-4285F4?logo=jetpackcompose&logoColor=white)](https://developer.android.com/jetpack/compose)
-[![Version](https://img.shields.io/badge/Version-1.50.2-blue)](app/build.gradle.kts)
+[![Version](https://img.shields.io/badge/Version-1.50.3-blue)](app/build.gradle.kts)
 [![Docs](https://img.shields.io/badge/API%20Docs-Dokka%20V2-orange)](docs/api/index.html)
 [![License](https://img.shields.io/badge/License-Uso%20interno-lightgrey)](#licencia-y-uso)
 
@@ -17,12 +17,33 @@
 
 ## 📦 Descarga directa
 
-- [⬇️ Descargar APK firmado (release actual)](https://raw.githubusercontent.com/oscargines/SinCarnetAndroid/main/SinCarnet_V.1.50.2.apk)
+- [⬇️ Descargar APK firmado (release actual)](https://raw.githubusercontent.com/oscargines/SinCarnetAndroid/main/SinCarnet_V.1.50.3.apk)
 
 > El binario distribuible publicado en el repositorio corresponde al artefacto firmado de la versión actual.
 
 ## 🛠️ Cambios implementados (última actualización)
 
+### v1.50.3 - Actualización de seguridad y dependencias
+- **Actualización de seguridad crítica**: BouncyCastle actualizado de 1.50 a 1.78.1
+  - Corrige vulnerabilidades CVE-2018-1000654, CVE-2020-15522, CVE-2020-28052
+- **Protección de código**: Activado minifyEnabled y shrinkResources en builds release
+  - Ofuscación de código con R8 para prevenir ingeniería inversa
+- **Seguridad de red**: Añadido network_security_config.xml
+  - Tráfico HTTP deshabilitado por defecto (solo HTTPS permitido)
+- **Backups seguros**: Configurados backup_rules.xml y data_extraction_rules.xml
+  - Datos sensibles de atestados y documentos excluidos de backups automáticos
+- **Dependencias actualizadas**:
+  - core-ktx: 1.10.1 → 1.15.0
+  - lifecycle-runtime-ktx: 2.6.1 → 2.8.6
+  - activity-compose: 1.8.0 → 1.9.3
+  - compose-bom: 2024.09.00 → 2024.12.01
+  - koin: 3.5.6 → 4.0.0
+  - CameraX: 1.3.4 → 1.4.1
+  - Play Services Location: 21.0.1 → 21.3.0
+  - kotlinx-coroutines-android: 1.8.0 → 1.9.0
+- **Credenciales de firma**: Rotadas contraseñas del keystore por seguridad
+
+### v1.50.2
 - Versión de app actualizada a **1.50.2**.
 - **Colaboración Alcoholemia - Selección de pruebas**: cambiado RadioGroup por CheckBoxs para las pruebas de alcoholemia y drogas.
   - Permite seleccionar ambas pruebas simultáneamente.
@@ -184,14 +205,14 @@ La salida documental puede generarse como:
 | Componente | Tecnología | Versión |
 |------------|-----------|---------|
 | Lenguaje | Kotlin | JVM 11 |
-| UI Toolkit | Jetpack Compose + Material 3 | BOM estable |
+| UI Toolkit | Jetpack Compose + Material 3 | BOM 2024.12.01 |
 | Build System | Gradle Kotlin DSL | — |
 | `minSdk` | Android 12 | API 31 |
 | `targetSdk` / `compileSdk` | Android 15 | API 35 |
-| Cámara | CameraX | 1.3.4 |
-| Criptografía | BouncyCastle (`bcprov-jdk15on`) | 1.50 |
+| Cámara | CameraX | 1.4.1 |
+| Criptografía | BouncyCastle (`bcprov-jdk15on`) | 1.78.1 |
 | DNI electrónico | dniedroid + jmulticard | 2.0 |
-| Localización | Google Play Services Location | 21.0.1 |
+| Localización | Google Play Services Location | 21.3.0 |
 | Impresión | CPCL / Zebra SDK (local AAR) | — |
 | Documentación | Dokka | V2 (2.0.0) |
 
@@ -225,7 +246,7 @@ SinCarnetAndroid/
 │       └── index.html
 ├── keystore/
 │   └── sincarnet-release.jks     # Keystore de firma release
-├── SinCarnet_V.1.50.2.apk        # APK firmado publicado para descarga directa
+├── SinCarnet_V.1.50.3.apk        # APK firmado publicado para descarga directa
 ├── build.gradle.kts              # Configuración raíz
 ├── settings.gradle.kts
 ├── gradle/
@@ -354,6 +375,6 @@ Proyecto de **uso interno / operativo**. Cualquier reutilización, adaptación o
 
 <div align="center">
 
-**SinCarnet Android** · v1.50.2 · API 31–35 · Kotlin · Jetpack Compose
+**SinCarnet Android** · v1.50.3 · API 31–35 · Kotlin · Jetpack Compose
 
 </div>

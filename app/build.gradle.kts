@@ -22,8 +22,8 @@ android {
         applicationId = "com.oscar.sincarnet"
         minSdk = 31
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.50.1"
+        versionCode = 2
+        versionName = "1.50.3"
 
         // Mitigacion temporal Android 16KB page size:
         // evitamos empaquetar binarios x86/x86_64 (los que estan reportando
@@ -49,7 +49,8 @@ android {
     buildTypes {
         release {
             signingConfig = signingConfigs.findByName("release")
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -116,7 +117,7 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     implementation("org.jetbrains.kotlin:kotlin-reflect:2.2.10")
     // lifecycle-runtime-compose: LocalLifecycleOwner actualizado (no deprecado)
-    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.0")
+    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.6")
 
 }
 

@@ -53,13 +53,13 @@ kotlin {
 
             implementation(libs.androidx.core.ktx)
             implementation(libs.androidx.lifecycle.runtime.ktx)
-            implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.0")
+            implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.6")
             implementation(libs.androidx.lifecycle.viewmodel.compose)
             implementation(libs.androidx.activity.compose)
-            implementation("androidx.compose.ui:ui:1.7.0")
-            implementation("androidx.compose.ui:ui-graphics:1.7.0")
-            implementation("androidx.compose.ui:ui-tooling-preview:1.7.0")
-            implementation("androidx.compose.material3:material3:1.3.0")
+            implementation("androidx.compose.ui:ui:1.7.6")
+            implementation("androidx.compose.ui:ui-graphics:1.7.6")
+            implementation("androidx.compose.ui:ui-tooling-preview:1.7.6")
+            implementation("androidx.compose.material3:material3:1.3.1")
             implementation("org.jetbrains.kotlin:kotlin-reflect")
             implementation(libs.koin.android)
             implementation(libs.koin.compose)
@@ -78,6 +78,6 @@ kotlin {
 }
 
 dependencies {
-    debugImplementation("androidx.compose.ui:ui-tooling:1.7.0")
-    debugImplementation("androidx.compose.ui:ui-test-manifest:1.7.0")
+    debugImplementation("androidx.compose.ui:ui-tooling:1.7.6")
+    debugImplementation("androidx.compose.ui:ui-test-manifest:1.7.6")
 }
