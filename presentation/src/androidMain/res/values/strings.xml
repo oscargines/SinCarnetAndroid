@@ -809,4 +809,9 @@
     <!-- Documentos Complementarios -->
     <string name="dc_info_text">Actas realizadas conforme a las que figuran en el Título 11. Procedimiento de Control de Alcoholemia y el Consumo de otras Drogas en la Seguridad Vial.</string>
 
+    <!-- Modal informativo: cambio denominación juzgados LO 1/2025 -->
+    <string name="court_denomination_info_title">Aviso importante: Cambio de denominación de los juzgados</string>
+    <string name="court_denomination_info_message">Con la entrada en vigor de la Ley Orgánica 1/2025, de 2 de enero, de medidas en materia de eficiencia del Servicio Público de Justicia, los antiguos Juzgados de Instrucción y los Juzgados de Primera Instancia e Instrucción han cambiado su denominación.\n\nAhora se denominan:\n• Sección de Instrucción del Tribunal de Instancia.\n• Sección Civil y de Instrucción del Tribunal de Instancia (sección única).\n\nTenga en cuenta esta nueva nomenclatura al completar los datos del juzgado destinatario del atestado.</string>
+    <string name="court_denomination_info_accept">Entendido</string>
+
 </resources>

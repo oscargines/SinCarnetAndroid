@@ -140,6 +140,8 @@ fun DatosJuzgadoAtestadoScreen(
     var municipioExpanded by remember { mutableStateOf(false) }
     var sedeExpanded by remember { mutableStateOf(false) }
 
+    var showDenominationInfo by rememberSaveable { mutableStateOf(true) }
+
     var selectedCcaaId by rememberSaveable { mutableStateOf(initialData.ccaaId) }
     var selectedCcaaName by rememberSaveable { mutableStateOf(initialData.ccaaNombre) }
     var selectedProvinciaId by rememberSaveable { mutableStateOf(initialData.provinciaId) }
@@ -946,6 +948,24 @@ fun DatosJuzgadoAtestadoScreen(
         ) {
             DatePicker(state = datePickerState)
         }
+    }
+
+    if (showDenominationInfo) {
+        AlertDialog(
+            onDismissRequest = { showDenominationInfo = false },
+            title = { Text(text = stringResource(R.string.court_denomination_info_title)) },
+            text = {
+                Text(
+                    text = stringResource(R.string.court_denomination_info_message),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = { showDenominationInfo = false }) {
+                    Text(text = stringResource(R.string.court_denomination_info_accept))
+                }
+            }
+        )
     }
 }
 

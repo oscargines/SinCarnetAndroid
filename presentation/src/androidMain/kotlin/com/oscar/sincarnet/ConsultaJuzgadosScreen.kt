@@ -106,6 +106,7 @@ fun ConsultaJuzgadosScreen(
     var selectedMunicipioName by rememberSaveable { mutableStateOf("") }
     var selectedSedeName by rememberSaveable { mutableStateOf("") }
     var selectedSede by remember { mutableStateOf<SedeJudicial?>(null) }
+    var showDenominationInfo by rememberSaveable { mutableStateOf(true) }
 
     LaunchedEffect(Unit) {
         if (isInPreview) {
@@ -487,6 +488,24 @@ fun ConsultaJuzgadosScreen(
         ) {
             BackIconButton(onClick = onBackClick)
         }
+    }
+
+    if (showDenominationInfo) {
+        AlertDialog(
+            onDismissRequest = { showDenominationInfo = false },
+            title = { Text(text = stringResource(R.string.court_denomination_info_title)) },
+            text = {
+                Text(
+                    text = stringResource(R.string.court_denomination_info_message),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = { showDenominationInfo = false }) {
+                    Text(text = stringResource(R.string.court_denomination_info_accept))
+                }
+            }
+        )
     }
 }
 
