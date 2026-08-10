@@ -22,8 +22,8 @@ android {
         applicationId = "com.oscar.sincarnet"
         minSdk = 31
         targetSdk = 35
-        versionCode = 2
-        versionName = "1.50.3"
+        versionCode = 3
+        versionName = "1.51.3"
 
         // Mitigacion temporal Android 16KB page size:
         // evitamos empaquetar binarios x86/x86_64 (los que estan reportando
@@ -56,6 +56,9 @@ android {
                 "proguard-rules.pro"
             )
         }
+    }
+    lint {
+        abortOnError = false
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11

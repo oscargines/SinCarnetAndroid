@@ -7,7 +7,7 @@
 [![Platform](https://img.shields.io/badge/Platform-Android%2012%2B-3DDC84?logo=android&logoColor=white)](https://developer.android.com)
 [![Kotlin](https://img.shields.io/badge/Language-Kotlin-7F52FF?logo=kotlin&logoColor=white)](https://kotlinlang.org)
 [![Compose](https://img.shields.io/badge/UI-Jetpack%20Compose-4285F4?logo=jetpackcompose&logoColor=white)](https://developer.android.com/jetpack/compose)
-[![Version](https://img.shields.io/badge/Version-1.50.3-blue)](app/build.gradle.kts)
+[![Version](https://img.shields.io/badge/Version-1.51.3-blue)](app/build.gradle.kts)
 [![Docs](https://img.shields.io/badge/API%20Docs-Dokka%20V2-orange)](docs/api/index.html)
 [![License](https://img.shields.io/badge/License-Uso%20interno-lightgrey)](#licencia-y-uso)
 
@@ -17,11 +17,20 @@
 
 ## 📦 Descarga directa
 
-- [⬇️ Descargar APK firmado (release actual)](https://raw.githubusercontent.com/oscargines/SinCarnetAndroid/main/SinCarnet_V.1.50.3.apk)
+- [⬇️ Descargar APK firmado (release actual)](https://raw.githubusercontent.com/oscargines/SinCarnetAndroid/main/SinCarnet_V.1.51.3.apk)
 
 > El binario distribuible publicado en el repositorio corresponde al artefacto firmado de la versión actual.
 
 ## 🛠️ Cambios implementados (última actualización)
+
+### v1.51.3 - Actualización denominación juzgados (LO 1/2025)
+- **Denominación juzgados actualizada** según la Ley Orgánica 1/2025, de 2 de enero, de medidas en materia de eficiencia del Servicio Público de Justicia:
+  - "Juzgado de Instrucción" → **Sección de Instrucción del Tribunal de Instancia**
+  - "Juzgado de lo Penal" → **Sección de lo Penal del Tribunal de Instancia**
+  - "Juzgado de Primera Instancia" → **Sección Civil y de Instrucción del Tribunal de Instancia**
+- **Modal informativo**: Añadido aviso al abrir las pantallas de selección de juzgado (Consulta de Juzgados y Datos de Juzgado del Atestado) informando del cambio de nomenclatura con referencia a la LO 1/2025.
+- **Base de datos de juzgados actualizada** con la denominación vigente de los órganos judiciales.
+- **Versión en "Acerca de"**: El diálogo "Acerca de..." ahora muestra la versión de la app (Versión 1.51.3).
 
 ### v1.50.3 - Actualización de seguridad y dependencias
 - **Actualización de seguridad crítica**: BouncyCastle actualizado de 1.50 a 1.78.1
@@ -246,7 +255,7 @@ SinCarnetAndroid/
 │       └── index.html
 ├── keystore/
 │   └── sincarnet-release.jks     # Keystore de firma release
-├── SinCarnet_V.1.50.3.apk        # APK firmado publicado para descarga directa
+├── SinCarnet_V.1.51.3.apk        # APK firmado publicado para descarga directa
 ├── build.gradle.kts              # Configuración raíz
 ├── settings.gradle.kts
 ├── gradle/
@@ -375,6 +384,6 @@ Proyecto de **uso interno / operativo**. Cualquier reutilización, adaptación o
 
 <div align="center">
 
-**SinCarnet Android** · v1.50.3 · API 31–35 · Kotlin · Jetpack Compose
+**SinCarnet Android** · v1.51.3 · API 31–35 · Kotlin · Jetpack Compose
 
 </div>
