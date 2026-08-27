@@ -30,6 +30,7 @@ import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -43,6 +44,7 @@ import androidx.compose.ui.unit.dp
 import com.oscar.sincarnet.data.repository.OficioCustodiaSangreStorage
 import com.oscar.sincarnet.data.toStorage
 import com.oscar.sincarnet.domain.model.OficioCustodiaSangreData
+import com.oscar.sincarnet.nfc.LocalNfcReaderController
 import com.oscar.sincarnet.ui.theme.SinCarnetTheme
 import java.time.Instant
 import java.time.LocalDate
@@ -92,12 +94,15 @@ fun OficioCustodiaSangreDocScreen(
     var showSiniestroTimePicker by rememberSaveable { mutableStateOf(false) }
     var pendingSiniestroDate by rememberSaveable { mutableStateOf("") }
 
+    val nfcController = LocalNfcReaderController.current
     val nfcHelper = if (!isInPreview) {
         rememberNfcReadingHelper(
             onDataRead = { data ->
                 nombreApellidos = "${data.firstName} ${data.lastName1} ${data.lastName2}".trim().uppercase()
                 numeroDocumento = data.optionalData.ifBlank { data.documentNumber }.uppercase()
-            }
+            },
+            onEnableNfcReader = { nfcController.enableNfcReaderModeForDniRead() },
+            onDisableNfcReader = { nfcController.disableNfcReaderModeForDniRead() }
         )
     } else null
 

@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -22,6 +23,8 @@ import androidx.core.content.FileProvider
 import androidx.navigation.compose.rememberNavController
 import com.oscar.sincarnet.data.datasource.nfc.NfcTagRepository
 import com.oscar.sincarnet.navigation.NavGraph
+import com.oscar.sincarnet.nfc.LocalNfcReaderController
+import com.oscar.sincarnet.nfc.NfcReaderController
 import com.oscar.sincarnet.ui.theme.SinCarnetTheme
 import org.koin.androidx.compose.koinViewModel
 import java.io.File
@@ -39,7 +42,7 @@ import java.io.File
  * @see NfcTagRepository Para lectura de DNI
  * @see MainViewModel Para estado y lógica de presentación
  */
-class MainActivity : ComponentActivity() {
+class MainActivity : ComponentActivity(), NfcReaderController {
     private companion object {
         const val NFC_LOG_TAG = "MainActivityNfc"
     }
@@ -129,44 +132,46 @@ class MainActivity : ComponentActivity() {
         }
 
         SinCarnetTheme {
-            Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                if (uiState.showSplash) {
-                    SplashScreen(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(innerPadding),
-                        versionName = BuildConfig.VERSION_NAME
-                    )
-                } else {
-                    NavGraph(
-                        navController = navController,
-                        viewModel = viewModel,
-                        uiState = uiState,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(innerPadding),
-                        onOpenPdf = { pdfFile ->
-                            val opened = openGeneratedPdf(pdfFile)
-                            if (!opened) {
-                                Toast.makeText(
-                                    applicationContext,
-                                    getString(R.string.scan_pdf_open_error),
-                                    Toast.LENGTH_LONG
-                                ).show()
-                            }
-                        },
-                        onSharePdf = { pdfFile ->
-                            val shared = shareGeneratedPdf(pdfFile)
-                            if (!shared) {
-                                Toast.makeText(
-                                    applicationContext,
-                                    getString(R.string.atestado_pdf_share_error),
-                                    Toast.LENGTH_LONG
-                                ).show()
-                            }
-                        },
-                        versionName = BuildConfig.VERSION_NAME
-                    )
+            androidx.compose.runtime.CompositionLocalProvider(LocalNfcReaderController provides this) {
+                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+                    if (uiState.showSplash) {
+                        SplashScreen(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(innerPadding),
+                            versionName = BuildConfig.VERSION_NAME
+                        )
+                    } else {
+                        NavGraph(
+                            navController = navController,
+                            viewModel = viewModel,
+                            uiState = uiState,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(innerPadding),
+                            onOpenPdf = { pdfFile ->
+                                val opened = openGeneratedPdf(pdfFile)
+                                if (!opened) {
+                                    Toast.makeText(
+                                        applicationContext,
+                                        getString(R.string.scan_pdf_open_error),
+                                        Toast.LENGTH_LONG
+                                    ).show()
+                                }
+                            },
+                            onSharePdf = { pdfFile ->
+                                val shared = shareGeneratedPdf(pdfFile)
+                                if (!shared) {
+                                    Toast.makeText(
+                                        applicationContext,
+                                        getString(R.string.atestado_pdf_share_error),
+                                        Toast.LENGTH_LONG
+                                    ).show()
+                                }
+                            },
+                            versionName = BuildConfig.VERSION_NAME
+                        )
+                    }
                 }
             }
         }
@@ -190,7 +195,7 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         logNfcAdapterState("onResume")
-        enableNfcReaderMode()
+        // No activamos ReaderMode aquí; se activa bajo demanda al leer DNI
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -199,7 +204,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onPause() {
         super.onPause()
-        disableNfcReaderMode()
+        // No desactivamos ReaderMode aquí; se gestiona bajo demanda
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -262,6 +267,40 @@ class MainActivity : ComponentActivity() {
     private fun disableNfcReaderMode() {
         val adapter = nfcAdapter ?: return
         Log.d(NFC_LOG_TAG, "disableReaderMode")
+        adapter.disableReaderMode(this)
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // CONTROL NFC BAJO DEMANDA (para lectura de DNI)
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Activa el modo lector NFC para lectura de DNI electrónico.
+     * Debe llamarse solo cuando el usuario inicia explícitamente la lectura.
+     */
+    override fun enableNfcReaderModeForDniRead() {
+        val adapter = nfcAdapter ?: return
+        if (!adapter.isEnabled) {
+            Log.w(NFC_LOG_TAG, "enableNfcReaderModeForDniRead omitido: NFC desactivado")
+            return
+        }
+
+        val flags = NfcAdapter.FLAG_READER_NFC_A or
+            NfcAdapter.FLAG_READER_NFC_B or
+            NfcAdapter.FLAG_READER_SKIP_NDEF_CHECK
+        val options = Bundle().apply {
+            putInt(NfcAdapter.EXTRA_READER_PRESENCE_CHECK_DELAY, 300)
+        }
+        Log.d(NFC_LOG_TAG, "enableReaderModeForDniRead flags=$flags")
+        adapter.enableReaderMode(this, readerCallback, flags, options)
+    }
+
+    /**
+     * Desactiva el modo lector NFC tras completar/cancelar lectura de DNI.
+     */
+    override fun disableNfcReaderModeForDniRead() {
+        val adapter = nfcAdapter ?: return
+        Log.d(NFC_LOG_TAG, "disableReaderModeForDniRead")
         adapter.disableReaderMode(this)
     }
 

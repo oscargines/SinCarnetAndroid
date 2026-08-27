@@ -71,6 +71,7 @@ import com.google.android.gms.tasks.CancellationTokenSource
 import com.oscar.sincarnet.data.repository.ComplementarioAlcoholStorage
 import com.oscar.sincarnet.data.toStorage
 import com.oscar.sincarnet.domain.model.ComplementarioAlcoholData
+import com.oscar.sincarnet.nfc.LocalNfcReaderController
 import com.oscar.sincarnet.ui.theme.SinCarnetTheme
 import java.text.Normalizer
 import java.time.Instant
@@ -140,13 +141,16 @@ fun ColaboracionAlcoholScreen(
     var showMotivoDialog by rememberSaveable { mutableStateOf(false) }
     var tipoConductorSeleccionado by rememberSaveable { mutableStateOf(initialData.tipoConductor) }
 
+    val nfcController = LocalNfcReaderController.current
     val nfcHelper = if (!isInPreview) {
         rememberNfcReadingHelper(
             onDataRead = { data ->
                 personaNombre = "${data.firstName} ${data.lastName1} ${data.lastName2}".trim().uppercase()
                 personaDni = data.optionalData.ifBlank { data.documentNumber }.uppercase()
                 personaDomicilio = data.residenceAddress
-            }
+            },
+            onEnableNfcReader = { nfcController.enableNfcReaderModeForDniRead() },
+            onDisableNfcReader = { nfcController.disableNfcReaderModeForDniRead() }
         )
     } else null
 
