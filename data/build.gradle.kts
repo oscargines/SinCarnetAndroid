@@ -61,7 +61,8 @@ kotlin {
             implementation("androidx.compose.ui:ui-graphics:1.7.6")
             implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
 
-            // Excluir JARs de BouncyCastle "plataforma Android" (versiones recortadas 1.5x.0.0).
+            // Excluir JARs de BouncyCastle "plataforma Android" (SpongyCastle renombrado).
+            // jmulticard-2.0 necesita las clases org.bouncycastle de la API antigua.
             implementation(fileTree("libs") {
                 include("*.jar")
                 exclude(
@@ -71,12 +72,10 @@ kotlin {
                     "core-1.58.0.0.jar"
                 )
             })
-            implementation(files("libs/dniedroid-release.aar"))
 
-            // BouncyCastle: proveedor de criptografía requerido por dniedroid/jmulticard
-            // Actualizado de 1.50 a 1.78.1 para corregir CVEs conocidos
-            implementation("org.bouncycastle:bcprov-jdk15on:1.78.1")
-            implementation("org.bouncycastle:bcpkix-jdk15on:1.78.1")
+            // jmulticard-2.0 referencia DERObjectIdentifier, eliminado en versiones nuevas.
+            implementation("org.bouncycastle:bcprov-jdk15on:1.50")
+            implementation("org.bouncycastle:bcpkix-jdk15on:1.50")
 
             // CameraX (api para que las screens en :app puedan usar los tipos directamente)
             api("androidx.camera:camera-core:1.4.1")

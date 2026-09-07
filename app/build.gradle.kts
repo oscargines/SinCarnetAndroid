@@ -23,7 +23,7 @@ android {
         minSdk = 31
         targetSdk = 35
         versionCode = 4
-        versionName = "1.52.3"
+        versionName = "1.52.5"
 
         // Mitigacion temporal Android 16KB page size:
         // evitamos empaquetar binarios x86/x86_64 (los que estan reportando

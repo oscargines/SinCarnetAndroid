@@ -61,7 +61,12 @@ class MainActivity : ComponentActivity(), NfcReaderController {
             return@ReaderCallback
         }
         val uid = tag.id?.joinToString(":") { "%02X".format(it) }.orEmpty()
-        Log.i(NFC_LOG_TAG, "ReaderMode tag detectado uid=$uid techs=${tag.techList.joinToString()}")
+        Log.i(
+            NFC_LOG_TAG,
+            "ReaderMode tag detectado uid=$uid techs=${tag.techList.joinToString()} " +
+                "thread=${Thread.currentThread().name} nfcEnabled=${nfcAdapter?.isEnabled} " +
+                "capturedAt=${System.currentTimeMillis()}"
+        )
         NfcTagRepository.update(tag)
     }
 
@@ -291,8 +296,14 @@ class MainActivity : ComponentActivity(), NfcReaderController {
         val options = Bundle().apply {
             putInt(NfcAdapter.EXTRA_READER_PRESENCE_CHECK_DELAY, 300)
         }
-        Log.d(NFC_LOG_TAG, "enableReaderModeForDniRead flags=$flags")
-        adapter.enableReaderMode(this, readerCallback, flags, options)
+        Log.d(
+            NFC_LOG_TAG,
+            "enableReaderModeForDniRead flags=$flags presenceDelayMs=300 " +
+                "thread=${Thread.currentThread().name} adapterEnabled=${adapter.isEnabled}"
+        )
+        runCatching { adapter.enableReaderMode(this, readerCallback, flags, options) }
+            .onSuccess { Log.i(NFC_LOG_TAG, "ReaderMode habilitado para lectura DNI") }
+            .onFailure { Log.e(NFC_LOG_TAG, "No se pudo habilitar ReaderMode para lectura DNI", it) }
     }
 
     /**
@@ -300,8 +311,10 @@ class MainActivity : ComponentActivity(), NfcReaderController {
      */
     override fun disableNfcReaderModeForDniRead() {
         val adapter = nfcAdapter ?: return
-        Log.d(NFC_LOG_TAG, "disableReaderModeForDniRead")
-        adapter.disableReaderMode(this)
+        Log.d(NFC_LOG_TAG, "disableReaderModeForDniRead thread=${Thread.currentThread().name}")
+        runCatching { adapter.disableReaderMode(this) }
+            .onSuccess { Log.i(NFC_LOG_TAG, "ReaderMode deshabilitado tras lectura DNI") }
+            .onFailure { Log.e(NFC_LOG_TAG, "No se pudo deshabilitar ReaderMode tras lectura DNI", it) }
     }
 
     // ─────────────────────────────────────────────────────────────────────────

@@ -4,6 +4,7 @@ import android.nfc.Tag
 import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
@@ -23,6 +24,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.oscar.sincarnet.data.datasource.nfc.NfcDniReader
 import com.oscar.sincarnet.data.datasource.nfc.NfcTagRepository
@@ -102,6 +104,28 @@ class NfcReadingHelper(
         nfcReadErrorState.value = null
     }
 
+    /**
+     * Reanuda la espera usando el mismo CAN, pero obliga a detectar el documento de nuevo.
+     * Un Tag que ya produjo un error de conexión no debe reutilizarse.
+     */
+    fun retryScan() {
+        val can = pendingCanForNfcState.value
+        if (can.isBlank()) {
+            clearError()
+            startCanDialog()
+            return
+        }
+
+        val attemptId = System.currentTimeMillis().toString()
+        NfcTagRepository.clear()
+        pendingAttemptIdState.value = attemptId
+        nfcScanStartedAtMillisState.value = System.currentTimeMillis()
+        nfcReadErrorState.value = null
+        onEnableNfcReader()
+        waitingForNfcTagState.value = true
+        showNfcScanDialogState.value = true
+    }
+
     fun dismissDataDialog() {
         pendingNfcDataState.value = null
     }
@@ -113,32 +137,43 @@ class NfcReadingHelper(
 
     fun startNfcRead(attemptId: String, can: String, tag: Tag) {
         val uid = tag.id?.joinToString(":") { "%02X".format(it) }
-        Log.i(NFC_LOG_TAG, "[$attemptId] Inicio lectura con tag uid=${uid ?: "<null>"} techs=${tag.techList.joinToString()}")
+        val debugInfo = NfcTagRepository.debugInfo()
+        Log.i(
+            NFC_LOG_TAG,
+            "[$attemptId] Inicio lectura con tag uid=${uid ?: "<null>"} techs=${tag.techList.joinToString()} " +
+                "thread=${Thread.currentThread().name} capturedAt=${debugInfo.capturedAtMillis} " +
+                "ageMs=${debugInfo.ageMs} hasTag=${debugInfo.hasTag}"
+        )
         waitingForNfcTagState.value = false
         showNfcScanDialogState.value = false
         canCodeErrorState.value = ""
-        onDisableNfcReader()
         isReadingNfcState.value = true
         scope.launch {
             Log.d(NFC_LOG_TAG, "[$attemptId] Invocando NfcDniReader.read(...) en IO")
-            val result = withContext(Dispatchers.IO) { NfcDniReader.read(can, tag) }
-            isReadingNfcState.value = false
-            result.onSuccess {
-                Log.i(NFC_LOG_TAG, "[$attemptId] Lectura NFC OK. nombre='${it.firstName.take(24)}' doc='${it.documentNumber.take(12)}'")
-                pendingNfcDataState.value = it
-            }.onFailure { throwable ->
-                val rootCause = generateSequence(throwable) { it.cause }.last()
-                Log.e(
-                    NFC_LOG_TAG,
-                    "[$attemptId] Lectura NFC fallida: type=${throwable.javaClass.name}, message=${throwable.message}, rootType=${rootCause.javaClass.name}, rootMessage=${rootCause.message}",
-                    throwable
-                )
-                nfcReadErrorState.value = if (throwable is ClassNotFoundException) {
-                    nfcMissingLibraryMessage
-                } else {
-                    throwable.message ?: nfcReadErrorTitle
+            try {
+                // ReaderMode debe permanecer activo mientras jMulticard abre IsoDep.
+                val result = withContext(Dispatchers.IO) { NfcDniReader.read(can, tag) }
+                result.onSuccess {
+                    Log.i(NFC_LOG_TAG, "[$attemptId] Lectura NFC OK. nombre='${it.firstName.take(24)}' doc='${it.documentNumber.take(12)}'")
+                    pendingNfcDataState.value = it
+                }.onFailure { throwable ->
+                    val rootCause = generateSequence(throwable) { it.cause }.last()
+                    Log.e(
+                        NFC_LOG_TAG,
+                        "[$attemptId] Lectura NFC fallida: type=${throwable.javaClass.name}, message=${throwable.message}, rootType=${rootCause.javaClass.name}, rootMessage=${rootCause.message}",
+                        throwable
+                    )
+                    nfcReadErrorState.value = if (throwable is ClassNotFoundException) {
+                        nfcMissingLibraryMessage
+                    } else {
+                        throwable.message ?: nfcReadErrorTitle
+                    }
+                    Log.w(NFC_LOG_TAG, "[$attemptId] Mensaje mostrado al usuario: '${nfcReadErrorState.value}'")
                 }
-                Log.w(NFC_LOG_TAG, "[$attemptId] Mensaje mostrado al usuario: '${nfcReadErrorState.value}'")
+            } finally {
+                isReadingNfcState.value = false
+                NfcTagRepository.clear()
+                // La sesión de transporte ya terminó; ahora sí se puede cerrar ReaderMode.
                 onDisableNfcReader()
             }
         }
@@ -254,6 +289,7 @@ fun NfcReadingHelper.NfcDialogs() {
                         },
                         label = { Text(canCodeLabel) },
                         singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         isError = canCodeError.isNotEmpty()
                     )
                     if (canCodeError.isNotEmpty()) {
@@ -313,7 +349,7 @@ fun NfcReadingHelper.NfcDialogs() {
             title = { Text(nfcReadErrorTitle) },
             text = { Text(nfcReadError.orEmpty()) },
             confirmButton = {
-                TextButton(onClick = { clearError() }) {
+                TextButton(onClick = { retryScan() }) {
                     Text(acceptAction)
                 }
             }
