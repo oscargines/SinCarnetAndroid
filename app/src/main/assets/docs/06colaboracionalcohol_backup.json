@@ -1,0 +1,183 @@
+er{
+  "documento": {
+    "titulo": "ACTA PARA DOCUMENTAR LA REALIZACIÓN DE PRUEBAS DE VERIFICACIÓN DEL GRADO DE IMPREGNACIÓN ALCOHÓLICA, A PETICIÓN DE CUERPOS DE SEGURIDAD QUE NO DISPONEN DE LOS MEDIOS TÉCNICOS NECESARIOS",
+    "cuerpo": {
+      "descripcion": "Se procede a levantar la presente Acta, al objeto de dejar constancia de las circunstancias que concurrieron en la realización de las pruebas de verificación del grado de impregnación alcohólica, a petición de un Cuerpo Policial que no dispone de los medios técnicos adecuados:"
+    },
+    "secciones": [
+      {
+        "id": 1,
+        "titulo": "1.- FECHA:",
+        "contenido": "[[alcohol_fecha]]"
+      },
+      {
+        "id": 2,
+        "titulo": "2.- HORA:",
+        "contenido": "[[alcohol_hora]]"
+      },
+      {
+        "id": 3,
+        "titulo": "3.- LUGAR:",
+        "contenido": "[[alcohol_lugar]]"
+      },
+      {
+        "id": 4,
+        "titulo": "4.- TÉRMINO MUNICIPAL:",
+        "contenido": "[[alcohol_terminomunicipal]]"
+      },
+      {
+        "id": 5,
+        "titulo": "5.- PARTIDO JUDICIAL:",
+        "contenido": "[[alcohol_partidojudicial]]"
+      },
+      {
+        "id": 6,
+        "titulo": "6.- CUERPO POLICIAL SOLICITANTE:",
+        "contenido": "[[alcohol_cuerposolicitante]]"
+      },
+      {
+        "id": 7,
+        "titulo": "7.- AGENTES SOLICITANTES:",
+        "contenido": "[[alcohol_agentessolicitantes]]"
+      },
+      {
+        "id": 8,
+        "titulo": "8.- MOTIVO DEL REQUERIMIENTO:",
+        "contenido": "",
+        "items": [
+          {
+            "descripcion": "Accidente [[alcohol_motivo_accidente]]"
+          },
+          {
+            "descripcion": "Sintomatología externa [[alcohol_motivo_sintomatologia]]"
+          },
+          {
+            "descripcion": "Infracción [[alcohol_motivo_infraccion]]"
+          },
+          {
+            "descripcion": "Control prevent. [[alcohol_motivo_controlpreventivo]]"
+          }
+        ]
+      },
+      {
+        "id": 9,
+        "titulo": "9.- IDENTIDAD PERSONA SOMETIDA:",
+        "contenido": "",
+        "items": [
+          {
+            "descripcion": "9.1.- NOMBRE/APELLIDOS: [[alcohol_persona_nombre]]"
+          },
+          {
+            "descripcion": "9.2.- Nº Per. ConD/DNI/NIE: [[alcohol_persona_dni]]"
+          },
+          {
+            "descripcion": "9.3.- FECHA EXP: [[alcohol_persona_fechaexp]]"
+          },
+          {
+            "descripcion": "9.4.- DOMICILIO: [[alcohol_persona_domicilio]]"
+          }
+        ]
+      },
+      {
+        "id": 10,
+        "titulo": "10.- VEHÍCULO: MARCA, MODELO Y MATRÍCULA:",
+        "contenido": "[[alcohol_vehiculo_marca]], [[alcohol_vehiculo_modelo]], [[alcohol_vehiculo_matricula]]"
+      },
+      {
+        "id": 11,
+        "titulo": "11.- AGENTE QUE REALIZA LAS PRUEBAS:",
+        "contenido": "",
+        "items": [
+          {
+            "descripcion": "TIP. [[alcohol_operador_tip]]"
+          },
+          {
+            "descripcion": "UNIDAD: [[alcohol_operador_unidad]]"
+          }
+        ]
+      },
+      {
+        "id": 12,
+        "titulo": "12.- DERECHOS DE LA PERSONA SOMETIDA A LAS PRUEBAS:",
+        "contenido": "Todos los CONDUCTORES quedan OBLIGADOS a someterse a las pruebas legalmente establecidas. Igualmente quedan OBLIGADOS los demás USUARIOS de las vía cuando se hallan implicados en un accidente de circulación (art. 12 del Real Decreto Legislativo 339/1990, de Seguridad Vial y Tráfico).\n\nLa negativa podría comportar la comisión de un DELITO CONTRA LA SEGURIDAD VIAL contenido en el artículo 383 del Código Penal (Ley Orgánica 10/1995, de 23 de noviembre, en virtud de la modificación introducida por la LO 15/2007, de 30 de noviembre), castigado con la pena de PRISIÓN de 6 meses a 1 año y privación del derecho a conducir vehículos a motor y ciclomotores por tiempo superior a uno y hasta cuatro años.\n\nSi el resultado fuera positivo, los agentes tienen obligación de someterle a una segunda prueba de detección alcohólica por el aire espirado, mediante un procedimiento similar al utilizado para la primera, para mayor garantía y a efectos de contraste.\n\nPara evitar posibles distorsiones en el resultado de la prueba, es aconsejable que entre la realización de ambas permanezca sin comer, beber, fumar o realizar ejercicio físico.\n\nTiene derecho a controlar, por sí o por cualquiera de sus acompañantes o testigos presentes, que entre la realización de la primera y segunda prueba medie un tiempo mínimo de DIEZ MINUTOS.\n\nTiene derecho a CONTRASTAR los resultados obtenidos mediante análisis de sangre, orina u otros análogos, que el personal facultativo del Centro Médico al que sea trasladado estime más adecuados. El importe de dichos análisis deberá ser PREVIAMENTE DEPOSITADO por el interesado y con él se atenderá al pago cuando el resultado de la prueba de contraste sea POSITIVO, será a cargo de los órganos periféricos de la Dirección General de Tráfico o de las autoridades municipales o autonómicas competentes cuando sea NEGATIVO, devolviéndose el depósito en este último caso.\n\nDe conformidad con lo dispuesto en el artículo 22.2 del Reglamento General de Circulación (Real Decreto 1428/2003, de 21 de noviembre), cuando las personas obligadas sufrieran lesiones, dolencias o enfermedades cuya gravedad impida la práctica de las pruebas, el personal facultativo del centro médico al que fuesen evacuados decidirá las que se hayan de realizar. El coste de las mismas será asumido por la Jefatura Provincial de Tráfico correspondiente.\n\nIgualmente tiene derecho a formular cuantas alegaciones y observaciones tenga por conveniente, por sí o por medio de su acompañante o defensor, si los tuviera.\n\nAsimismo, se le informa que según el Real Decreto 1428/2003, de 21 de noviembre, por el que se aprueba el Reglamento General de Circulación en su artículo 20, párrafo primero, y en su artículo 23, apartado 1, las tasas máximas permitidas son:",
+        "items": [
+          {
+            "descripcion": "A [[alcohol_tipo_conductor_a]] Conductor de vehículos, conductor de bicicletas - 0,25 mg/l"
+          },
+          {
+            "descripcion": "B [[alcohol_tipo_conductor_b]] Usuario de la vía implicado en siniestro vial - 0,25 mg/l"
+          },
+          {
+            "descripcion": "C [[alcohol_tipo_conductor_c]] Conductor de vehículos destinados al transporte de mercancías con PMA superior a 3.500 kg, vehículos destinados al transporte de viajeros de más de 9 plazas o de servicio público, escolar o de menores, mercancías peligrosas, de servicio de urgencias o transportes especiales - 0,15 mg/l"
+          },
+          {
+            "descripcion": "D [[alcohol_tipo_conductor_d]] Los conductores de cualquier vehículo, durante los dos años siguientes a la obtención del permiso o licencia que les habilita para conducir - 0,15 mg/l"
+          }
+        ],
+        "informacion_adicional": "Encontrándose el interesado en el caso marcado con un aspa (✗)."
+      },
+      {
+        "id": 13,
+        "titulo": "13.- IDENTIFICACIÓN ETILÓMETRO UTILIZADO",
+        "contenido": "",
+        "items": [
+          {
+            "descripcion": "Aproximación [[alcohol_etilometro_tipo_aproximacion]]"
+          },
+          {
+            "descripcion": "13.1.- Marca: [[alcohol_etilometro_marca]]"
+          },
+          {
+            "descripcion": "13.2.- Modelo: [[alcohol_etilometro_modelo]]"
+          },
+          {
+            "descripcion": "13.3.- Núm.: [[alcohol_etilometro_numserie]]"
+          },
+          {
+            "descripcion": "13.4.- Fecha últ. revisión: [[alcohol_etilometro_fecharevision]]"
+          },
+          {
+            "descripcion": "13.5.- Hora prueba: [[alcohol_etilometro_horaprueba]]"
+          },
+          {
+            "descripcion": "13.6.- Resultado: [[alcohol_etilometro_resultado]]"
+          }
+        ]
+      },
+      {
+        "id": 14,
+        "titulo": "14.- RESULTADOS OBTENIDOS",
+        "contenido": "",
+        "items": [
+          {
+            "descripcion": "14.1.- Primera prueba - Hora: [[alcohol_primera_hora]] - Resultado: [[alcohol_primera_resultado]]"
+          },
+          {
+            "descripcion": "14.2.- Segunda prueba - Hora: [[alcohol_segunda_hora]] - Resultado: [[alcohol_segunda_resultado]]"
+          },
+          {
+            "descripcion": "14.3.- Prueba de contraste: [[alcohol_contraste]]"
+          }
+        ],
+        "informacion_adicional": "En este acto se entregan al agente solicitante dos tiques impresos del resultado de la prueba."
+      },
+      {
+        "id": 15,
+        "titulo": "15.- FIRMA DE LOS INTERVINIENTES",
+        "contenido": "",
+        "items": [
+          {
+            "descripcion": "Agente solicitante: _________________________"
+          },
+          {
+            "descripcion": "Operador: _________________________"
+          },
+          {
+            "descripcion": "Firma de la persona sometida: _________________________"
+          }
+        ]
+      }
+    ],
+    "cierre": ""
+  }
+}

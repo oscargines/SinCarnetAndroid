@@ -181,7 +181,7 @@ object NfcDniReader {
     }.recoverCatching { error ->
         Log.e(
             TAG,
-            "Lectura NFC terminó con error type=${error.javaClass.name} message=${error.message} " +
+            "Lectura NFC terminó con error type=open${error.javaClass.name} message=${error.message} " +
                 "causeChain=${causeChain(error)}",
             error
         )

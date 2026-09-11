@@ -1,0 +1,33 @@
+{
+  "documento": {
+    "titulo": "DILIGENCIA DE DENUNCIAS FORMULADAS",
+    "cuerpo": {
+      "descripcion": "En [[lugar]], siendo las [[hora]] horas del día [[fechacompleta]], por el Guardia Civil instructor de las presentes, con las Tarjetas de Identidad Profesional [[instructor]], se procede a informar a ese Juzgado que simultáneamente a la confección del presente Atestado, se han formulado los siguientes boletines de denuncia:",
+      "campos_variables": {
+        "lugar": "[[lugar]]",
+        "hora": "[[hora]]",
+        "fecha_completa": "[[fechacompleta]]",
+        "instructor_tip": "[[instructor]]"
+      }
+    },
+    "denuncias_formuladas": {
+      "descripcion": "Relación de boletines de denuncia formulados. Este bloque es repetible: se genera una instancia de 'plantilla_denuncia' por cada boletín de denuncia formulado junto al atestado.",
+      "repetible": true,
+      "plantilla_denuncia": {
+        "texto": "Con número de expediente número [[numeroexpediente]], remitido a la [[organismodestino]], por infracción al Art. 1.1, op. 5A del Reglamento General de Conductores, bajo el concepto de \"Conducir el vehículo reseñado careciendo de la autorización administrativa correspondiente\". En el citado documento se hace constar que se instruyen diligencias que serán remitidas al [[juzgadodestino]].",
+        "campos_variables": {
+          "numero_expediente": "[[numeroexpediente]]",
+          "organismo_destino": "[[organismodestino]]",
+          "juzgado_destino": "[[juzgadodestino]]"
+        }
+      }
+    },
+    "cierre": {
+      "descripcion": "Y para que conste, en el lugar, fecha y hora arriba consignados, se extiende la presente diligencia que es firmada por el Instructor.",
+      "firmante": {
+        "titulo": "TIP Núm.",
+        "campo_variable": "[[instructor]]"
+      }
+    }
+  }
+}

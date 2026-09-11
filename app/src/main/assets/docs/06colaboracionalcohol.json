@@ -1,0 +1,235 @@
+{
+  "documento": {
+    "titulo": "ACTA DE REQUERIMIENTO PARA LA REALIZACION DE PRUEBAS DE ALCOHOL O DROGAS A PETICION DE OTROS CUERPOS POLICIALES, UNIDADES, U OTROS ORGANISMOS",
+    "subtitulo": "ANEXO IV",
+    "cuerpo": {
+      "descripcion": "Se procede a levantar el presente acta, al objeto de dejar constancia de las circunstancias que concurrieron en la realización de las pruebas de:"
+    },
+    "secciones": [
+      {
+        "id": 1,
+        "titulo": "PRUEBAS REALIZADAS",
+        "contenido": "",
+        "items": [
+          {
+            "descripcion": "☐ Verificación del grado de impregnación alcohólica [[requerimiento_alcohol]]"
+          },
+          {
+            "descripcion": "☐ Presencia de drogas [[requerimiento_drogas]]"
+          }
+        ]
+      },
+      {
+        "id": 2,
+        "titulo": "DATOS DE LA ACTUACIÓN",
+        "contenido": "",
+        "items": [
+          {
+            "descripcion": "Fecha: [[acta_fecha]]"
+          },
+          {
+            "descripcion": "Hora: [[acta_hora]]"
+          },
+          {
+            "descripcion": "Lugar: [[acta_lugar]]"
+          },
+          {
+            "descripcion": "Término municipal: [[acta_termino_municipal]] | Partido Judicial: [[acta_partido_judicial]]"
+          }
+        ]
+      },
+      {
+        "id": 3,
+        "titulo": "UNIDAD QUE PRESTA EL APOYO",
+        "contenido": "",
+        "items": [
+          {
+            "descripcion": "☐ Sector ☐ Subsector ☐ Destacamento [[acta_tipo_unidad]]"
+          },
+          {
+            "descripcion": "Unidad, cuerpo, organismo solicitante: [[acta_cuerpo_solicitante]]"
+          },
+          {
+            "descripcion": "Diligencias/expediente nº: [[acta_diligencias_expediente]]"
+          }
+        ]
+      },
+      {
+        "id": 4,
+        "titulo": "MOTIVO DEL REQUERIMIENTO",
+        "contenido": "",
+        "items": [
+          {
+            "descripcion": "☐ Siniestro vial [[motivo_siniestro_vial]]"
+          },
+          {
+            "descripcion": "☐ Signos evidentes [[motivo_signos_evidentes]]"
+          },
+          {
+            "descripcion": "☐ Requerimiento judicial [[motivo_requerimiento_judicial]]"
+          },
+          {
+            "descripcion": "☐ Infracción tráfico [[motivo_infraccion_trafico]]"
+          },
+          {
+            "descripcion": "☐ Control preventivo [[motivo_control_preventivo]]"
+          },
+          {
+            "descripcion": "☐ Otros: [[motivo_otros]]"
+          }
+        ]
+      },
+      {
+        "id": 5,
+        "titulo": "IDENTIDAD PERSONA SOMETIDA A PRUEBA",
+        "contenido": "",
+        "items": [
+          {
+            "descripcion": "Nombre/apellidos: [[persona_nombre]]"
+          },
+          {
+            "descripcion": "Nacido el: [[persona_fecha_nacimiento]]"
+          },
+          {
+            "descripcion": "DNI/NIE: [[persona_dni]]"
+          },
+          {
+            "descripcion": "Domicilio: [[persona_domicilio]]"
+          },
+          {
+            "descripcion": "Tif: [[persona_tif]]"
+          }
+        ]
+      },
+      {
+        "id": 6,
+        "titulo": "EN CALIDAD DE",
+        "contenido": "",
+        "items": [
+          {
+            "descripcion": "☐ Conductor de vehículo a motor, ciclomotor o bicicleta [[en_calidad_conductor]]"
+          },
+          {
+            "descripcion": "  Marca/modelo/matrícula: [[vehiculo_marca]] / [[vehiculo_modelo]] / [[vehiculo_matricula]]"
+          },
+          {
+            "descripcion": "☐ Otros usuarios de la vía [[en_calidad_otros_usuarios]]"
+          },
+          {
+            "descripcion": "☐ Otros [[en_calidad_otros]]"
+          }
+        ]
+      },
+      {
+        "id": 7,
+        "titulo": "INSTRUMENTOS UTILIZADOS",
+        "contenido": "",
+        "items": [
+          {
+            "descripcion": "ETILÓMETRO EVIDENCIAL:"
+          },
+          {
+            "descripcion": "  Marca: [[etilometro_marca]] | Modelo: [[etilometro_modelo]]"
+          },
+          {
+            "descripcion": "  Nº serie: [[etilometro_numero_serie]] | Fecha verificación periódica: [[etilometro_hora_verificacion]]"
+          },
+          {
+            "descripcion": "  Agente operator TIP: [[etilometro_agente]]"
+          },
+          {
+            "descripcion": ""
+          },
+          {
+            "descripcion": "LECTOR DE DROGAS:"
+          },
+          {
+            "descripcion": "  Marca: [[lector_drogas_marca]] | Modelo: [[lector_drogas_modelo]]"
+          },
+          {
+            "descripcion": "  Nº serie: [[lector_drogas_numero_serie]] | Fecha verificación periódica: [[lector_drogas_hora_verificacion]]"
+          },
+          {
+            "descripcion": "  Agente operator TIP: [[lector_drogas_agente]]"
+          }
+        ]
+      },
+      {
+        "id": 8,
+        "titulo": "TASAS MÁXIMAS PERMITIDAS",
+        "contenido": "Real Decreto 1428/2003, de 21 de noviembre, por el que se aprueba el Reglamento General de Circulación.",
+        "items": [
+          {
+            "descripcion": "Conductor de vehículos y bicicletas: 0.25 mg/l ALCOHOL - Mera presencia DROGAS"
+          },
+          {
+            "descripcion": "Usuario de la vía implicado en siniestro vial - Persona obligada a someterse: Sin tasa específica ALCOHOL - Mera presencia DROGAS"
+          },
+          {
+            "descripcion": "Conductor de transporte de mercancías/viajeros (PMA>3500kg, >9 plazas, públicos, escolares, menores, peligrosas, urgencias, especiales): 0.15 mg/l ALCOHOL - Mera presencia DROGAS"
+          },
+          {
+            "descripcion": "Conductores en dos años desde permiso: 0.15 mg/l ALCOHOL - Mera presencia DROGAS"
+          },
+          {
+            "descripcion": "Otros en casos ágenos a seguridad vial: Sin tasa específica ALCOHOL - Sin tasa específica DROGAS"
+          }
+        ]
+      },
+      {
+        "id": 9,
+        "titulo": "RESULTADOS OBTENIDOS - ALCOHOL",
+        "contenido": "",
+        "items": [
+          {
+            "descripcion": "1ª prueba - Hora: [[primera_prueba_hora]] - Resultado: [[primera_prueba_resultado]] mg/l"
+          },
+          {
+            "descripcion": "2ª prueba - Hora: [[segunda_prueba_hora]] - Resultado: [[segunda_prueba_resultado]] mg/l"
+          },
+          {
+            "descripcion": "Desea prueba de contraste: ☐ Si ☐ No [[prueba_contraste_alcohol]]"
+          }
+        ]
+      },
+      {
+        "id": 10,
+        "titulo": "RESULTADOS OBTENIDOS - DROGAS",
+        "contenido": "",
+        "items": [
+          {
+            "descripcion": "Prueba indiciaría: [[prueba_drogas_indiciaría]]"
+          },
+          {
+            "descripcion": "Resultado: ☐ Negativa ☐ Positiva [[prueba_drogas_resultado]]"
+          },
+          {
+            "descripcion": "Tipo de droga (si positiva): ☐ THC ☐ OPI ☐ COC ☐ AMP ☐ MAMP [[prueba_drogas_tipo]]"
+          },
+          {
+            "descripcion": "Desea prueba de contraste: ☐ Si ☐ No [[prueba_drogas_contraste]]"
+          }
+        ]
+      },
+      {
+        "id": 11,
+        "titulo": "OBSERVACIONES",
+        "contenido": "[[observaciones]]"
+      },
+      {
+        "id": 12,
+        "titulo": "FIRMAS",
+        "contenido": "",
+        "items": [
+          {
+            "descripcion": "Firma de la autoridad o agente solicitante: ___________________________"
+          },
+          {
+            "descripcion": "Firma del agente operador: ___________________________"
+          }
+        ]
+      }
+    ],
+    "cierre": "Finalizada la actuación de los agentes que realizan las pruebas, se entregarán a la autoridad/agente solicitante los 'tiques' impresos aportados por el instrumento utilizado y el resultado de las mismas. Asimismo, se le informa que en el caso de que la prueba de detección del consumo de alcohol y drogas haya resultado positiva, se tomará otra muestra para análisis confirmatorio en laboratorio, garantizando la cadena de custodia. El informe emitido por el mismo será enviado a la autoridad, cuerpo u organismo solicitante."
+  }
+}

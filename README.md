@@ -7,7 +7,7 @@
 [![Platform](https://img.shields.io/badge/Platform-Android%2012%2B-3DDC84?logo=android&logoColor=white)](https://developer.android.com)
 [![Kotlin](https://img.shields.io/badge/Language-Kotlin-7F52FF?logo=kotlin&logoColor=white)](https://kotlinlang.org)
 [![Compose](https://img.shields.io/badge/UI-Jetpack%20Compose-4285F4?logo=jetpackcompose&logoColor=white)](https://developer.android.com/jetpack/compose)
-[![Version](https://img.shields.io/badge/Version-1.52.5-blue)](app/build.gradle.kts)
+[![Version](https://img.shields.io/badge/Version-1.65.4-blue)](app/build.gradle.kts)
 [![Docs](https://img.shields.io/badge/API%20Docs-Dokka%20V2-orange)](docs/api/index.html)
 [![License](https://img.shields.io/badge/License-Uso%20interno-lightgrey)](#licencia-y-uso)
 
@@ -17,11 +17,20 @@
 
 ## 📦 Descarga directa
 
-- [⬇️ Descargar APK firmado (release actual)](https://raw.githubusercontent.com/oscargines/SinCarnetAndroid/main/SinCarnet_V.1.52.5.apk)
+- [⬇️ Descargar APK firmado (release actual)](https://raw.githubusercontent.com/oscargines/SinCarnetAndroid/main/SinCarnet_V.1.65.4.apk)
 
 > El binario distribuible publicado en el repositorio corresponde al artefacto firmado de la versión actual.
 
 ## 🛠️ Cambios implementados (última actualización)
+
+### v1.65.4 - Atestado completo y exportación documental
+- Flujo de generación completa con validación de documentos escaneados o declaración de inexistencia.
+- Captura y persistencia de jefatura provincial, número de boletín, antecedentes y modo de envío.
+- Incorporación de las diligencias de denuncias, antecedentes y remisión al PDF completo.
+- Generación ordenada de portada, resumen, atestado, portada de anexos y documentos escaneados.
+- Compartición y visualización del PDF completo desde la pantalla de generación.
+- Layout PDF específico para portada y resumen con recursos institucionales y datos dinámicos.
+- Documentación técnica ampliada en `DOCUMENTACION_ATESTADO_COMPLETO_V1.65.4.md`.
 
 ### v1.52.5 - Lectura NFC de DNIe y diagnóstico de conexión
 - **Lectura DNIe corregida**: `ReaderMode` permanece activo durante toda la sesión de `IsoDep` y se desactiva al finalizar la lectura.
@@ -264,7 +273,7 @@ SinCarnetAndroid/
 │       └── index.html
 ├── keystore/
 │   └── sincarnet-release.jks     # Keystore de firma release
-├── SinCarnet_V.1.52.5.apk        # APK firmado publicado para descarga directa
+├── SinCarnet_V.1.65.4.apk        # APK firmado publicado para descarga directa
 ├── build.gradle.kts              # Configuración raíz
 ├── settings.gradle.kts
 ├── gradle/
@@ -307,7 +316,7 @@ app/build/outputs/apk/release/app-release.apk
 Para distribución directa desde GitHub, el artefacto versionado publicado en la raíz del repositorio es:
 
 ```text
-SinCarnet_V.1.52.5.apk
+SinCarnet_V.1.65.4.apk
 ```
 
 > Es necesario que `keystore.properties` esté correctamente configurado con la ruta y credenciales del keystore antes de ejecutar el build de release.

@@ -1,0 +1,74 @@
+{
+  "documento": {
+    "titulo": "ACTA AUTORIZACIÓN TRASLADO VEHÍCULO POR MOTIVOS DE SEGURIDAD VIAL",
+    "cuerpo": {
+      "descripcion": "AGRUPACIÓN DE TRÁFICO DE LA GUARDIA CIVIL\nSECTOR DE [[sector]]\nSUBSECTOR DE TRÁFICO [[subsector]]  DESTACAMENTO DE [[destacamento]]\n\nVEHÍCULO: Tipo [[vehiculoTipo]], Marca [[vehiculoMarca]], Modelo [[vehiculoModelo]], Color [[vehiculoColor]], Matrícula [[vehiculoMatricula]].\n\nDATOS DEL [[tipoPersona]]: Nombre [[nombrecompleto]], D.N.I/N.I.E [[dniNie]], Teléfono [[telefono]].",
+      "campos_variables": {
+        "sector": "[[sector]]",
+        "subsector": "[[subsector]]",
+        "destacamento": "[[destacamento]]",
+        "vehiculo_tipo": "[[vehiculoTipo]]",
+        "vehiculo_marca": "[[vehiculoMarca]]",
+        "vehiculo_modelo": "[[vehiculoModelo]]",
+        "vehiculo_color": "[[vehiculoColor]]",
+        "vehiculo_matricula": "[[vehiculoMatricula]]",
+        "nombre_completo": "[[nombrecompleto]]",
+        "dni_nie": "[[dniNie]]",
+        "telefono": "[[telefono]]"
+      }
+    },
+    "seccion_actuacion": {
+      "descripcion": "LA ACTUACIÓN DE LOS AGENTES CON EL USUARIO SE INICIA POR:",
+      "items": [
+        { "descripcion": "[[checkAuxilioAccidente]] AUXILIO ACCIDENTE" },
+        { "descripcion": "[[checkInfraccion]] INFRACCIÓN" },
+        { "descripcion": "[[checkOtroMotivo]] OTRO MOTIVO: [[inicioOtroMotivo]]" }
+      ]
+    },
+    "circunstancias": {
+      "descripcion": "CIRCUNSTANCIAS QUE JUSTIFICAN EL TRASLADO:",
+      "items": [
+        { "descripcion": "[[checkFactoresAtmosfericos]] FACTORES ATMOSFÉRICOS" },
+        { "descripcion": "[[checkMalaVisibilidad]] MALA VISIBILIDAD" },
+        { "descripcion": "[[checkConfiguracionVia]] CONFIGURACIÓN DE LA VÍA: [[circunstanciaConfiguracionVia]]" },
+        { "descripcion": "[[checkOtrasCircunstancias]] OTRAS: [[circunstanciaOtras]]" }
+      ]
+    },
+    "informacion_traslado": {
+      "descripcion": "INFORMACIÓN AL USUARIO SOBRE TRASLADO DE SU VEHÍCULO:",
+      "parrafos": [
+        "El conductor o propietario del vehículo podrá dar su consentimiento expreso para que, por parte de cualquiera de los Agentes, por motivos de seguridad, efectúen el traslado de su vehículo a una zona próxima donde quede inmovilizado conforme al art 104 y 105 LSV. A falta de su consentimiento, se procederá a dar aviso al servicio de grúa, trasladándose su vehículo para la inmovilización y siendo el importe satisfecho por el usuario.",
+        "En caso de que Vd. no abone el pago del servicio de grúa, se retirará igualmente el vehículo y se solicitará factura a nombre de la Dirección General de Tráfico, cuyo importe será repercutido, con posterioridad, por este organismo sobre él.",
+        "En el caso de que el conductor no fuera el propietario del vehículo, como responsable temporal del mismo, se compromete a participar esta actuación al propietario de la forma más rápida posible."
+      ]
+    },
+    "inicio_fin_traslado": {
+      "descripcion": "INICIO / FIN DEL TRASLADO:",
+      "items": [
+        { "label": "INICIO DEL TRASLADO: Lugar:", "campo": "[[inicioLugar]]" },
+        { "label": "Fecha y hora:", "campo": "[[inicioFechaHora]]" },
+        { "label": "FIN DEL TRASLADO: Lugar:", "campo": "[[finLugar]]" },
+        { "label": "Fecha y hora:", "campo": "[[finFechaHora]]" },
+        { "label": "UNIDAD RESPONSABLE:", "campo": "[[unidadResponsable]]" },
+        { "label": "TELÉFONO:", "campo": "[[unidadTelefono]]" },
+        { "label": "AGENTE QUE EFECTÚA TRASLADO: T.I.P.", "campo": "[[agenteTip]]" },
+        { "label": "UNIDAD:", "campo": "[[agenteUnidad]]" }
+      ]
+    },
+    "consentimiento": {
+      "descripcion": "CONSENTIMIENTO Y AUTORIZACIÓN:",
+      "items": [
+        { "label": "DECLARO MI CONSENTIMIENTO EXPRESO PARA EL TRASLADO DEL VEHÍCULO:", "campo": "[[consentimientoTraslado]]" },
+        { "label": "PERSONA QUE AUTORIZA:", "campo": "[[personaAutoriza]]" },
+        { "label": "El abajo firmante autoriza el traslado de vehículo:", "campo": "[[firmanteAutorizaTraslado]]" },
+        { "label": "Se ha producido alguna incidencia o daño en el vehículo durante el traslado:", "campo": "[[incidenciaDuranteTraslado]]" },
+        { "label": "El conductor/propietario se hace nuevamente cargo de las llaves del mismo:", "campo": "[[entregaLlaves]]" }
+      ]
+    },
+    "firmas": [
+      { "rol": "agente", "texto": "Firma Agente que ha trasladado" },
+      { "rol": "titular", "texto": "Firma Titular/Conductor" }
+    ],
+    "cierre": ""
+  }
+}

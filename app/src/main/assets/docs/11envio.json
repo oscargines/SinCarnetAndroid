@@ -1,0 +1,49 @@
+{
+  "documento": {
+    "titulo": "DILIGENCIA DE REMISIÓN Y ENTREGA",
+    "cuerpo": {
+      "descripcion": "A [[horaenvio]] hora y [[fechaenvio]] día reflejado en el recibo de envío mediante [[sistemaenvio]], dirigido al [[juzgadodestino]], se hace entrega del presente Atestado que consta de portada y [[numerofolios]] folios escritos a una sola cara y de la documentación adjunta:",
+      "campos_variables": {
+        "hora_envio": "[[horaenvio]]",
+        "fecha_envio": "[[fechaenvio]]",
+        "sistema_envio": "[[sistemaenvio]]",
+        "juzgado_destino": "[[juzgadodestino]]",
+        "numero_folios": "[[numerofolios]]"
+      },
+      "valores_defecto": {
+        "sistema_envio": "sistema informático LEXNET"
+      }
+    },
+    "documentacion_adjunta": {
+      "descripcion": "Relación de anexos que se adjuntan al Atestado. Bloque repetible: una entrada por cada anexo.",
+      "repetible": true,
+      "plantilla_anexo": {
+        "texto": "[[nombreanexo]]",
+        "campos_variables": {
+          "nombre_anexo": "[[nombreanexo]]"
+        }
+      }
+    },
+    "remision_ministerio_fiscal": {
+      "descripcion": "Se significa que se remite al Ministerio Fiscal copia del presente Atestado.",
+      "campo_variable": "[[remisionfiscal]]",
+      "valor_defecto": true,
+      "nota": "Campo booleano: indica si procede incluir esta mención. Si no procede, se omite el párrafo."
+    },
+    "cierre": {
+      "descripcion": "Y para que conste se extiende la presente diligencia, que es firmada por el Instructor y el Secretario.",
+      "firmantes": [
+        {
+          "rol": "Instructor",
+          "titulo": "TIP Núm.",
+          "campo_variable": "[[instructor]]"
+        },
+        {
+          "rol": "Secretario",
+          "titulo": "TIP Núm.",
+          "campo_variable": "[[secretario]]"
+        }
+      ]
+    }
+  }
+}

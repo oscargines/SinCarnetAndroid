@@ -2,7 +2,7 @@
   "documento": {
     "titulo": "ACTA DE INMOVILIZACIÓN DE UN VEHÍCULO",
     "cuerpo": {
-      "descripcion": "En [[lugarhechos]], a las [[horafecha]], se procede a formalizar la presente Acta de inmovilización del vehículo marca [[marca]], modelo [[modelo]], matrícula [[matricula]] que era conducido por de D./Dña. [[datosconductorydocumento]], y que tras someterse a las pruebas de alcoholemia en aire espirado y según consta en este atestado hay indicios racionales que permiten establecer que presuntamente ha cometido un delito contra la seguridad vial tipificado en el artículo 379 del Código Penal.",
+      "descripcion": "En [[lugarhechos]], a las [[horafecha]], se procede a formalizar la presente Acta de inmovilización del vehículo marca [[marca]], modelo [[modelo]], matrícula [[matricula]] que era conducido por de D./Dña. [[datosconductorydocumento]], y que una vez realizadas las comprobaciones y consultas pertinentes y según consta en este atestado hay indicios racionales que permiten establecer que presuntamente ha cometido un delito contra la seguridad vial tipificado en el artículo 379 del Código Penal.",
       "campos_variables": {
         "lugar_hechos": "[[lugarhechos]]",
         "hora_fecha": "[[horafecha]]",

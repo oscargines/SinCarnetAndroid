@@ -1,23 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-    Reglas de backup para SinCarnet.
-    Excluye datos sensibles de atestados, credenciales y datos temporales.
-    Válido para Android 11 (API 30) y anteriores.
-    Ver: https://developer.android.com/guide/topics/data/autobackup
--->
 <full-backup-content>
-    <!-- Incluir datos básicos de usuario -->
-    <include domain="sharedpref" path="." />
-    <include domain="database" path="." />
-
-    <!-- Excluir datos sensibles de atestados y documentos temporales -->
-    <exclude domain="sharedpref" path="device.xml"/>
-    <exclude domain="sharedpref" path="settings.xml"/>
-    <exclude domain="file" path="atestados/"/>
-    <exclude domain="file" path="documents/"/>
-    <exclude domain="file" path="temp/"/>
-    <exclude domain="cache" path="." />
-
-    <!-- Excluir datos de ubicación sensibles -->
-    <exclude domain="sharedpref" path=".*location.*"/>
+    <include domain="sharedpref" path="."/>
+    <include domain="database" path="."/>
+    <exclude domain="file" path="atestados"/>
+    <exclude domain="file" path="documents"/>
 </full-backup-content>

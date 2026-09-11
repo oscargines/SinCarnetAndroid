@@ -47,6 +47,7 @@ import com.oscar.sincarnet.DrogasScreen
 import com.oscar.sincarnet.ExpiredValidityScreen
 import com.oscar.sincarnet.FirmaManuscritaScreen
 import com.oscar.sincarnet.FirmasAtestadoScreen
+import com.oscar.sincarnet.GenerateCompleteAtestadoScreen
 import com.oscar.sincarnet.JudicialSuspensionScreen
 import com.oscar.sincarnet.MainUiState
 import com.oscar.sincarnet.MainViewModel
@@ -86,6 +87,7 @@ import java.io.File
  * @param onOpenPdf Callback para abrir un PDF generado por el escáner.
  * @param onSharePdf Callback para compartir un PDF generado por el escáner.
  */
+@kotlin.OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 fun NavGraph(
     navController: NavHostController,
@@ -636,6 +638,10 @@ fun NavGraph(
                 onActingDataClick = { navController.navigate(Route.AtestadoActingData.route) },
                 onSignaturesClick = { navController.navigate(Route.AtestadoSignatures.route) },
                 onScanDocumentClick = { navController.navigate(Route.DocumentScanner.route) },
+                onGenerateCompleteAtestadoClick = {
+                    navController.navigate(Route.GenerateCompleteAtestado.route)
+                },
+                documentScanStatus = uiState.documentScanStatus,
                 printSignatures = PrintSignatures(
                     instructor = uiState.signature.signaturesBySigner[SIGNER_INSTRUCTOR],
                     secretary = uiState.signature.signaturesBySigner[SIGNER_SECRETARY],
@@ -862,7 +868,34 @@ fun NavGraph(
                 modifier = Modifier.fillMaxSize(),
                 onBackClick = { navController.popBackStack() },
                 onOpenPdf = onOpenPdf,
-                onSharePdf = onSharePdf
+                onSharePdf = onSharePdf,
+                onDocumentStatusChange = viewModel::onDocumentScanStatusChange
+            )
+        }
+
+        composable(Route.GenerateCompleteAtestado.route) {
+            GenerateCompleteAtestadoScreen(
+                modifier = Modifier.fillMaxSize(),
+                onBackClick = { navController.popBackStack() },
+                onDataConfirmed = { jefaturaProvincial, numeroBoletin ->
+                    viewModel.saveCompleteAtestadoData(jefaturaProvincial, numeroBoletin)
+                },
+                onAntecedentesChange = { tiene, guardiaCivil, senalamientos, dgt, otrosCuerpos, requisitorias ->
+                    viewModel.updateCompleteAtestadoAntecedentes(
+                        tieneAntecedentes = tiene,
+                        antecedentesGuardiaCivil = guardiaCivil,
+                        antecedentesSenalamientosNacionales = senalamientos,
+                        antecedentesDgt = dgt,
+                        antecedentesOtrosCuerpos = otrosCuerpos,
+                        requisitoriasJudiciales = requisitorias
+                    )
+                },
+                completeAtestadoPath = uiState.document.completeAtestadoPdfPath,
+                isGeneratingCompleteAtestado = uiState.document.isGeneratingCompleteAtestado,
+                onSendModeChange = viewModel::updateCompleteAtestadoSendMode,
+                onVisualizeClick = viewModel::openCompleteAtestado,
+                onGenerateCompleteClick = viewModel::generateCompleteAtestado,
+                onShareCompleteClick = viewModel::shareCompleteAtestado
             )
         }
 

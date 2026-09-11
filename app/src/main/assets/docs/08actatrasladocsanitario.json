@@ -1,0 +1,76 @@
+{
+  "documento": {
+    "titulo": "ACTA REALIZACIÓN PRUEBAS DE DETECCIÓN DE ALCOHOL Y/O PRESENCIA DE DROGAS MEDIANTE RECONOCIMIENTO MÉDICO O ANÁLISIS CLÍNICOS POR RAZONES JUSTIFICADAS",
+    "cuerpo": {
+      "descripcion": "AGRUPACIÓN DE TRÁFICO DE LA GUARDIA CIVIL\nSUBSECTOR [[subsector]]\nUNIDAD INTERVINIENTE [[unidadInterviniente]]\nNÚMERO DE EXPEDIENTE/DILIGENCIA: [[numeroExpediente]]"
+    },
+    "lugar_intervencion": {
+      "descripcion": "Datos del lugar de la intervención policial:",
+      "items": [
+        { "label": "Lugar:", "campo": "[[lugarIntervencion]]" },
+        { "label": "Motivo:", "campo": "[[motivo]]" },
+        { "label": "Fecha y hora:", "campo": "[[fechaHora]]" }
+      ]
+    },
+    "persona": {
+      "descripcion": "Datos del interesado (conductor, otro usuario):",
+      "items": [
+        { "label": "Nombre y apellidos:", "campo": "[[nombreApellidos]]" },
+        { "label": "DNI/NIE o PASAPORTE n.º:", "campo": "[[dniNiePasaporte]]" }
+      ]
+    },
+    "facultativo": {
+      "descripcion": "El facultativo cuya firma se consigna, considera que existen razones justificadas que impiden realizar las pruebas de alcohol y/o drogas por parte de los agentes de la autoridad encargados de la vigilancia del tráfico, dichas razones son:",
+      "items": [
+        { "label": "Colegiado n.º:", "campo": "[[facultativoColegiado]]" }
+      ]
+    },
+    "pruebas": {
+      "descripcion": "Pruebas o análisis que el facultativo estima oportuno realizar:",
+      "items": [
+        { "label": "Extracción para análisis de muestras de sangre:", "campo": "[[checkPruebaSangre]]" },
+        { "label": "Extracción para análisis de muestras de saliva:", "campo": "[[checkPruebaOtroTipo]]" },
+        { "label": "Otro tipo de prueba:", "campo": "[[pruebaOtroDetalle]]" }
+      ]
+    },
+    "centro": {
+      "descripcion": "Centro sanitario donde se realiza la toma de muestras:",
+      "items": [
+        { "label": "Centro sanitario:", "campo": "[[centroSanitario]]" },
+        { "label": "Extracción realizada por colegiado n.º:", "campo": "[[extraccionColegiado]]" },
+        { "label": "Fecha y hora extracción:", "campo": "[[fechaHoraExtraccion]]" }
+      ]
+    },
+    "muestras": {
+      "descripcion": "Una vez obtenidas las muestras, se procede a su sella y precintado, haciendo constar el correspondiente proceso de cadena de custodia:",
+      "items": [
+        { "label": "Precintos de seguridad:", "campo": "[[precintosSeguridad]]" },
+        { "label": "Dato dado a la muestra:", "campo": "[[datoMuestra]]" }
+      ]
+    },
+    "juzgado": {
+      "descripcion": "Juzgado u organismo competente para la investigación de los hechos y forma remisión informe:",
+      "items": [
+        { "label": "Juzgado u organismo:", "campo": "[[juzgadoOrganismo]]" }
+      ]
+    },
+    "otras_observaciones": {
+      "descripcion": "OTRAS OBSERVACIONES:",
+      "items": [
+        { "label": "Observaciones:", "campo": "[[otrasObservaciones]]" }
+      ]
+    },
+    "cierre": {
+      "descripcion": "La presente acta queda integramente en su casa, area o la booths de deteccion y se entrega una copia al interesado (sujeto sometido a las pruebas), al quien presta su conformidad a la vez y resulta involucrado, junto con el facultativo, personal sanitario o agentes intervenidos.",
+      "items": [
+        { "label": "N.º TIP:", "campo": "[[numTip]]" }
+      ]
+    },
+    "firmas": [
+      { "rol": "interesado", "texto": "Firma del interesado" },
+      { "rol": "facultativo", "texto": "Firma del facultativo" },
+      { "rol": "sanitario", "texto": "Firma sanitario que realiza extracción" },
+      { "rol": "agente", "texto": "Firma agentes intervinientes" }
+    ]
+  }
+}

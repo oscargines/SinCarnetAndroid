@@ -80,7 +80,7 @@
     <string name="nfc_scan_dialog_title">Lectura NFC</string>
     <string name="nfc_apply_data_action">Aplicar datos</string>
     <string name="nfc_missing_library_message">No se encuentra la librería NFC (MrtdKeyStoreImpl). Revisa la integración del proyecto DetectorNFC.</string>
-    <string name="nfc_waiting_tag_message">CAN vlido. Acerca ahora el documento al mvil y mantenlo inmvil hasta iniciar la lectura.</string>
+    <string name="nfc_waiting_tag_message">CAN válido. Acerca ahora el documento al móvil y mantenlo inmóvil hasta iniciar la lectura.</string>
     <string name="nfc_reading_progress_title">Leyendo documento</string>
     <string name="nfc_reading_progress_message">Leyendo los datos del chip NFC&#8230;\nMantén el documento inmóvil.</string>
     <string name="nfc_field_nif">NIF: %1$s</string>
@@ -106,7 +106,7 @@
     <string name="person_data_last_name_1">Primer apellido</string>
     <string name="person_data_last_name_2">Segundo apellido</string>
     <string name="person_data_document_identification">Documento de identificación</string>
-    <string name="person_data_address">Domicilio</string>
+    <string name="person_data_address">Domicilio completo</string>
     <string name="person_data_birth_date">Fecha de nacimiento</string>
     <string name="person_data_birth_date_hint">Selecciona la fecha en formato dd-mm-yyyy</string>
     <string name="person_data_birth_date_select_action">Seleccionar</string>
@@ -464,6 +464,7 @@
     <string name="print_error_title">Error de impresión</string>
     <string name="printing_title">Imprimiendo documentos</string>
     <string name="no_printer_configured">No hay impresora configurada</string>
+    <string name="acta_traslado_print_zebra">Imprimir acta</string>
     <string name="manifestacion_incomplete_print_title">Manifestación incompleta</string>
     <string name="manifestacion_incomplete_print_message">Debe completar la manifestación (renuncia letrada y desea declarar) antes de imprimir</string>
 

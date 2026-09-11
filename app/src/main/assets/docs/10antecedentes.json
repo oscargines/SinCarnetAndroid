@@ -1,0 +1,63 @@
+{
+  "documento": {
+    "titulo": "DILIGENCIA DE ANTECEDENTES Y REQUISITORIAS",
+    "cuerpo": {
+      "descripcion": "En [[lugar]], siendo las [[hora]] horas del día [[fechacompleta]], por la Fuerza Instructora y en virtud de lo dispuesto en el segundo párrafo del artículo 292 de la Ley de Enjuiciamiento Criminal, se procede a reseñar los antecedentes policiales y penales, así como las requisitorias pendientes del investigado D./Dña. [[nombrecompletoinvestigado]] ([[documentoidentificacion]]), que son los que a continuación se detallan:",
+      "campos_variables": {
+        "lugar": "[[lugar]]",
+        "hora": "[[hora]]",
+        "fecha_completa": "[[fechacompleta]]",
+        "nombre_completo_investigado": "[[nombrecompletoinvestigado]]",
+        "documento_identificacion": "[[documentoidentificacion]]"
+      }
+    },
+    "antecedentes": {
+      "descripcion": "Relación de antecedentes y requisitorias consultados en las siguientes bases de datos. Cada apartado se rellena con el resultado de la consulta o con el valor por defecto si no consta nada.",
+      "apartados": [
+        {
+          "id": 1,
+          "titulo": "En Base de Delincuencia de la Guardia Civil",
+          "campo_variable": "[[antecedentesbdgc]]",
+          "valor_defecto": "NO CONSTA"
+        },
+        {
+          "id": 2,
+          "titulo": "En Base de Datos de Señalamientos Nacionales (BDSN)",
+          "campo_variable": "[[antecedentesbdsn]]",
+          "valor_defecto": "NO CONSTA"
+        },
+        {
+          "id": 3,
+          "titulo": "En Base Schengen (SIS)",
+          "campo_variable": "[[antecedentessis]]",
+          "valor_defecto": "NO CONSTA"
+        },
+        {
+          "id": 4,
+          "titulo": "En Base de Datos de la Dirección General de Tráfico (retiradas de permiso de conducción)",
+          "campo_variable": "[[antecedentesdgt]]",
+          "valor_defecto": "NO CONSTAN"
+        },
+        {
+          "id": 5,
+          "titulo": "Antecedentes que se conozcan existentes en Base de Datos de otros Cuerpos Policiales",
+          "campo_variable": "[[antecedentesotroscuerpos]]",
+          "valor_defecto": "NO CONSTAN"
+        },
+        {
+          "id": 6,
+          "titulo": "Como requisitorias Judiciales",
+          "campo_variable": "[[requisitoriasjudiciales]]",
+          "valor_defecto": "NO CONSTAN"
+        }
+      ]
+    },
+    "cierre": {
+      "descripcion": "Y para que conste, en el lugar, fecha y hora arriba consignados, se extiende la presente diligencia que firma el Instructor.",
+      "firmante": {
+        "titulo": "TIP Núm.",
+        "campo_variable": "[[instructor]]"
+      }
+    }
+  }
+}

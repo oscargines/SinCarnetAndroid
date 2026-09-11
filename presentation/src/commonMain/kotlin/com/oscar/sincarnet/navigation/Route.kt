@@ -35,6 +35,7 @@ sealed class Route(val route: String) {
     data object FirmaScreen : Route("firma_screen")
     data object BluetoothPrinter : Route("bluetooth_printer")
     data object DocumentScanner : Route("document_scanner")
+    data object GenerateCompleteAtestado : Route("generate_complete_atestado")
     data object CentroSanitario : Route("centro_sanitario")
     data object CentroSanitarioFirmas : Route("centro_sanitario_firmas")
     data object CentroSanitarioFirmaScreen : Route("centro_sanitario_firma_screen")
