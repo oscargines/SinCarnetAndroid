@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
@@ -36,12 +37,18 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.oscar.sincarnet.data.pdf.buildSealUnitText
+import com.oscar.sincarnet.data.pdf.getInstitutionalSealBitmap
+import com.oscar.sincarnet.data.pdf.isSealTextTooLong
+import com.oscar.sincarnet.data.repository.ActuantesStorage
 import com.oscar.sincarnet.data.repository.AtestadoInicioStorage
 import com.oscar.sincarnet.data.repository.OcurrenciaDelitStorage
+import com.oscar.sincarnet.data.repository.SealUnitStorage
 import com.oscar.sincarnet.data.toStorage
 import com.oscar.sincarnet.presentation.R
 
@@ -73,7 +80,7 @@ fun GenerateCompleteAtestadoScreen(
     isGeneratingCompleteAtestado: Boolean = false,
     onSendModeChange: (enviarPorLexnet: Boolean, modoEnvio: String) -> Unit = { _, _ -> },
     onVisualizeClick: () -> Unit = {},
-    onGenerateCompleteClick: () -> Unit = {},
+    onGenerateCompleteClick: (sealUnitText: String) -> Unit = {},
     onShareCompleteClick: () -> Unit = {}
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
@@ -85,8 +92,17 @@ fun GenerateCompleteAtestadoScreen(
     }
     val defaultProvince = occurrence.provincia.trim().ifBlank { saved.jefaturaProvincial.trim() }
 
+    val initialSealUnitText = remember(context) {
+        val actuantes = ActuantesStorage(context.toStorage("actuantes_storage")).loadCurrent()
+        SealUnitStorage(context.toStorage("seal_unit_storage")).loadSealUnitText()
+            .ifBlank { buildSealUnitText(actuantes.instructorUnit) }
+            .ifBlank { DEFAULT_SEAL_UNIT_TEXT }
+    }
+
     var showInformationDialog by rememberSaveable { mutableStateOf(true) }
     var showDataDialog by rememberSaveable { mutableStateOf(false) }
+    var showSealDialog by rememberSaveable { mutableStateOf(false) }
+    var sealUnitText by rememberSaveable { mutableStateOf(initialSealUnitText) }
     var province by rememberSaveable { mutableStateOf(defaultProvince) }
     var bulletinNumber by rememberSaveable { mutableStateOf(saved.numeroBoletin) }
     var hasBackground by rememberSaveable { mutableStateOf(saved.tieneAntecedentes) }
@@ -286,7 +302,7 @@ fun GenerateCompleteAtestadoScreen(
             Text(stringResource(R.string.generate_complete_atestado_visualize))
         }
         Button(
-            onClick = onGenerateCompleteClick,
+            onClick = { showSealDialog = true },
             enabled = !isGeneratingCompleteAtestado,
             modifier = Modifier.fillMaxWidth(),
             shape = androidx.compose.material3.MaterialTheme.shapes.medium,
@@ -448,6 +464,71 @@ fun GenerateCompleteAtestadoScreen(
         )
     }
 
+    if (showSealDialog) {
+        val sealPreviewBitmap = remember(sealUnitText) {
+            runCatching { getInstitutionalSealBitmap(context, sealUnitText, sizePx = 360) }.getOrNull()
+        }
+        val sealTextTooLong = remember(sealUnitText) { isSealTextTooLong(context, sealUnitText) }
+        AlertDialog(
+            onDismissRequest = { showSealDialog = false },
+            title = { Text(stringResource(R.string.generate_complete_atestado_seal_dialog_title)) },
+            text = {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = stringResource(R.string.generate_complete_atestado_seal_dialog_message),
+                        style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    sealPreviewBitmap?.let { bitmap ->
+                        Image(
+                            bitmap = bitmap.asImageBitmap(),
+                            contentDescription = stringResource(R.string.atestado_acting_seal_preview),
+                            modifier = Modifier.size(140.dp)
+                        )
+                    }
+                    OutlinedTextField(
+                        value = sealUnitText,
+                        onValueChange = { sealUnitText = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        label = { Text(stringResource(R.string.generate_complete_atestado_seal_unit_label)) },
+                        isError = sealTextTooLong,
+                        supportingText = {
+                            if (sealTextTooLong) {
+                                Text(
+                                    text = stringResource(R.string.generate_complete_atestado_seal_too_long),
+                                    color = androidx.compose.material3.MaterialTheme.colorScheme.error
+                                )
+                            }
+                        }
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showSealDialog = false
+                        onGenerateCompleteClick(sealUnitText.trim())
+                    },
+                    enabled = sealUnitText.isNotBlank()
+                ) {
+                    Text(stringResource(R.string.generate_complete_atestado_generate))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showSealDialog = false }) {
+                    Text(stringResource(R.string.cancel_action))
+                }
+            }
+        )
+    }
+
     if (isGeneratingCompleteAtestado) {
         AlertDialog(
             onDismissRequest = {},
@@ -492,3 +573,4 @@ private fun BackgroundSwitch(
 }
 
 private const val MIN_BULLETIN_DIGITS = 12
+private const val DEFAULT_SEAL_UNIT_TEXT = "Dsto. Ribadesella"

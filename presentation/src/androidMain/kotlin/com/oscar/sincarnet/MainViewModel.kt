@@ -11,6 +11,7 @@ import com.oscar.sincarnet.data.pdf.SIGNER_SECOND_DRIVER
 import com.oscar.sincarnet.data.pdf.SIGNER_SECRETARY
 import com.oscar.sincarnet.data.pdf.generateAtestadoContinuousPdf
 import com.oscar.sincarnet.data.pdf.generateCompleteAtestadoFrontMatterPdf
+import com.oscar.sincarnet.data.pdf.getInstitutionalSealBitmap
 import com.oscar.sincarnet.data.pdf.mergeAtestadoPdfs
 import com.oscar.sincarnet.data.pdf.generateAtestadoOdt
 import com.oscar.sincarnet.data.pdf.mapSignaturesForPdf
@@ -22,6 +23,7 @@ import com.oscar.sincarnet.data.repository.JuzgadoAtestadoStorage
 import com.oscar.sincarnet.data.repository.ManifestacionStorage
 import com.oscar.sincarnet.data.repository.OcurrenciaDelitStorage
 import com.oscar.sincarnet.data.repository.PersonaInvestigadaStorage
+import com.oscar.sincarnet.data.repository.SealUnitStorage
 import com.oscar.sincarnet.data.repository.VehiculoStorage
 import com.oscar.sincarnet.domain.model.ActuantesData
 import com.oscar.sincarnet.domain.model.AtestadoInicioModalData
@@ -527,8 +529,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun generateCompleteAtestado() {
+    fun generateCompleteAtestado(sealUnitText: String) {
         if (_uiState.value.document.isGeneratingCompleteAtestado) return
+        SealUnitStorage(appContext.toStorage("seal_unit_storage")).saveSealUnitText(sealUnitText)
         _uiState.update { it.copy(document = it.document.copy(isGeneratingCompleteAtestado = true)) }
         viewModelScope.launch {
             runCatching {
@@ -539,7 +542,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     val atestado = generateDocument(
                         hasSecondDriver = state.form.hasSecondDriver,
                         wantsToSign = state.signature.wantsToSign,
-                        includeCompleteDiligencias = true
+                        includeCompleteDiligencias = true,
+                        stampInstitutionalSeal = true,
+                        sealUnitText = sealUnitText
                     ).file
                     val frontMatter = generateCompleteAtestadoFrontMatterPdf(
                         context = appContext,
@@ -550,7 +555,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         instructorTip = state.actuantes.instructorTip,
                         secretaryTip = state.actuantes.secretaryTip,
                         instructorUnit = state.actuantes.instructorUnit,
-                        includeAnnexCover = false
+                        includeAnnexCover = false,
+                        sealUnitText = sealUnitText
                     )
                     val annexCover = generateCompleteAtestadoFrontMatterPdf(
                         context = appContext,
@@ -561,7 +567,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         instructorTip = state.actuantes.instructorTip,
                         secretaryTip = state.actuantes.secretaryTip,
                         instructorUnit = state.actuantes.instructorUnit,
-                        onlyAnnexCover = true
+                        onlyAnnexCover = true,
+                        sealUnitText = sealUnitText
                     )
                     val scanned = data.documentosEscaneadosPdfPath
                         .takeIf { it.isNotBlank() }
@@ -575,7 +582,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         scannedDocumentsFile = scanned,
                         outputFile = output,
                         prefixFiles = listOf(frontMatter),
-                        suffixFiles = listOf(annexCover)
+                        suffixFiles = listOf(annexCover),
+                        sealBitmap = getInstitutionalSealBitmap(appContext, sealUnitText)
                     )
                     storage.saveCurrent(storage.loadCurrent().copy(atestadoCompletoPdfPath = output.absolutePath))
                     output
@@ -642,7 +650,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private fun generateDocument(
         hasSecondDriver: Boolean,
         wantsToSign: Boolean,
-        includeCompleteDiligencias: Boolean = false
+        includeCompleteDiligencias: Boolean = false,
+        stampInstitutionalSeal: Boolean = false,
+        sealUnitText: String = ""
     ): com.oscar.sincarnet.data.pdf.AtestadoPdfResult {
         val state = _uiState.value
         val savedInicioData = AtestadoInicioStorage(appContext.toStorage("atestado_inicio_storage")).loadCurrent()
@@ -698,7 +708,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             instructorUnit = state.actuantes.instructorUnit,
             inicioModalData = inicioModalData,
             hasSecondDriver = hasSecondDriver,
-            includeCompleteDiligencias = includeCompleteDiligencias
+            includeCompleteDiligencias = includeCompleteDiligencias,
+            stampInstitutionalSeal = stampInstitutionalSeal,
+            sealUnitText = sealUnitText
         )
     }
 }

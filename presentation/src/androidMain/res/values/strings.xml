@@ -96,6 +96,10 @@
     <string name="generate_complete_atestado_progress_title">Generando atestado completo</string>
     <string name="generate_complete_atestado_progress_message">Se están confeccionando las diligencias y uniendo los documentos. Espere unos instantes.</string>
     <string name="generate_complete_atestado_share">Compartir Atestados</string>
+    <string name="generate_complete_atestado_seal_dialog_title">Sello de la unidad</string>
+    <string name="generate_complete_atestado_seal_dialog_message">Antes de generar el atestado, confirma la denominación de la unidad que se estampará en el sello.</string>
+    <string name="generate_complete_atestado_seal_unit_label">Unidad del sello</string>
+    <string name="generate_complete_atestado_seal_too_long">El texto posiblemente no quepa en el sello. Acórtalo usando acrónimos.</string>
     <string name="atestado_complete_generated">Atestado completo generado.</string>
     <string name="atestado_complete_generate_error">Genere el Atestado de la sección de firmas y posteriormente revise la sección de escaneo de documentos, con estos documentos completados se generará el Atestado completo.</string>
     <string name="atestado_complete_not_found">Todavía no hay un atestado completo generado.</string>
@@ -197,6 +201,7 @@
     <string name="atestado_acting_tip">TIP</string>
     <string name="atestado_acting_tip_format_hint">Formato requerido: A12345B</string>
     <string name="atestado_acting_unit">Unidad</string>
+    <string name="atestado_acting_seal_preview">Vista previa del sello de la unidad</string>
     <string name="atestado_acting_same_unit">¿Pertenecen a la misma Unidad?</string>
     <string name="atestado_acting_save">Guardar</string>
     <string name="atestado_acting_delete">Borrar</string>

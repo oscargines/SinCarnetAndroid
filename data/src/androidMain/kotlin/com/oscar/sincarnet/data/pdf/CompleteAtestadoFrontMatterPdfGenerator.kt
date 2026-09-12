@@ -35,10 +35,15 @@ fun generateCompleteAtestadoFrontMatterPdf(
     secretaryTip: String,
     instructorUnit: String,
     includeAnnexCover: Boolean = false,
-    onlyAnnexCover: Boolean = false
+    onlyAnnexCover: Boolean = false,
+    sealUnitText: String = ""
 ): File {
     val document = PdfDocument()
     var pageNumber = 1
+    val sealBitmap = getInstitutionalSealBitmap(context, sealUnitText)
+    fun drawSealOnPage(page: PdfDocument.Page) {
+        drawSealBottomLeft(page.canvas, sealBitmap)
+    }
     val regular = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.BLACK
         textSize = 10f
@@ -61,18 +66,19 @@ fun generateCompleteAtestadoFrontMatterPdf(
             page = page(), context = context, regular = regular, bold = bold, line = line,
             courtData = courtData, occurrenceData = occurrenceData, inicioData = inicioData, instructorTip = instructorTip,
             secretaryTip = secretaryTip, instructorUnit = instructorUnit
-        ).also { document.finishPage(it) }
+        ).also { drawSealOnPage(it); document.finishPage(it) }
 
         drawResumen(
             page = page(), context = context, regular = regular, bold = bold, small = small, line = line,
             courtData = courtData, personData = personData, occurrenceData = occurrenceData,
             inicioData = inicioData, instructorTip = instructorTip, secretaryTip = secretaryTip,
             instructorUnit = instructorUnit
-        ).also { document.finishPage(it) }
+        ).also { drawSealOnPage(it); document.finishPage(it) }
     }
 
     if (includeAnnexCover || onlyAnnexCover) {
-        drawPortadaAnexo(page = page(), context = context, bold = bold).also { document.finishPage(it) }
+        drawPortadaAnexo(page = page(), context = context, bold = bold)
+            .also { drawSealOnPage(it); document.finishPage(it) }
     }
 
     val output = File(context.cacheDir, "atestado_front_matter_${System.currentTimeMillis()}.pdf")

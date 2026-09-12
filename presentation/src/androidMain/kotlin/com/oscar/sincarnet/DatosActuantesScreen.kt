@@ -139,14 +139,14 @@ fun DatosActuantesScreen(
                                     tipHistory = tipHistory,
                                     unitHistory = unitHistory,
                                     footer = {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Checkbox(checked = sameUnit, onCheckedChange = onSameUnitChange)
-                            Text(text = stringResource(R.string.atestado_acting_same_unit))
-                        }
-                    }
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Checkbox(checked = sameUnit, onCheckedChange = onSameUnitChange)
+                                            Text(text = stringResource(R.string.atestado_acting_same_unit))
+                                        }
+                                    }
                 )
 
                 OfficerCard(

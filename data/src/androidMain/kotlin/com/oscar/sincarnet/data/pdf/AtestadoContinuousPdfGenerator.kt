@@ -85,8 +85,12 @@ fun generateAtestadoContinuousPdf(
     secretaryTip: String,
     instructorUnit: String,
     inicioModalData: AtestadoInicioModalData = AtestadoInicioModalData(),
-    includeCompleteDiligencias: Boolean = false
+    includeCompleteDiligencias: Boolean = false,
+    stampInstitutionalSeal: Boolean = false,
+    sealUnitText: String = ""
 ): AtestadoPdfResult {
+
+    val sealBitmap = if (stampInstitutionalSeal) getInstitutionalSealBitmap(context, sealUnitText) else null
 
     val prefs = context.getSharedPreferences("segundo_conductor", Context.MODE_PRIVATE)
     val segundoConductorNombre = prefs.getString("nombre", "")?.trim() ?: ""
@@ -168,6 +172,7 @@ fun generateAtestadoContinuousPdf(
             boxPaint = boxPaint
         )
         pageNumber += 1
+        var pageSealed = false
 
         val maxContentY = A4_HEIGHT_PT - mmToPt(BOTTOM_MARGIN_MM)
 
@@ -200,6 +205,7 @@ fun generateAtestadoContinuousPdf(
 
             alignedLines.forEach { alignedLine ->
                 if (pageState.cursorY + lineHeight > maxContentY) {
+                    if (sealBitmap != null && !pageSealed) drawSealBottomLeft(pageState.canvas, sealBitmap)
                     pdfDocument.finishPage(pageState.page)
                     pageState = startContinuousPage(
                         pdfDocument = pdfDocument,
@@ -209,6 +215,7 @@ fun generateAtestadoContinuousPdf(
                         textPaintSmall = textPaintSmall,
                         boxPaint = boxPaint
                     )
+                    pageSealed = false
                     pageNumber += 1
                 }
                 if (alignedLine.text.isNotEmpty()) {
@@ -245,6 +252,7 @@ fun generateAtestadoContinuousPdf(
                     val itemLines = wrapTextLines("- $itemText", (pageState.right - pageState.left) - 12f, textPaint)
                     itemLines.forEach { alignedLine ->
                         if (pageState.cursorY + 13f > maxContentY) {
+                            if (sealBitmap != null && !pageSealed) drawSealBottomLeft(pageState.canvas, sealBitmap)
                             pdfDocument.finishPage(pageState.page)
                             pageState = startContinuousPage(
                                 pdfDocument = pdfDocument,
@@ -254,6 +262,7 @@ fun generateAtestadoContinuousPdf(
                                 textPaintSmall = textPaintSmall,
                                 boxPaint = boxPaint
                             )
+                            pageSealed = false
                             pageNumber += 1
                         }
                         if (alignedLine.text.isNotEmpty()) {
@@ -277,6 +286,7 @@ fun generateAtestadoContinuousPdf(
                     val optionLines = wrapTextLines("- $optionText", (pageState.right - pageState.left) - 12f, textPaint)
                     optionLines.forEach { alignedLine ->
                         if (pageState.cursorY + 13f > maxContentY) {
+                            if (sealBitmap != null && !pageSealed) drawSealBottomLeft(pageState.canvas, sealBitmap)
                             pdfDocument.finishPage(pageState.page)
                             pageState = startContinuousPage(
                                 pdfDocument = pdfDocument,
@@ -286,6 +296,7 @@ fun generateAtestadoContinuousPdf(
                                 textPaintSmall = textPaintSmall,
                                 boxPaint = boxPaint
                             )
+                            pageSealed = false
                             pageNumber += 1
                         }
                         if (alignedLine.text.isNotEmpty()) {
@@ -321,6 +332,7 @@ fun generateAtestadoContinuousPdf(
         // - en caso contrario se dibuja la disposición completa de firmas
 
         if (pageState.cursorY + MIN_SIGNATURE_SECTION_HEIGHT_PT > maxContentY) {
+            if (sealBitmap != null && !pageSealed) drawSealBottomLeft(pageState.canvas, sealBitmap)
             pdfDocument.finishPage(pageState.page)
             pageState = startContinuousPage(
                 pdfDocument = pdfDocument,
@@ -330,6 +342,7 @@ fun generateAtestadoContinuousPdf(
                 textPaintSmall = textPaintSmall,
                 boxPaint = boxPaint
             )
+            pageSealed = false
             pageNumber += 1
         }
 
@@ -364,7 +377,7 @@ fun generateAtestadoContinuousPdf(
                 title = "Investigado"
             )
         } else {
-            drawCitacionSignatures(
+            pageSealed = drawCitacionSignatures(
                 canvas = pageState.canvas,
                 signatures = signatures,
                 startY = pageState.cursorY + 6f,
@@ -383,10 +396,12 @@ fun generateAtestadoContinuousPdf(
                     "$segundoConductorNombre ($segundoConductorDocumento)"
                 else
                     segundoConductorNombre,
-                allowSecondDriver = document.allowSecondDriver
+                allowSecondDriver = document.allowSecondDriver,
+                sealBitmap = sealBitmap
             )
         }
 
+        if (sealBitmap != null && !pageSealed) drawSealBottomLeft(pageState.canvas, sealBitmap)
         pdfDocument.finishPage(pageState.page)
     }
 
@@ -1000,8 +1015,9 @@ private fun drawCitacionSignatures(
     hasSecondDriver: Boolean = false,  // ← AÑADIR parámetro
     secondDriverName: String = "",    // ← AÑADIR parámetro
     allowSecondDriver: Boolean = false, // ← nuevo: si el documento permite segundo conductor
-    includeInvestigated: Boolean = true
-) {
+    includeInvestigated: Boolean = true,
+    sealBitmap: Bitmap? = null
+): Boolean {
     android.util.Log.d("PDF_SIG", "drawCitacionSignatures called: hasSecondDriver=$hasSecondDriver, secondDriverName='$secondDriverName'")
     signatures.forEach { (k, v) ->
         android.util.Log.d("PDF_SIG", "  slot=$k, type=${v.let { it::class.simpleName }}${if (v is PdfSignatureContent.Image) " id=${System.identityHashCode(v.value)}" else ""}")
@@ -1051,6 +1067,8 @@ private fun drawCitacionSignatures(
         cursorY + topRowHeight
     )
 
+    val hasSecretarySignature = signatures[PdfSignatureSlot.SECRETARY] is PdfSignatureContent.Image
+
     drawSignatureBlock(
         canvas = canvas,
         rect = instructorRect,
@@ -1061,20 +1079,27 @@ private fun drawCitacionSignatures(
         textPaint = textPaint,
         tipPaint = tipPaint
     )
-    drawSignatureBlock(
-        canvas = canvas,
-        rect = secretaryRect,
-        title = "Secretario",
-        tip = secretaryTip,
-        content = signatures[PdfSignatureSlot.SECRETARY],
-        fallbackText = "Sin firma",
-        textPaint = textPaint,
-        tipPaint = tipPaint
-    )
+    if (sealBitmap != null && !hasSecretarySignature) {
+        drawSeal(canvas, sealBitmap, sealRectReplacing(secretaryRect))
+    } else {
+        drawSignatureBlock(
+            canvas = canvas,
+            rect = secretaryRect,
+            title = "Secretario",
+            tip = secretaryTip,
+            content = signatures[PdfSignatureSlot.SECRETARY],
+            fallbackText = "Sin firma",
+            textPaint = textPaint,
+            tipPaint = tipPaint
+        )
+    }
+    if (sealBitmap != null && hasSecretarySignature) {
+        drawSeal(canvas, sealBitmap, sealRectLeftOf(instructorRect))
+    }
 
     cursorY = instructorRect.bottom + signatureGap
 
-    if (!includeInvestigated) return
+    if (!includeInvestigated) return sealBitmap != null
 
     // ← MODIFICAR: Fila 2 - Investigado y Segundo Conductor (si existe)
     if (effectiveHasSecondDriver) {
@@ -1137,6 +1162,7 @@ private fun drawCitacionSignatures(
             tipPaint = tipPaint
         )
     }
+    return sealBitmap != null
 }
 
 private fun drawSignatureBlock(

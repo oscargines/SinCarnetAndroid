@@ -10,13 +10,22 @@ import java.io.File
 import java.io.FileOutputStream
 import android.os.ParcelFileDescriptor
 
-/** Combina los PDFs del atestado y de los documentos escaneados en un único PDF. */
+/**
+ * Combina los PDFs del atestado y de los documentos escaneados en un único PDF.
+ *
+ * Las páginas de los documentos escaneados pueden estampar el sello
+ * institucional en la esquina inferior izquierda; el resto de fuentes ya llega
+ * sellada desde sus generadores.
+ *
+ * @param sealBitmap Bitmap del sello institucional, o null para no estampar.
+ */
 fun mergeAtestadoPdfs(
     atestadoFile: File,
     scannedDocumentsFile: File?,
     outputFile: File,
     prefixFiles: List<File> = emptyList(),
-    suffixFiles: List<File> = emptyList()
+    suffixFiles: List<File> = emptyList(),
+    sealBitmap: Bitmap? = null
 ): File {
     require(atestadoFile.isFile) { "No se ha generado el PDF del atestado" }
     require(scannedDocumentsFile == null || scannedDocumentsFile.isFile) {
@@ -27,7 +36,11 @@ fun mergeAtestadoPdfs(
 
     val output = PdfDocument()
     var pageNumber = 1
-    (prefixFiles + listOf(atestadoFile) + suffixFiles + listOfNotNull(scannedDocumentsFile)).forEach { sourceFile ->
+    val sources = prefixFiles.map { it to false } +
+        (atestadoFile to false) +
+        suffixFiles.map { it to false } +
+        listOfNotNull(scannedDocumentsFile?.let { it to true })
+    sources.forEach { (sourceFile, stampSeal) ->
         ParcelFileDescriptor.open(sourceFile, ParcelFileDescriptor.MODE_READ_ONLY).use { descriptor ->
             PdfRenderer(descriptor).use { renderer ->
                 for (index in 0 until renderer.pageCount) {
@@ -41,6 +54,9 @@ fun mergeAtestadoPdfs(
                             bitmap.eraseColor(Color.WHITE)
                             sourcePage.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_PRINT)
                             canvas.drawBitmap(bitmap, null, Rect(0, 0, 595, 842), null)
+                            if (stampSeal && sealBitmap != null) {
+                                drawSealBottomLeft(canvas, sealBitmap)
+                            }
                         } finally {
                             bitmap.recycle()
                             output.finishPage(page)
