@@ -24,6 +24,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.oscar.sincarnet.data.device.getDeviceIdentifierSuffix
 
 /**
  * Diálogo "Acerca de" de la aplicación.
@@ -36,6 +37,7 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun AboutDialog(onDismissRequest: () -> Unit, versionName: String = "") {
     val context = LocalContext.current
+    val deviceId = remember(context) { getDeviceIdentifierSuffix(context) }
     val aboutBitmap = remember {
         runCatching {
             context.assets.open("images/escudo_bw.png").use { inputStream ->
@@ -78,6 +80,13 @@ fun AboutDialog(onDismissRequest: () -> Unit, versionName: String = "") {
 
                 Text(
                     text = "Versión $versionName",
+                    style = MaterialTheme.typography.bodySmall,
+                    textAlign = TextAlign.Center,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                Text(
+                    text = stringResource(R.string.device_identifier_format, deviceId),
                     style = MaterialTheme.typography.bodySmall,
                     textAlign = TextAlign.Center,
                     color = MaterialTheme.colorScheme.onSurfaceVariant

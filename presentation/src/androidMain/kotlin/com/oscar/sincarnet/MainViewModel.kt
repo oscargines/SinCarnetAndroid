@@ -160,6 +160,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         )
     }
 
+    fun updateCompleteAtestadoSealEnabled(enabled: Boolean) {
+        SealUnitStorage(appContext.toStorage("seal_unit_storage")).saveSealEnabled(enabled)
+    }
+
     // ═══════════════════════════════════════════════════════════════════════
     // FIRMAS
     // ═══════════════════════════════════════════════════════════════════════
@@ -529,9 +533,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun generateCompleteAtestado(sealUnitText: String) {
+    fun generateCompleteAtestado(sealUnitText: String, stampSeal: Boolean) {
         if (_uiState.value.document.isGeneratingCompleteAtestado) return
-        SealUnitStorage(appContext.toStorage("seal_unit_storage")).saveSealUnitText(sealUnitText)
+        SealUnitStorage(appContext.toStorage("seal_unit_storage")).apply {
+            saveSealUnitText(sealUnitText)
+            saveSealEnabled(stampSeal)
+        }
         _uiState.update { it.copy(document = it.document.copy(isGeneratingCompleteAtestado = true)) }
         viewModelScope.launch {
             runCatching {
@@ -543,7 +550,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         hasSecondDriver = state.form.hasSecondDriver,
                         wantsToSign = state.signature.wantsToSign,
                         includeCompleteDiligencias = true,
-                        stampInstitutionalSeal = true,
+                        stampInstitutionalSeal = stampSeal,
                         sealUnitText = sealUnitText
                     ).file
                     val frontMatter = generateCompleteAtestadoFrontMatterPdf(
@@ -556,7 +563,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         secretaryTip = state.actuantes.secretaryTip,
                         instructorUnit = state.actuantes.instructorUnit,
                         includeAnnexCover = false,
-                        sealUnitText = sealUnitText
+                        sealUnitText = sealUnitText,
+                        stampInstitutionalSeal = stampSeal
                     )
                     val annexCover = generateCompleteAtestadoFrontMatterPdf(
                         context = appContext,
@@ -568,7 +576,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         secretaryTip = state.actuantes.secretaryTip,
                         instructorUnit = state.actuantes.instructorUnit,
                         onlyAnnexCover = true,
-                        sealUnitText = sealUnitText
+                        sealUnitText = sealUnitText,
+                        stampInstitutionalSeal = stampSeal
                     )
                     val scanned = data.documentosEscaneadosPdfPath
                         .takeIf { it.isNotBlank() }
@@ -583,7 +592,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         outputFile = output,
                         prefixFiles = listOf(frontMatter),
                         suffixFiles = listOf(annexCover),
-                        sealBitmap = getInstitutionalSealBitmap(appContext, sealUnitText)
+                        sealBitmap = if (stampSeal) getInstitutionalSealBitmap(appContext, sealUnitText) else null
                     )
                     storage.saveCurrent(storage.loadCurrent().copy(atestadoCompletoPdfPath = output.absolutePath))
                     output

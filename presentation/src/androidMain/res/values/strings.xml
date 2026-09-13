@@ -100,6 +100,8 @@
     <string name="generate_complete_atestado_seal_dialog_message">Antes de generar el atestado, confirma la denominación de la unidad que se estampará en el sello.</string>
     <string name="generate_complete_atestado_seal_unit_label">Unidad del sello</string>
     <string name="generate_complete_atestado_seal_too_long">El texto posiblemente no quepa en el sello. Acórtalo usando acrónimos.</string>
+    <string name="generate_complete_atestado_seal_enabled">¿Pintar el sello en el PDF?</string>
+    <string name="device_identifier_format">ID: %1$s</string>
     <string name="atestado_complete_generated">Atestado completo generado.</string>
     <string name="atestado_complete_generate_error">Genere el Atestado de la sección de firmas y posteriormente revise la sección de escaneo de documentos, con estos documentos completados se generará el Atestado completo.</string>
     <string name="atestado_complete_not_found">Todavía no hay un atestado completo generado.</string>

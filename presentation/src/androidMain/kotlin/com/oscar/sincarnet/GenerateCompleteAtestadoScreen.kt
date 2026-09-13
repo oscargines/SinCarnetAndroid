@@ -80,7 +80,8 @@ fun GenerateCompleteAtestadoScreen(
     isGeneratingCompleteAtestado: Boolean = false,
     onSendModeChange: (enviarPorLexnet: Boolean, modoEnvio: String) -> Unit = { _, _ -> },
     onVisualizeClick: () -> Unit = {},
-    onGenerateCompleteClick: (sealUnitText: String) -> Unit = {},
+    onGenerateCompleteClick: (sealUnitText: String, stampSeal: Boolean) -> Unit = { _, _ -> },
+    onSealEnabledChange: (Boolean) -> Unit = {},
     onShareCompleteClick: () -> Unit = {}
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
@@ -103,6 +104,9 @@ fun GenerateCompleteAtestadoScreen(
     var showDataDialog by rememberSaveable { mutableStateOf(false) }
     var showSealDialog by rememberSaveable { mutableStateOf(false) }
     var sealUnitText by rememberSaveable { mutableStateOf(initialSealUnitText) }
+    var stampSeal by rememberSaveable {
+        mutableStateOf(SealUnitStorage(context.toStorage("seal_unit_storage")).loadSealEnabled())
+    }
     var province by rememberSaveable { mutableStateOf(defaultProvince) }
     var bulletinNumber by rememberSaveable { mutableStateOf(saved.numeroBoletin) }
     var hasBackground by rememberSaveable { mutableStateOf(saved.tieneAntecedentes) }
@@ -508,13 +512,29 @@ fun GenerateCompleteAtestadoScreen(
                             }
                         }
                     )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = stringResource(R.string.generate_complete_atestado_seal_enabled),
+                            modifier = Modifier.weight(1f)
+                        )
+                        Switch(
+                            checked = stampSeal,
+                            onCheckedChange = {
+                                stampSeal = it
+                                onSealEnabledChange(it)
+                            }
+                        )
+                    }
                 }
             },
             confirmButton = {
                 Button(
                     onClick = {
                         showSealDialog = false
-                        onGenerateCompleteClick(sealUnitText.trim())
+                        onGenerateCompleteClick(sealUnitText.trim(), stampSeal)
                     },
                     enabled = sealUnitText.isNotBlank()
                 ) {

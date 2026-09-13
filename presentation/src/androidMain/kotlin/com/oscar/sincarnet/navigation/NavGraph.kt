@@ -895,6 +895,7 @@ fun NavGraph(
                 onSendModeChange = viewModel::updateCompleteAtestadoSendMode,
                 onVisualizeClick = viewModel::openCompleteAtestado,
                 onGenerateCompleteClick = viewModel::generateCompleteAtestado,
+                onSealEnabledChange = viewModel::updateCompleteAtestadoSealEnabled,
                 onShareCompleteClick = viewModel::shareCompleteAtestado
             )
         }

@@ -22,8 +22,8 @@ android {
         applicationId = "com.oscar.sincarnet"
         minSdk = 31
         targetSdk = 35
-        versionCode = 5
-        versionName = "1.65.4"
+        versionCode = 6
+        versionName = "1.66.1"
 
         // Mitigacion temporal Android 16KB page size:
         // evitamos empaquetar binarios x86/x86_64 (los que estan reportando

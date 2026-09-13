@@ -30,6 +30,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.oscar.sincarnet.ui.theme.SinCarnetTheme
+import com.oscar.sincarnet.data.device.getDeviceIdentifierSuffix
 
 /**
  * Pantalla de splash que se muestra al iniciar la aplicación.
@@ -51,6 +52,7 @@ import com.oscar.sincarnet.ui.theme.SinCarnetTheme
 fun SplashScreen(modifier: Modifier = Modifier, versionName: String = "") {
     val context = LocalContext.current
     val versionText = "Versión $versionName"
+    val deviceId = remember(context) { getDeviceIdentifierSuffix(context) }
     val splashBitmap = remember {
         runCatching {
             context.assets.open("images/escudo_bw.png").use { inputStream ->
@@ -103,7 +105,7 @@ fun SplashScreen(modifier: Modifier = Modifier, versionName: String = "") {
         }
 
         Text(
-            text = versionText,
+            text = "$versionText\n${stringResource(R.string.device_identifier_format, deviceId)}",
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()

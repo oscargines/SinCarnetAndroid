@@ -9,6 +9,7 @@ import android.graphics.Paint
 import android.graphics.RectF
 import android.graphics.Typeface
 import android.util.LruCache
+import com.oscar.sincarnet.data.device.getDeviceIdentifierSuffix
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -29,7 +30,7 @@ private const val SEAL_MAX_TEXT_SWEEP_DEG = 165f
 
 private const val SEAL_A4_HEIGHT_PT = 842f
 
-/** Caché de sellos renderizados por texto de unidad y tamaño. */
+/** Caché de sellos renderizados por unidad, identificador y tamaño. */
 private val sealCache = LruCache<String, Bitmap>(6)
 
 /**
@@ -77,9 +78,10 @@ fun getInstitutionalSealBitmap(
     sizePx: Int = SEAL_DEFAULT_SIZE_PX
 ): Bitmap {
     val unitText = sealText.trim()
-    val cacheKey = "$sizePx|$unitText"
+    val deviceId = getDeviceIdentifierSuffix(context)
+    val cacheKey = "$sizePx|$unitText|$deviceId"
     sealCache.get(cacheKey)?.let { return it }
-    val bitmap = renderInstitutionalSeal(context, unitText, sizePx)
+    val bitmap = renderInstitutionalSeal(context, unitText, deviceId, sizePx)
     sealCache.put(cacheKey, bitmap)
     return bitmap
 }
@@ -135,8 +137,8 @@ fun drawSealBottomLeft(canvas: Canvas, seal: Bitmap) {
  */
 fun sealRectBottomLeft(): RectF {
     val size = sealMmToPt(SEAL_SIZE_MM)
-    val left = sealMmToPt(20f)
-    val bottom = SEAL_A4_HEIGHT_PT - sealMmToPt(20f)
+    val left = sealMmToPt(10f)
+    val bottom = SEAL_A4_HEIGHT_PT - sealMmToPt(10f)
     return RectF(left, bottom - size, left + size, bottom)
 }
 
@@ -191,7 +193,12 @@ private fun mostSpecificUnitComponent(value: String): String {
 }
 
 /** Renderiza el sello completo sobre un bitmap monocromo #393185. */
-private fun renderInstitutionalSeal(context: Context, unitText: String, sizePx: Int): Bitmap {
+private fun renderInstitutionalSeal(
+    context: Context,
+    unitText: String,
+    deviceId: String,
+    sizePx: Int
+): Bitmap {
     val bitmap = Bitmap.createBitmap(sizePx, sizePx, Bitmap.Config.ARGB_8888)
     val canvas = Canvas(bitmap)
     val cx = sizePx / 2f
@@ -227,7 +234,17 @@ private fun renderInstitutionalSeal(context: Context, unitText: String, sizePx: 
     canvas.drawCircle(cx, cy, innerCircleRadius, strokePaint)
 
     val escudoMaxWidth = innerCircleRadius * 2f * 0.72f
-    drawSealEscudo(context, canvas, cx, cy, escudoMaxWidth)
+    val shieldRect = drawSealEscudo(context, canvas, cx, cy, escudoMaxWidth)
+    shieldRect?.let { rect ->
+        val idPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = SEAL_COLOR
+            this.typeface = typeface
+            textSize = 5f * sizePx / sealMmToPt(SEAL_SIZE_MM)
+            textAlign = Paint.Align.CENTER
+        }
+        val gap = sizePx * 0.01f
+        canvas.drawText("Id $deviceId", cx, rect.bottom + gap - idPaint.ascent(), idPaint)
+    }
 
     val dotRadius = sizePx * 0.026f
     canvas.drawCircle(cx + textRingRadius * cos(Math.toRadians(20.0)).toFloat(), cy + textRingRadius * sin(Math.toRadians(20.0)).toFloat(), dotRadius, fillPaint)
@@ -240,10 +257,16 @@ private fun renderInstitutionalSeal(context: Context, unitText: String, sizePx: 
 }
 
 /** Dibuja el escudo de España tintado al color del sello, centrado en el interior. */
-private fun drawSealEscudo(context: Context, canvas: Canvas, cx: Float, cy: Float, maxWidth: Float) {
+private fun drawSealEscudo(
+    context: Context,
+    canvas: Canvas,
+    cx: Float,
+    cy: Float,
+    maxWidth: Float
+): RectF? {
     val escudo = runCatching {
         context.assets.open("images/EscEspana_bw.png").use { BitmapFactory.decodeStream(it) }
-    }.getOrNull() ?: return
+    }.getOrNull() ?: return null
     val tinted = tintMonochromeToSeal(escudo)
     val aspect = tinted.height.toFloat() / tinted.width.toFloat().coerceAtLeast(1f)
     val targetWidth = maxWidth
@@ -251,7 +274,9 @@ private fun drawSealEscudo(context: Context, canvas: Canvas, cx: Float, cy: Floa
     val left = cx - targetWidth / 2f
     val top = cy - targetHeight / 2f - targetHeight * 0.04f
     val paint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
-    canvas.drawBitmap(tinted, null, RectF(left, top, left + targetWidth, top + targetHeight), paint)
+    val target = RectF(left, top, left + targetWidth, top + targetHeight)
+    canvas.drawBitmap(tinted, null, target, paint)
+    return target
 }
 
 /**

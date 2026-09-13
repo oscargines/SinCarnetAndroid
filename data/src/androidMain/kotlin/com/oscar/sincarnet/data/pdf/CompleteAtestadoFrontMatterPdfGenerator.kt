@@ -36,13 +36,18 @@ fun generateCompleteAtestadoFrontMatterPdf(
     instructorUnit: String,
     includeAnnexCover: Boolean = false,
     onlyAnnexCover: Boolean = false,
-    sealUnitText: String = ""
+    sealUnitText: String = "",
+    stampInstitutionalSeal: Boolean = true
 ): File {
     val document = PdfDocument()
     var pageNumber = 1
-    val sealBitmap = getInstitutionalSealBitmap(context, sealUnitText)
+    val sealBitmap = if (stampInstitutionalSeal) {
+        getInstitutionalSealBitmap(context, sealUnitText)
+    } else {
+        null
+    }
     fun drawSealOnPage(page: PdfDocument.Page) {
-        drawSealBottomLeft(page.canvas, sealBitmap)
+        sealBitmap?.let { drawSealBottomLeft(page.canvas, it) }
     }
     val regular = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.BLACK
