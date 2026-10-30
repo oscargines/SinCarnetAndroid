@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -18,6 +19,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -27,17 +29,27 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.oscar.sincarnet.ui.theme.SinCarnetTheme
 
 /** Catálogo de empleos de Guardia Civil para selección guiada. */
@@ -259,6 +271,19 @@ private fun OfficerCard(
     footer: @Composable (() -> Unit)? = null
 ) {
     var expanded by remember { mutableStateOf(false) }
+    var tipValue by remember { mutableStateOf(TextFieldValue(tip)) }
+    var unitValue by remember { mutableStateOf(TextFieldValue(unit)) }
+
+    LaunchedEffect(tip) {
+        if (tipValue.text != tip) {
+            tipValue = TextFieldValue(tip, selection = TextRange(tip.length))
+        }
+    }
+    LaunchedEffect(unit) {
+        if (unitValue.text != unit) {
+            unitValue = TextFieldValue(unit, selection = TextRange(unit.length))
+        }
+    }
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -303,103 +328,217 @@ private fun OfficerCard(
                 }
             }
 
-                    var tipDropdownExpanded by remember { mutableStateOf(false) }
-                    val filteredTipSuggestions = tipHistory.filter { it.startsWith(tip, ignoreCase = true) && it != tip }
-                    ExposedDropdownMenuBox(
-                        expanded = tipDropdownExpanded,
-                        onExpandedChange = { tipDropdownExpanded = !tipDropdownExpanded }
-                    ) {
-                        OutlinedTextField(
-                            value = tip,
-                            onValueChange = {
-                                onTipChange(normalizeTipInput(it))
-                                tipDropdownExpanded = true
-                            },
-                            modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable).fillMaxWidth(),
-                            singleLine = true,
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Ascii),
-                            isError = tip.isNotEmpty() && !isTipValid(tip),
-                            label = { Text(text = stringResource(R.string.atestado_acting_tip)) },
-                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = tipDropdownExpanded) },
-                            supportingText = {
-                                if (tip.isNotEmpty() && !isTipValid(tip)) {
-                                    Text(text = stringResource(R.string.atestado_acting_tip_format_hint))
-                                }
-                            }
-                        )
-                        androidx.compose.material3.DropdownMenu(
-                            expanded = tipDropdownExpanded && filteredTipSuggestions.isNotEmpty(),
-                            onDismissRequest = { tipDropdownExpanded = false }
-                        ) {
-                            filteredTipSuggestions.forEach { suggestion ->
-                                DropdownMenuItem(
-                                    text = { Text(text = suggestion) },
-                                    onClick = {
-                                        onTipChange(suggestion)
-                                        tipDropdownExpanded = false
-                                    }
-                                )
-                            }
-                        }
-                    }
+            val clearFieldDescription = stringResource(R.string.atestado_acting_clear_field)
 
-                    var unitDropdownExpanded by remember { mutableStateOf(false) }
-                    val filteredUnitSuggestions = unitHistory.filter { it.startsWith(unit, ignoreCase = true) && it != unit }
-                    ExposedDropdownMenuBox(
-                        expanded = unitDropdownExpanded,
-                        onExpandedChange = { unitDropdownExpanded = !unitDropdownExpanded }
-                    ) {
-                        OutlinedTextField(
-                            value = unit,
-                            onValueChange = {
-                                onUnitChange(it)
-                                unitDropdownExpanded = true
-                            },
-                            modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable).fillMaxWidth(),
-                            singleLine = true,
-                            enabled = unitEnabled,
-                            label = { Text(text = stringResource(R.string.atestado_acting_unit)) },
-                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = unitDropdownExpanded) }
-                        )
-                        androidx.compose.material3.DropdownMenu(
-                            expanded = unitDropdownExpanded && filteredUnitSuggestions.isNotEmpty(),
-                            onDismissRequest = { unitDropdownExpanded = false }
-                        ) {
-                            filteredUnitSuggestions.forEach { suggestion ->
-                                DropdownMenuItem(
-                                    text = { Text(text = suggestion) },
-                                    onClick = {
-                                        onUnitChange(suggestion)
-                                        unitDropdownExpanded = false
-                                    }
-                                )
-                            }
-                        }
-                    }
+            HistoryDropdownTextField(
+                value = tipValue,
+                onValueChange = { newValue ->
+                    tipValue = newValue
+                    onTipChange(newValue.text)
+                },
+                label = stringResource(R.string.atestado_acting_tip),
+                history = tipHistory,
+                clearContentDescription = clearFieldDescription,
+                showHistory = false,
+                sanitize = ::sanitizeTipInput,
+                isError = tipValue.text.isNotEmpty() && !isTipValid(tipValue.text),
+                supportingText = if (tipValue.text.isNotEmpty() && !isTipValid(tipValue.text)) {
+                    { Text(text = stringResource(R.string.atestado_acting_tip_format_hint)) }
+                } else {
+                    null
+                },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Ascii)
+            )
+
+            HistoryDropdownTextField(
+                value = unitValue,
+                onValueChange = { newValue ->
+                    unitValue = newValue
+                    onUnitChange(newValue.text)
+                },
+                label = stringResource(R.string.atestado_acting_unit),
+                history = unitHistory,
+                clearContentDescription = clearFieldDescription,
+                enabled = unitEnabled
+            )
 
             footer?.invoke()
         }
     }
 }
 
-private fun normalizeTipInput(input: String): String {
-    val upper = input.uppercase()
-    val result = StringBuilder(TIP_MAX_LENGTH)
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun HistoryDropdownTextField(
+    value: TextFieldValue,
+    onValueChange: (TextFieldValue) -> Unit,
+    label: String,
+    history: List<String>,
+    clearContentDescription: String,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    sanitize: ((String) -> String)? = null,
+    isError: Boolean = false,
+    supportingText: (@Composable () -> Unit)? = null,
+    keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+    showHistory: Boolean = true
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val currentValue by rememberUpdatedState(value)
+    val currentOnValueChange by rememberUpdatedState(onValueChange)
+    val suggestions = if (showHistory) {
+        history.filter { it.startsWith(value.text, ignoreCase = true) && it != value.text }
+    } else {
+        emptyList()
+    }
+    val menuVisible = showHistory && expanded && suggestions.isNotEmpty()
 
-    for (char in upper) {
-        if (!char.isLetterOrDigit()) continue
-
-        when (result.length) {
-            0 -> if (char.isLetter()) result.append(char)
-            in 1..5 -> if (char.isDigit()) result.append(char)
-            6 -> if (char.isLetter()) result.append(char)
+    val clearButton: @Composable () -> Unit = {
+        if (enabled && value.text.isNotEmpty()) {
+            IconButton(
+                onClick = {
+                    currentOnValueChange(TextFieldValue(""))
+                    expanded = false
+                },
+                modifier = Modifier
+                    .size(40.dp)
+                    .semantics { this.contentDescription = clearContentDescription }
+            ) {
+                Text(
+                    text = "×",
+                    fontSize = 20.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
-
-        if (result.length == TIP_MAX_LENGTH) break
     }
 
-    return result.toString()
+    if (!showHistory) {
+        OutlinedTextField(
+            value = value,
+            onValueChange = { newValue ->
+                val sanitized = sanitize?.invoke(newValue.text) ?: newValue.text
+                val adjusted = if (sanitized == newValue.text) {
+                    newValue
+                } else {
+                    TextFieldValue(sanitized, selection = TextRange(sanitized.length))
+                }
+                currentOnValueChange(adjusted)
+            },
+            modifier = modifier
+                .fillMaxWidth()
+                .selectAllOnDoubleTap {
+                    val current = currentValue
+                    if (current.text.isNotEmpty()) {
+                        currentOnValueChange(
+                            current.copy(selection = TextRange(0, current.text.length))
+                        )
+                    }
+                },
+            enabled = enabled,
+            singleLine = true,
+            keyboardOptions = keyboardOptions,
+            isError = isError,
+            label = { Text(text = label) },
+            trailingIcon = clearButton,
+            supportingText = supportingText
+        )
+        return
+    }
+
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = !expanded }
+    ) {
+        OutlinedTextField(
+            value = value,
+            onValueChange = { newValue ->
+                val sanitized = sanitize?.invoke(newValue.text) ?: newValue.text
+                val adjusted = if (sanitized == newValue.text) {
+                    newValue
+                } else {
+                    TextFieldValue(sanitized, selection = TextRange(sanitized.length))
+                }
+                currentOnValueChange(adjusted)
+                expanded = adjusted.text.isNotEmpty()
+            },
+            modifier = modifier
+                .menuAnchor(MenuAnchorType.PrimaryEditable)
+                .fillMaxWidth()
+                .selectAllOnDoubleTap {
+                    val current = currentValue
+                    if (current.text.isNotEmpty()) {
+                        currentOnValueChange(
+                            current.copy(selection = TextRange(0, current.text.length))
+                        )
+                    }
+                },
+            enabled = enabled,
+            singleLine = true,
+            keyboardOptions = keyboardOptions,
+            isError = isError,
+            label = { Text(text = label) },
+            trailingIcon = {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    clearButton()
+                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = menuVisible)
+                }
+            },
+            supportingText = supportingText
+        )
+
+        androidx.compose.material3.DropdownMenu(
+            expanded = menuVisible,
+            onDismissRequest = { expanded = false }
+        ) {
+            suggestions.forEach { suggestion ->
+                DropdownMenuItem(
+                    text = { Text(text = suggestion) },
+                    onClick = {
+                        currentOnValueChange(
+                            TextFieldValue(suggestion, selection = TextRange(suggestion.length))
+                        )
+                        expanded = false
+                    }
+                )
+            }
+        }
+    }
 }
+
+private const val DOUBLE_TAP_TIMEOUT_MS = 400L
+
+private fun Modifier.selectAllOnDoubleTap(onDoubleTap: () -> Unit): Modifier =
+    pointerInput(Unit) {
+        awaitPointerEventScope {
+            var lastTapUpUptime = 0L
+            var pendingSelectAll = false
+            while (true) {
+                val event = awaitPointerEvent(PointerEventPass.Final)
+                val now = event.changes.firstOrNull()?.uptimeMillis ?: continue
+                when (event.type) {
+                    PointerEventType.Press -> {
+                        if (lastTapUpUptime != 0L && now - lastTapUpUptime <= DOUBLE_TAP_TIMEOUT_MS) {
+                            pendingSelectAll = true
+                            lastTapUpUptime = 0L
+                        }
+                    }
+                    PointerEventType.Release -> {
+                        lastTapUpUptime = now
+                        if (pendingSelectAll) {
+                            pendingSelectAll = false
+                            onDoubleTap()
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+internal fun sanitizeTipInput(input: String): String =
+    input.uppercase()
+        .filter { it.isLetterOrDigit() }
+        .take(TIP_MAX_LENGTH)
 
 private fun isTipValid(tip: String): Boolean = TIP_REGEX.matches(tip)
 

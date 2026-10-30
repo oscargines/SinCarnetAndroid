@@ -377,7 +377,7 @@ fun generateAtestadoContinuousPdf(
                 title = "Investigado"
             )
         } else {
-            pageSealed = drawCitacionSignatures(
+            drawCitacionSignatures(
                 canvas = pageState.canvas,
                 signatures = signatures,
                 startY = pageState.cursorY + 6f,
@@ -396,8 +396,7 @@ fun generateAtestadoContinuousPdf(
                     "$segundoConductorNombre ($segundoConductorDocumento)"
                 else
                     segundoConductorNombre,
-                allowSecondDriver = document.allowSecondDriver,
-                sealBitmap = sealBitmap
+                allowSecondDriver = document.allowSecondDriver
             )
         }
 
@@ -1015,9 +1014,8 @@ private fun drawCitacionSignatures(
     hasSecondDriver: Boolean = false,  // ← AÑADIR parámetro
     secondDriverName: String = "",    // ← AÑADIR parámetro
     allowSecondDriver: Boolean = false, // ← nuevo: si el documento permite segundo conductor
-    includeInvestigated: Boolean = true,
-    sealBitmap: Bitmap? = null
-): Boolean {
+    includeInvestigated: Boolean = true
+) {
     android.util.Log.d("PDF_SIG", "drawCitacionSignatures called: hasSecondDriver=$hasSecondDriver, secondDriverName='$secondDriverName'")
     signatures.forEach { (k, v) ->
         android.util.Log.d("PDF_SIG", "  slot=$k, type=${v.let { it::class.simpleName }}${if (v is PdfSignatureContent.Image) " id=${System.identityHashCode(v.value)}" else ""}")
@@ -1067,8 +1065,6 @@ private fun drawCitacionSignatures(
         cursorY + topRowHeight
     )
 
-    val hasSecretarySignature = signatures[PdfSignatureSlot.SECRETARY] is PdfSignatureContent.Image
-
     drawSignatureBlock(
         canvas = canvas,
         rect = instructorRect,
@@ -1079,27 +1075,20 @@ private fun drawCitacionSignatures(
         textPaint = textPaint,
         tipPaint = tipPaint
     )
-    if (sealBitmap != null && !hasSecretarySignature) {
-        drawSeal(canvas, sealBitmap, sealRectReplacing(secretaryRect))
-    } else {
-        drawSignatureBlock(
-            canvas = canvas,
-            rect = secretaryRect,
-            title = "Secretario",
-            tip = secretaryTip,
-            content = signatures[PdfSignatureSlot.SECRETARY],
-            fallbackText = "Sin firma",
-            textPaint = textPaint,
-            tipPaint = tipPaint
-        )
-    }
-    if (sealBitmap != null && hasSecretarySignature) {
-        drawSeal(canvas, sealBitmap, sealRectLeftOf(instructorRect))
-    }
+    drawSignatureBlock(
+        canvas = canvas,
+        rect = secretaryRect,
+        title = "Secretario",
+        tip = secretaryTip,
+        content = signatures[PdfSignatureSlot.SECRETARY],
+        fallbackText = "Sin firma",
+        textPaint = textPaint,
+        tipPaint = tipPaint
+    )
 
     cursorY = instructorRect.bottom + signatureGap
 
-    if (!includeInvestigated) return sealBitmap != null
+    if (!includeInvestigated) return
 
     // ← MODIFICAR: Fila 2 - Investigado y Segundo Conductor (si existe)
     if (effectiveHasSecondDriver) {
@@ -1162,7 +1151,6 @@ private fun drawCitacionSignatures(
             tipPaint = tipPaint
         )
     }
-    return sealBitmap != null
 }
 
 private fun drawSignatureBlock(

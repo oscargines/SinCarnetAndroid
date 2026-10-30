@@ -202,6 +202,7 @@
     <string name="atestado_acting_employment">Empleo</string>
     <string name="atestado_acting_tip">TIP</string>
     <string name="atestado_acting_tip_format_hint">Formato requerido: A12345B</string>
+    <string name="atestado_acting_clear_field">Borrar texto del campo</string>
     <string name="atestado_acting_unit">Unidad</string>
     <string name="atestado_acting_seal_preview">Vista previa del sello de la unidad</string>
     <string name="atestado_acting_same_unit">¿Pertenecen a la misma Unidad?</string>
