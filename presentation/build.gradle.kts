@@ -64,6 +64,7 @@ kotlin {
             implementation(libs.koin.android)
             implementation(libs.koin.compose)
             implementation(libs.androidx.navigation.compose)
+            implementation(libs.mlkit.text.recognition)
         }
 
         iosMain.dependencies {

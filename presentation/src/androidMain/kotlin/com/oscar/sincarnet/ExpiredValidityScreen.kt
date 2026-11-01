@@ -301,7 +301,7 @@ fun ExpiredValidityScreen(
     }
 
     if (showCompletedLossModal) {
-        AlertDialog(
+        AccessibleAlertDialog(
             onDismissRequest = { showCompletedLossModal = false },
             title = { Text(text = stringResource(R.string.expired_validity_modal_title)) },
             text = {
@@ -327,7 +327,7 @@ fun ExpiredValidityScreen(
     }
 
     if (showEdictalModal) {
-        AlertDialog(
+        AccessibleAlertDialog(
             onDismissRequest = { showEdictalModal = false },
             title = { Text(text = stringResource(R.string.expired_validity_option_3)) },
             text = {
@@ -354,7 +354,7 @@ fun ExpiredValidityScreen(
     }
 
     if (showEdictalAppealModal) {
-        AlertDialog(
+        AccessibleAlertDialog(
             onDismissRequest = { showEdictalAppealModal = false },
             title = { Text(text = stringResource(R.string.expired_validity_option_3)) },
             text = {

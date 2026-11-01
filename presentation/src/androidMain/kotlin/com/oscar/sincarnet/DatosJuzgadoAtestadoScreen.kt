@@ -1,3 +1,5 @@
+@file:OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+
 package com.oscar.sincarnet
 
 import com.oscar.sincarnet.presentation.R
@@ -633,8 +635,7 @@ fun DatosJuzgadoAtestadoScreen(
             }
         }
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
+        AdaptiveActionRow(
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Button(
@@ -767,10 +768,8 @@ fun DatosJuzgadoAtestadoScreen(
             Text(text = stringResource(R.string.atestado_court_print_summons))
         }
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
-            verticalAlignment = Alignment.CenterVertically
+        AdaptiveActionRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End)
         ) {
             IconButton(
                 onClick = onPrintClick,
@@ -787,7 +786,7 @@ fun DatosJuzgadoAtestadoScreen(
     }
 
     if (showDeleteConfirmation) {
-        AlertDialog(
+        AccessibleAlertDialog(
             onDismissRequest = { showDeleteConfirmation = false },
             title = { Text(text = stringResource(R.string.atestado_court_delete_confirm_title)) },
             text = { Text(text = stringResource(R.string.atestado_court_delete_confirm_message)) },
@@ -828,7 +827,7 @@ fun DatosJuzgadoAtestadoScreen(
     }
 
     if (showSaveConfirmation) {
-        AlertDialog(
+        AccessibleAlertDialog(
             onDismissRequest = { showSaveConfirmation = false },
             title = { Text(text = stringResource(R.string.atestado_court_save_confirm_title)) },
             text = { Text(text = stringResource(R.string.atestado_court_save_confirm_message)) },
@@ -841,7 +840,7 @@ fun DatosJuzgadoAtestadoScreen(
     }
     // Diálogo de progreso mientras se imprime
     if (isPrintingCitation) {
-        AlertDialog(
+        AccessibleAlertDialog(
             onDismissRequest = { }, // No permitir cerrar manualmente
             title = { Text(text = stringResource(R.string.printing_citation_title)) },
             text = {
@@ -862,7 +861,7 @@ fun DatosJuzgadoAtestadoScreen(
 
     // Modal informativo tras imprimir
     if (showPrintInfoModal) {
-        AlertDialog(
+        AccessibleAlertDialog(
             onDismissRequest = { showPrintInfoModal = false },
             title = { Text(text = stringResource(R.string.printing_citation_info_title)) },
             text = {
@@ -878,7 +877,7 @@ fun DatosJuzgadoAtestadoScreen(
 
 // Diálogo de error si falla la impresión
     if (printErrorMessage != null) {
-        AlertDialog(
+        AccessibleAlertDialog(
             onDismissRequest = { printErrorMessage = null },
             title = { Text(text = stringResource(R.string.printing_citation_error_title)) },
             text = {
@@ -902,7 +901,7 @@ fun DatosJuzgadoAtestadoScreen(
     }
 
     if (showRequiredFieldsError) {
-        AlertDialog(
+        AccessibleAlertDialog(
             onDismissRequest = { showRequiredFieldsError = false },
             title = { Text(text = stringResource(R.string.atestado_court_required_fields_title)) },
             text = {
@@ -951,7 +950,7 @@ fun DatosJuzgadoAtestadoScreen(
     }
 
     if (showDenominationInfo) {
-        AlertDialog(
+        AccessibleAlertDialog(
             onDismissRequest = { showDenominationInfo = false },
             title = { Text(text = stringResource(R.string.court_denomination_info_title)) },
             text = {

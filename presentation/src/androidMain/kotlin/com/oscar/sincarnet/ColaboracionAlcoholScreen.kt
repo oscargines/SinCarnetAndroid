@@ -847,7 +847,7 @@ fun ColaboracionAlcoholScreen(
                 Card(
                     modifier = Modifier
                         .padding(horizontal = 24.dp)
-                        .widthIn(min = 180.dp, max = 260.dp),
+                        .widthIn(min = 220.dp, max = 320.dp),
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.surface
                     )
@@ -894,7 +894,7 @@ fun ColaboracionAlcoholScreen(
     }
 
     if (showMotivoDialog) {
-        AlertDialog(
+        AccessibleAlertDialog(
             onDismissRequest = { showMotivoDialog = false },
             title = { Text(text = stringResource(R.string.colaboracion_alcohol_motivo_requerimiento)) },
             text = {
@@ -962,7 +962,7 @@ fun ColaboracionAlcoholScreen(
     }
 
     if (showTipoConductorDialog) {
-        AlertDialog(
+        AccessibleAlertDialog(
             onDismissRequest = { showTipoConductorDialog = false },
             title = { Text(text = stringResource(R.string.colaboracion_alcohol_tipo_conductor_title)) },
             text = {

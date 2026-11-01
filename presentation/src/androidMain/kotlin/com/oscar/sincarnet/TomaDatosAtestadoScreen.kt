@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -79,7 +81,7 @@ fun TomaDatosAtestadoScreen(
     var showDocumentRequirementDialog by remember { mutableStateOf(false) }
 
     if (showDocumentRequirementDialog) {
-        AlertDialog(
+        AccessibleAlertDialog(
             onDismissRequest = { showDocumentRequirementDialog = false },
             title = { Text(stringResource(R.string.atestado_complete_documents_required_title)) },
             text = {
@@ -109,7 +111,7 @@ fun TomaDatosAtestadoScreen(
 
     // ── Modal de progreso de impresión ────────────────────────
     if (printProgress.isVisible) {
-        AlertDialog(
+        AccessibleAlertDialog(
             onDismissRequest = { /* No se puede cerrar mientras imprime */ },
             title = {
                 Text(
@@ -177,6 +179,7 @@ fun TomaDatosAtestadoScreen(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {

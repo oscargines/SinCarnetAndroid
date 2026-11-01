@@ -493,7 +493,7 @@ fun ConsultaJuzgadosScreen(
     }
 
     if (showDenominationInfo) {
-        AlertDialog(
+        AccessibleAlertDialog(
             onDismissRequest = { showDenominationInfo = false },
             title = { Text(text = stringResource(R.string.court_denomination_info_title)) },
             text = {

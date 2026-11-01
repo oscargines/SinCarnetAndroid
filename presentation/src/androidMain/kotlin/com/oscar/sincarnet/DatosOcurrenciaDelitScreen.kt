@@ -556,7 +556,7 @@ fun DatosOcurrenciaDelitScreen(
                 Card(
                     modifier = Modifier
                         .padding(horizontal = 24.dp)
-                        .widthIn(min = 180.dp, max = 260.dp),
+                        .widthIn(min = 220.dp, max = 320.dp),
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.surface
                     )

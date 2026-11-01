@@ -227,7 +227,7 @@ fun ActaTrasladoVehiculoFirmasScreen(
     }
 
     if (printProgress.isVisible) {
-        AlertDialog(
+        AccessibleAlertDialog(
             onDismissRequest = {},
             title = {
                 Text(

@@ -336,7 +336,7 @@ fun ManifestacionScreen(
     }
 
     if (showDeleteConfirmation) {
-        AlertDialog(
+        AccessibleAlertDialog(
             onDismissRequest = { showDeleteConfirmation = false },
             title = {
                 Text(
@@ -378,7 +378,7 @@ fun ManifestacionScreen(
     }
 
     if (showSaveConfirmation) {
-        AlertDialog(
+        AccessibleAlertDialog(
             onDismissRequest = { showSaveConfirmation = false },
             title = {
                 Text(
@@ -404,7 +404,7 @@ fun ManifestacionScreen(
     }
 
     if (showRequiredFieldsError) {
-        AlertDialog(
+        AccessibleAlertDialog(
             onDismissRequest = { showRequiredFieldsError = false },
             title = {
                 Text(

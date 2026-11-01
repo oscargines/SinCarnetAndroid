@@ -400,7 +400,7 @@ fun DatosVehiculoScreen(
 
     // Diálogo: confirmación borrado
     if (showDeleteConfirmation) {
-        AlertDialog(
+        AccessibleAlertDialog(
             onDismissRequest = { showDeleteConfirmation = false },
             title = { Text(stringResource(R.string.vehicle_delete_confirm_title)) },
             text = { Text(stringResource(R.string.vehicle_delete_confirm_message)) },
@@ -420,7 +420,7 @@ fun DatosVehiculoScreen(
 
     // Diálogo: datos guardados
     if (showSaveConfirmation) {
-        AlertDialog(
+        AccessibleAlertDialog(
             onDismissRequest = { showSaveConfirmation = false },
             title = { Text(stringResource(R.string.vehicle_save_confirm_title)) },
             text = { Text(stringResource(R.string.vehicle_save_confirm_message)) },
@@ -434,7 +434,7 @@ fun DatosVehiculoScreen(
 
     // Diálogo: campos obligatorios
     if (showRequiredFieldsError) {
-        AlertDialog(
+        AccessibleAlertDialog(
             onDismissRequest = { showRequiredFieldsError = false },
             title = { Text(stringResource(R.string.vehicle_required_fields_title)) },
             text = {

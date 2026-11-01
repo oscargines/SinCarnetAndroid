@@ -231,7 +231,7 @@ fun DocumentScannerScreen(
     }
 
     errorMessage?.let { msg ->
-        AlertDialog(
+        AccessibleAlertDialog(
             onDismissRequest = { errorMessage = null },
             title = { Text(stringResource(R.string.scan_error_title)) },
             text = { Text(msg) },
@@ -244,7 +244,7 @@ fun DocumentScannerScreen(
     }
 
     pendingCapture?.let {
-        AlertDialog(
+        AccessibleAlertDialog(
             onDismissRequest = { pendingCapture = null },
             title = { Text(stringResource(R.string.scan_capture_info_title)) },
             text = { Text(stringResource(R.string.scan_capture_info_message)) },
@@ -702,7 +702,7 @@ private fun CaptureDocumentScreen(
     }
 
     errorMessage?.let { msg ->
-        AlertDialog(
+        AccessibleAlertDialog(
             onDismissRequest = { errorMessage = null },
             title = { Text(stringResource(R.string.scan_error_title)) },
             text = { Text(msg) },

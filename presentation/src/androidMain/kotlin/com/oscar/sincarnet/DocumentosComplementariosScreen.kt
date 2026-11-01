@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -72,6 +74,7 @@ fun DocumentosComplementariosScreen(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
@@ -104,8 +107,6 @@ fun DocumentosComplementariosScreen(
                     text = stringResource(R.string.scj_action),
                     onClick = onSolicitudCustodiaJuzgadoClick
                 )
-
-                Spacer(modifier = Modifier.weight(1f))
             }
         }
 
@@ -123,7 +124,7 @@ fun DocumentosComplementariosScreen(
     }
 
     if (showInfoDialog) {
-        AlertDialog(
+        AccessibleAlertDialog(
             onDismissRequest = { showInfoDialog = false },
             confirmButton = {
                 OutlinedButton(onClick = { showInfoDialog = false }) {

@@ -1,3 +1,5 @@
+@file:OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+
 package com.oscar.sincarnet
 
 import com.oscar.sincarnet.presentation.R
@@ -184,8 +186,7 @@ fun DatosActuantesScreen(
             }
         }
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
+        AdaptiveActionRow(
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Button(
@@ -232,7 +233,7 @@ fun DatosActuantesScreen(
     }
 
     if (showDeleteConfirmation) {
-        AlertDialog(
+        AccessibleAlertDialog(
             onDismissRequest = { showDeleteConfirmation = false },
             title = { Text(text = stringResource(R.string.atestado_acting_delete_confirm_title)) },
             text = { Text(text = stringResource(R.string.atestado_acting_delete_confirm_message)) },

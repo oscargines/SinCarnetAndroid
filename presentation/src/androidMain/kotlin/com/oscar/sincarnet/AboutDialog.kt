@@ -46,7 +46,7 @@ fun AboutDialog(onDismissRequest: () -> Unit, versionName: String = "") {
         }.getOrNull()
     }
 
-    AlertDialog(
+    AccessibleAlertDialog(
         onDismissRequest = onDismissRequest,
         title = { Text(text = stringResource(R.string.about_screen_title)) },
         text = {

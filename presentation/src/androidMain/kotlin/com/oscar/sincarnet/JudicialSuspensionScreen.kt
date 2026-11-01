@@ -374,7 +374,7 @@ fun JudicialSuspensionScreen(
     }
 
     if (showLowerSentenceModal) {
-        AlertDialog(
+        AccessibleAlertDialog(
             onDismissRequest = { showLowerSentenceModal = false },
             title = { Text(text = stringResource(R.string.judicial_suspension_screen_title)) },
             text = {
@@ -396,7 +396,7 @@ fun JudicialSuspensionScreen(
     }
 
     if (showHigherSentenceModal) {
-        AlertDialog(
+        AccessibleAlertDialog(
             onDismissRequest = { showHigherSentenceModal = false },
             title = { Text(text = stringResource(R.string.judicial_suspension_screen_title)) },
             text = {

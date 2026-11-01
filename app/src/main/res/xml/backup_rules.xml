@@ -3,6 +3,4 @@
     <include domain="sharedpref" path="."/>
     <exclude domain="sharedpref" path="device_identifier_storage.xml"/>
     <include domain="database" path="."/>
-    <exclude domain="file" path="atestados"/>
-    <exclude domain="file" path="documents"/>
 </full-backup-content>

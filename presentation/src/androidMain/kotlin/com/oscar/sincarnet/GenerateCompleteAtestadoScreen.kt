@@ -349,7 +349,7 @@ fun GenerateCompleteAtestadoScreen(
     }
 
     if (showInformationDialog) {
-        AlertDialog(
+        AccessibleAlertDialog(
             onDismissRequest = { showInformationDialog = false },
             title = { Text(stringResource(R.string.generate_complete_atestado_title)) },
             text = { Text(stringResource(R.string.generate_complete_atestado_information)) },
@@ -456,7 +456,7 @@ fun GenerateCompleteAtestadoScreen(
     }
 
     if (showHelpDialog) {
-        AlertDialog(
+        AccessibleAlertDialog(
             onDismissRequest = { showHelpDialog = false },
             title = { Text(stringResource(R.string.generate_complete_atestado_has_background)) },
             text = { Text(stringResource(R.string.generate_complete_atestado_background_help)) },
@@ -550,7 +550,7 @@ fun GenerateCompleteAtestadoScreen(
     }
 
     if (isGeneratingCompleteAtestado) {
-        AlertDialog(
+        AccessibleAlertDialog(
             onDismissRequest = {},
             title = { Text(stringResource(R.string.generate_complete_atestado_progress_title)) },
             text = {

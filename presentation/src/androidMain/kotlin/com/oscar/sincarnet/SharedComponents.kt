@@ -7,10 +7,17 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.FlowRowScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -210,4 +217,89 @@ internal fun AssetImage(
             contentScale = ContentScale.Fit
         )
     }
+}
+
+/**
+ * Contenido de diálogo desplazable verticalmente.
+ *
+ * Material3 no añade scroll al slot `text` de [AlertDialog], por lo que con
+ * tamaños de fuente grandes el contenido se recorta. Este contenedor mantiene
+ * el texto y los controles accesibles mediante desplazamiento.
+ */
+@Composable
+internal fun ScrollableDialogContent(
+    modifier: Modifier = Modifier,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        content = content
+    )
+}
+
+/**
+ * Variante de [ScrollableDialogContent] para un único texto.
+ */
+@Composable
+internal fun ScrollableDialogText(
+    text: String,
+    modifier: Modifier = Modifier
+) {
+    ScrollableDialogContent(modifier = modifier) {
+        Text(text = text)
+    }
+}
+
+/**
+ * [AlertDialog] con el contenido de texto envuelto en un contenedor desplazable.
+ *
+ * Se usa para todos los modales cuyo contenido pueda crecer con el tamaño de
+ * fuente del sistema. Los diálogos con scroll propio deben seguir usando
+ * [AlertDialog] directamente.
+ */
+@Composable
+internal fun AccessibleAlertDialog(
+    onDismissRequest: () -> Unit,
+    confirmButton: @Composable () -> Unit,
+    modifier: Modifier = Modifier,
+    dismissButton: (@Composable () -> Unit)? = null,
+    icon: (@Composable () -> Unit)? = null,
+    title: (@Composable () -> Unit)? = null,
+    text: (@Composable () -> Unit)? = null
+) {
+    AlertDialog(
+        onDismissRequest = onDismissRequest,
+        confirmButton = confirmButton,
+        modifier = modifier,
+        dismissButton = dismissButton,
+        icon = icon,
+        title = title,
+        text = text?.let { content ->
+            { ScrollableDialogContent { content() } }
+        }
+    )
+}
+
+/**
+ * Fila de acciones que envuelve sus elementos cuando no caben en una línea.
+ *
+ * Evita que las barras inferiores recorten botones con tamaños de fuente grandes.
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+internal fun AdaptiveActionRow(
+    modifier: Modifier = Modifier,
+    horizontalArrangement: Arrangement.Horizontal = Arrangement.spacedBy(8.dp),
+    verticalArrangement: Arrangement.Vertical = Arrangement.spacedBy(8.dp),
+    content: @Composable FlowRowScope.() -> Unit
+) {
+    FlowRow(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = horizontalArrangement,
+        verticalArrangement = verticalArrangement,
+        content = content
+    )
 }

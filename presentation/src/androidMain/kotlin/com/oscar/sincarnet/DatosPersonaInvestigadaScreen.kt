@@ -1,3 +1,5 @@
+@file:OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+
 package com.oscar.sincarnet
 
 import com.oscar.sincarnet.presentation.R
@@ -251,7 +253,7 @@ fun DatosPersonaInvestigadaScreen(
             }
         }
 
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        AdaptiveActionRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Button(
                 onClick = {
                     val requiredFields = listOf(
@@ -336,7 +338,7 @@ fun DatosPersonaInvestigadaScreen(
     }
 
     if (showDeleteConfirmation) {
-        AlertDialog(
+        AccessibleAlertDialog(
             onDismissRequest = { showDeleteConfirmation = false },
             title = { Text(stringResource(R.string.person_data_delete_confirm_title)) },
             text = { Text(stringResource(R.string.person_data_delete_confirm_message)) },
@@ -367,7 +369,7 @@ fun DatosPersonaInvestigadaScreen(
     }
 
     if (showSaveConfirmation) {
-        AlertDialog(
+        AccessibleAlertDialog(
             onDismissRequest = { showSaveConfirmation = false },
             title = { Text(stringResource(R.string.person_data_save_confirm_title)) },
             text = { Text(stringResource(R.string.person_data_save_confirm_message)) },
@@ -380,7 +382,7 @@ fun DatosPersonaInvestigadaScreen(
     }
 
     if (showRequiredFieldsError) {
-        AlertDialog(
+        AccessibleAlertDialog(
             onDismissRequest = { showRequiredFieldsError = false },
             title = { Text(stringResource(R.string.person_data_required_fields_title)) },
             text = { Text(stringResource(R.string.person_data_required_fields_message, requiredFieldsErrorText)) },
@@ -542,7 +544,7 @@ fun DatosPersonaInvestigadaScreen(
         )
     }
 
-    if (rightsDialogStep == 1) {        AlertDialog(
+    if (rightsDialogStep == 1) {        AccessibleAlertDialog(
             onDismissRequest = { rightsDialogStep = null },
             title = { Text(stringResource(R.string.person_data_rights_dialog_title)) },
             text = { Text(stringResource(R.string.person_data_rights_intro_message)) },
@@ -555,7 +557,7 @@ fun DatosPersonaInvestigadaScreen(
     }
 
     if (rightsDialogStep == 2) {
-        AlertDialog(
+        AccessibleAlertDialog(
             onDismissRequest = { rightsDialogStep = null },
             title = { Text(stringResource(R.string.person_data_rights_dialog_title)) },
             text = {
@@ -587,7 +589,7 @@ fun DatosPersonaInvestigadaScreen(
     }
 
     if (rightsDialogStep == 3) {
-        AlertDialog(
+        AccessibleAlertDialog(
             onDismissRequest = { rightsDialogStep = null },
             title = { Text(stringResource(R.string.person_data_rights_dialog_title)) },
             text = { Text(stringResource(R.string.person_data_right_non_self_incrimination_message)) },
@@ -729,7 +731,7 @@ fun DatosPersonaInvestigadaScreen(
     }
 
     if (rightsDialogStep == 7) {
-        AlertDialog(
+        AccessibleAlertDialog(
             onDismissRequest = { rightsDialogStep = null },
             title = { Text(stringResource(R.string.person_data_rights_dialog_title)) },
             text = { Text(stringResource(R.string.person_data_right_free_legal_aid_message)) },

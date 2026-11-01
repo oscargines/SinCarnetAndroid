@@ -4,10 +4,12 @@ import android.nfc.Tag
 import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -264,8 +266,10 @@ fun NfcReadingHelper.NfcDialogs() {
     val nfcReadErrorTitle = stringResource(R.string.nfc_read_error_title)
     val biometricDescription = stringResource(R.string.can_dialog_biometric_description)
 
+    var showCanScanner by rememberSaveable { mutableStateOf(false) }
+
     if (showCanDialog) {
-        AlertDialog(
+        AccessibleAlertDialog(
             onDismissRequest = { cancelScan() },
             title = { Text(canDialogTitle) },
             text = {
@@ -295,6 +299,12 @@ fun NfcReadingHelper.NfcDialogs() {
                     if (canCodeError.isNotEmpty()) {
                         Text(canCodeError, color = Color.Red)
                     }
+                    OutlinedButton(
+                        onClick = { showCanScanner = true },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(stringResource(R.string.can_scan_camera_action))
+                    }
                 }
             },
             confirmButton = {
@@ -313,8 +323,18 @@ fun NfcReadingHelper.NfcDialogs() {
         )
     }
 
+    if (showCanDialog && showCanScanner) {
+        CanCameraScannerDialog(
+            onDismiss = { showCanScanner = false },
+            onCanDetected = { code ->
+                updateCanCode(code)
+                showCanScanner = false
+            }
+        )
+    }
+
     if (showNfcScanDialog && !isReadingNfc) {
-        AlertDialog(
+        AccessibleAlertDialog(
             onDismissRequest = { },
             title = { Text(nfcScanDialogTitle) },
             text = { Text(nfcWaitingTagMessage) },
@@ -327,7 +347,7 @@ fun NfcReadingHelper.NfcDialogs() {
     }
 
     if (isReadingNfc) {
-        AlertDialog(
+        AccessibleAlertDialog(
             onDismissRequest = { },
             title = { Text(nfcReadingProgressTitle) },
             text = {
@@ -344,7 +364,7 @@ fun NfcReadingHelper.NfcDialogs() {
     }
 
     if (nfcReadError != null) {
-        AlertDialog(
+        AccessibleAlertDialog(
             onDismissRequest = { clearError() },
             title = { Text(nfcReadErrorTitle) },
             text = { Text(nfcReadError.orEmpty()) },

@@ -404,7 +404,7 @@ fun FirmasAtestadoScreen(
     }
 
     if (isGeneratingAtestado) {
-        AlertDialog(
+        AccessibleAlertDialog(
             onDismissRequest = {},
             title = { Text(text = stringResource(R.string.atestado_signature_generate)) },
             text = {
@@ -422,7 +422,7 @@ fun FirmasAtestadoScreen(
     }
 
     if (isGeneratingOdt) {
-        AlertDialog(
+        AccessibleAlertDialog(
             onDismissRequest = {},
             title = { Text(text = stringResource(R.string.atestado_signature_share_odt)) },
             text = {
@@ -440,7 +440,7 @@ fun FirmasAtestadoScreen(
     }
 
     if (showGenerateReasonDialog && !isGeneratingAtestado) {
-        AlertDialog(
+        AccessibleAlertDialog(
             onDismissRequest = { showGenerateReasonDialog = false },
             title = {
                 Text(text = stringResource(R.string.atestado_generate_reason_title))
@@ -494,7 +494,7 @@ fun FirmasAtestadoScreen(
     }
 
     if (showArticleNormDialog && !isGeneratingAtestado) {
-        AlertDialog(
+        AccessibleAlertDialog(
             onDismissRequest = { showArticleNormDialog = false },
             title = {
                 Text(text = stringResource(R.string.atestado_generate_article_norm_title))
@@ -557,7 +557,7 @@ fun FirmasAtestadoScreen(
 
     // --- Modal 3: Bases de datos consultadas ---
     if (showBaseDatosDialog && !isGeneratingAtestado) {
-        AlertDialog(
+        AccessibleAlertDialog(
             onDismissRequest = { showBaseDatosDialog = false },
             title = { Text(text = stringResource(R.string.atestado_bases_datos_title)) },
             text = {
@@ -628,7 +628,7 @@ fun FirmasAtestadoScreen(
     // --- Modal 4: Vicisitudes Registro de Conductores ---
     if (showVicisitudesDialog && !isGeneratingAtestado) {
         val selectedVicisitudesOpt = VicisitudesOption.fromValue(vicisitudesOption)
-        AlertDialog(
+        AccessibleAlertDialog(
             onDismissRequest = { showVicisitudesDialog = false },
             title = { Text(text = stringResource(R.string.atestado_vicisitudes_title)) },
             text = {
@@ -685,7 +685,7 @@ fun FirmasAtestadoScreen(
 
     // --- Modal 5: Jefatura Provincial (Pérdida de vigencia por pérdida de puntos) ---
     if (showJefaturaDialog && !isGeneratingAtestado) {
-        AlertDialog(
+        AccessibleAlertDialog(
             onDismissRequest = { showJefaturaDialog = false },
             title = { Text(text = stringResource(R.string.atestado_jefatura_title)) },
             text = {
@@ -723,7 +723,7 @@ fun FirmasAtestadoScreen(
 
     // --- Modal 6: Condena firme en vigor ---
     if (showCondenaDetailsDialog && !isGeneratingAtestado) {
-        AlertDialog(
+        AccessibleAlertDialog(
             onDismissRequest = { showCondenaDetailsDialog = false },
             title = { Text(text = stringResource(R.string.atestado_condena_title)) },
             text = {
@@ -771,7 +771,7 @@ fun FirmasAtestadoScreen(
         var localName by remember { mutableStateOf(secondDriverName) }
         var localId by remember { mutableStateOf(secondDriverId) }
 
-        AlertDialog(
+        AccessibleAlertDialog(
             onDismissRequest = { showSecondDriverDialog = false },
             title = { Text(text = stringResource(R.string.atestado_second_driver_title)) },
             text = {
@@ -823,7 +823,7 @@ fun FirmasAtestadoScreen(
     }
 
     if (printProgress.isVisible) {
-        AlertDialog(
+        AccessibleAlertDialog(
             onDismissRequest = {},
             title = { Text(text = if (printProgress.isError) stringResource(R.string.print_error_title) else stringResource(R.string.printing_title)) },
             text = {
@@ -861,7 +861,7 @@ fun FirmasAtestadoScreen(
     }
 
     if (showManifestacionRequiredDialog) {
-        AlertDialog(
+        AccessibleAlertDialog(
             onDismissRequest = { showManifestacionRequiredDialog = false },
             title = { Text(text = stringResource(R.string.manifestacion_incomplete_print_title)) },
             text = {

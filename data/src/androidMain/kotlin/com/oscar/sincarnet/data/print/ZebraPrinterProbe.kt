@@ -5,6 +5,9 @@ import android.util.Log
 import com.zebra.sdk.comm.BluetoothConnection
 import com.zebra.sdk.comm.ConnectionException
 import com.zebra.sdk.printer.SGD
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 
 private const val ZEBRA_PROBE_TAG = "ZebraProbe"
 private const val PRODUCT_NAME_SGD_KEY = "device.product_name"
@@ -39,6 +42,60 @@ fun probeZebraPrinterModelByMacSdk(mac: String): String? {
         preparedLooper = true
     }
 
+    return try {
+        probeZebraPrinterModelOnce(mac)
+    } finally {
+        if (preparedLooper) {
+            Looper.myLooper()?.quitSafely()
+        }
+    }
+}
+
+/**
+ * Variante con reintentos del sondeo de modelo.
+ *
+ * Tras completar el emparejamiento Bluetooth, la conexión RFCOMM puede tardar unos instantes
+ * en estar disponible. Esta variante reintenta el sondeo preparando el [Looper] una sola vez
+ * para evitar reutilizar un Looper en estado de cierre entre intentos.
+ *
+ * @param mac Dirección MAC de la impresora Zebra.
+ * @param attempts Número máximo de intentos (por defecto 3).
+ * @param delayMillis Espera entre intentos en milisegundos (por defecto 500).
+ * @return Nombre del modelo detectado o null si todos los intentos fallan.
+ */
+suspend fun probeZebraPrinterModelByMacSdkWithRetry(
+    mac: String,
+    attempts: Int = 3,
+    delayMillis: Long = 500L
+): String? {
+    if (mac.isBlank() || attempts <= 0) return null
+
+    return withContext(Dispatchers.IO) {
+        val preparedLooper = Looper.myLooper() == null
+        if (preparedLooper) {
+            Looper.prepare()
+        }
+
+        try {
+            var detectedModel: String? = null
+            var attempt = 0
+            while (attempt < attempts && detectedModel == null) {
+                if (attempt > 0) {
+                    delay(delayMillis)
+                }
+                detectedModel = probeZebraPrinterModelOnce(mac)
+                attempt += 1
+            }
+            detectedModel
+        } finally {
+            if (preparedLooper) {
+                Looper.myLooper()?.quitSafely()
+            }
+        }
+    }
+}
+
+private fun probeZebraPrinterModelOnce(mac: String): String? {
     val connection = BluetoothConnection(mac, 2_500, 500)
     return runCatching {
         connection.open()
@@ -56,9 +113,6 @@ fun probeZebraPrinterModelByMacSdk(mac: String): String? {
         }
     }.getOrNull().also {
         runCatching { connection.close() }
-        if (preparedLooper) {
-            Looper.myLooper()?.quitSafely()
-        }
     }
 }
 
